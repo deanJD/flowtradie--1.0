@@ -4,38 +4,34 @@ type User {
   id: ID!
   email: String!
   name: String!
-  role: String
+  role: UserRole!
   phone: String
-  hourlyRate: Float # <-- ADD THIS LINE
+  hourlyRate: Float
   createdAt: DateTime!
   updatedAt: DateTime!
-
-  # Relationships
   tasks: [Task!]
 }
-
-
-# --- Input Types ---
 
 input CreateUserInput {
   email: String!
   name: String!
-  role: String
+  # This also uses the UserRole enum for type safety.
+  role: UserRole
   phone: String
-  hourlyRate: Float # <-- ADD THIS LINE
+  hourlyRate: Float
 }
 
 input UpdateUserInput {
   email: String
   name: String
-  role: String
+  # This also uses the UserRole enum.
+  role: UserRole
   phone: String
-  hourlyRate: Float # <-- ADD THIS LINE
+  hourlyRate: Float
 }
 
-
 # --- API Operations ---
-
+# These extend the base Query and Mutation types from root.graphql.
 extend type Query {
   users: [User!]
   user(id: ID!): User

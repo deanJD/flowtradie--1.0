@@ -1,8 +1,9 @@
-# This file defines shared types and the base Query/Mutation types
-# that other schema files will extend.
+# Defines core types and shared enums for the entire API.
 
 scalar DateTime
 
+# --- SHARED ENUMS ---
+# This section defines all the strict types for statuses and roles.
 enum JobStatus {
   PENDING
   ACTIVE
@@ -22,10 +23,24 @@ enum InvoiceStatus {
   SENT
   PAID
   OVERDUE
-  CANCELLED
+  PARTIALLY_PAID
 }
 
-# Base types that will be extended by other schema files
-type Query
-type Mutation
+enum UserRole {
+  OWNER
+  ADMIN
+  MANAGER
+  FOREMAN
+  WORKER
+  CONTRACTOR
+}
+
+# The base types that other files will add to.
+type Query {
+  _empty: String
+}
+
+type Mutation {
+  _empty: String
+}
 

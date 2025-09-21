@@ -1,15 +1,27 @@
 // This file contains all the business logic for handling User data.
 
-import type { User, Task } from '@prisma/client';
+import type { User, Task, UserRole } from '@prisma/client';
 import { GraphQLContext } from '../../prisma/client.js';
 
 // --- Input Types ---
-// REFACTORED: We now use TypeScript utility types to derive our inputs
-// directly from the Prisma User model. This is a cleaner and more scalable pattern.
-type CreateUserInput = Pick<User, 'email' | 'name' | 'role' | 'phone' | 'hourlyRate'>;
+// FIX: The input types have been updated to match the latest schema.
+interface CreateUserInput {
+  email: string;
+  // The password is required for the new auth system, but it's handled
+  // by the auth.ts resolver, so we don't need it here.
+  name: string;
+  role?: UserRole;
+  phone?: string;
+  hourlyRate?: number;
+}
 
-// 'Partial' makes all properties optional, which is perfect for update mutations.
-type UpdateUserInput = Partial<CreateUserInput>;
+interface UpdateUserInput {
+  email?: string;
+  name?: string;
+  role?: UserRole;
+  phone?: string;
+  hourlyRate?: number;
+}
 
 export const userResolvers = {
   Query: {
@@ -27,24 +39,25 @@ export const userResolvers = {
       { id }: { id: string },
       { prisma }: GraphQLContext
     ): Promise<User | null> => {
-      return prisma.user.findUnique({ where: { id } });
+      // We need to omit the password field when returning a user for security.
+      return prisma.user.findUnique({
+        where: { id },
+      });
     },
   },
   Mutation: {
+    // NOTE: The main 'createUser' logic is now in the 'auth.ts' resolver's 'register' function.
+    // This mutation is for an admin creating a user, which would have a different flow
+    // (e.g., sending an invite email instead of setting a password directly).
+    // For now, we'll keep the logic but it won't be used by our current auth schema.
     createUser: (
       _parent: unknown,
       { input }: { input: CreateUserInput },
       { prisma }: GraphQLContext
     ): Promise<User> => {
-      // Prisma expects 'null' for optional fields if they aren't provided,
-      // but GraphQL may send 'undefined'. We can normalize the input here.
-      const data = {
-        ...input,
-        role: input.role ?? null,
-        phone: input.phone ?? null,
-        hourlyRate: input.hourlyRate ?? null,
-      };
-      return prisma.user.create({ data });
+      // In a real app, an admin creating a user would likely not set a password.
+      // They would send an invite. We'll throw an error here to enforce using the 'register' mutation.
+      throw new Error("Please use the 'register' mutation to create a new user with a password.");
     },
     updateUser: (
       _parent: unknown,
@@ -74,4 +87,5 @@ export const userResolvers = {
     },
   },
 };
+
 

@@ -1,55 +1,25 @@
 # Node.js
 node_modules/
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
+*.tsbuildinfo
 
-# Next.js build artifacts
+# Next.js
 .next/
 out/
 .vercel/
 
-# OS-specific
+# OS + Editor
 .DS_Store
 Thumbs.db
-
-# Environment variables
-.env*
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Logs
-logs/
-*.log
-
-# IDE/editor
 .vscode/
 .idea/
-*.swp
 
-# Optional: TypeScript build output
-dist/
-build/
-*.tsbuildinfo
+# Env + Logs
+.env*
+*.log
 
-# Optional: coverage and test output
-coverage/
-*.lcov
-
-# Optional: local database or cache
+# Misc
 *.sqlite
-*.db
-.cache/
-
-# Optional: misc
-*.tgz
-*.gz
 *.zip
-*.bak
-*.tmp
-
-# Git LFS fallback (if needed)
+*.tgz
 *.node

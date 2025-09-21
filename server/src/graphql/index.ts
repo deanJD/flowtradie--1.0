@@ -11,9 +11,10 @@ import { expenseResolvers } from './resolvers/expense.js';
 import { timeLogResolvers } from './resolvers/timelog.js';
 import {reportingResolvers} from './resolvers/reporting.js';
 // FIX: Import the 'merge' function from the lodash.merge library.
-import merge from 'lodash.merge';
+import merge from 'lodash.merge'; // This line will now work correctly
 import { GraphQLScalarType, Kind } from 'graphql';
 import { paymentResolvers } from './resolvers/payment.js';
+import { authResolvers } from './resolvers/auth.js';
 
 // Define a custom scalar for handling DateTime objects.
 const dateTimeScalar = new GraphQLScalarType({
@@ -51,6 +52,7 @@ export const resolvers = merge(
   expenseResolvers,
   timeLogResolvers,
   paymentResolvers,
-  reportingResolvers
+  reportingResolvers,
+  authResolvers
 );
 

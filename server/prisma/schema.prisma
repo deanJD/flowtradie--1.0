@@ -33,24 +33,36 @@ enum InvoiceStatus {
   OVERDUE
   PARTIALLY_PAID
 }
+// We will use these roles to define a user's permissions.
+
+enum UserRole {
+  OWNER
+  ADMIN
+  MANAGER
+  FOREMAN
+  WORKER
+  CONTRACTOR
+}
 
 
 // --- MODELS ---
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  role      String? // e.g., "Foreman", "Worker", "Admin"
-  phone     String?
-  // NEW FIELD: Store the pay rate to calculate labor costs.
+  id         String   @id @default(cuid())
+  email      String   @unique
+  password   String
+  name       String
+  role       UserRole @default(WORKER)
+  phone      String?
   hourlyRate Float?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  tasks    Task[]
-  // A user can have many time logs recorded.
-  timeLogs TimeLog[]
+  tasks       Task[]
+  timeLogs    TimeLog[]
+  // FIX: This line completes the relationship by defining its opposite side.
+  // It tells Prisma that a single User can be the manager of many Jobs.
+  managedJobs Job[]    @relation("JobManager")
 }
 
 model Customer {
@@ -61,8 +73,7 @@ model Customer {
   address   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  jobs Job[]
+  jobs      Job[]
 }
 
 model Job {
@@ -75,18 +86,19 @@ model Job {
   endDate     DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-
-  customerId String
-  customer   Customer @relation(fields: [customerId], references: [id])
-
-  quotes    Quote[]
-  invoices  Invoice[]
-  tasks     Task[]
-  expenses  JobExpense[]
-  // A job can have many time logs from different users.
-  timeLogs  TimeLog[]
+  customerId  String
+  customer    Customer  @relation(fields: [customerId], references: [id])
+  // This is the link we will use for project-level responsibility.
+  managerId   String?
+  manager     User?     @relation("JobManager", fields: [managerId], references: [id])
+  quotes      Quote[]
+  invoices    Invoice[]
+  tasks       Task[]
+  expenses    JobExpense[]
+  timeLogs    TimeLog[]
 }
 
+// ... all other models (Quote, Invoice, etc.) remain unchanged ...
 model Quote {
   id          String      @id @default(cuid())
   quoteNumber String      @unique
@@ -115,11 +127,10 @@ model Invoice {
   id            String        @id @default(cuid())
   invoiceNumber String        @unique
   status        InvoiceStatus @default(DRAFT)
-  issueDate   DateTime      @default(now())
+  issueDate     DateTime      @default(now())
   dueDate       DateTime
   totalAmount   Float
   createdAt     DateTime      @default(now())
-  // FIX: Added the missing 'updatedAt' field name.
   updatedAt     DateTime      @updatedAt
   jobId         String
   job           Job           @relation(fields: [jobId], references: [id])
@@ -192,4 +203,3 @@ model TimeLog {
   user  User   @relation(fields: [userId], references: [id])
 }
 // --- END NEW MODEL ---
-
