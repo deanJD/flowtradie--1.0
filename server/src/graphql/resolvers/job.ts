@@ -1,22 +1,23 @@
-// This file is now fully typed with TypeScript.
+// This file is now fully typed and secured with role-based permission checks.
 
-import type { Job, Customer, Invoice, Quote, JobStatus } from '@prisma/client';
-import { GraphQLContext } from '../../prisma/client.js'; // Reuse the context type
+import type { Job, Customer, Invoice, Quote, JobStatus, Task, JobExpense } from '@prisma/client';
+import { GraphQLContext } from '../../prisma/client.js';
 
 // --- Input Types ---
-// Define interfaces for the mutation arguments to ensure type safety.
 interface CreateJobInput {
   title: string;
   customerId: string;
+  managerId?: string; // Allow assigning a manager on creation
   description?: string;
   location?: string;
-  status?: JobStatus; // Use the official Prisma-generated type
+  status?: JobStatus;
   startDate?: Date;
   endDate?: Date;
 }
 
 interface UpdateJobInput {
   title?: string;
+  managerId?: string;
   description?: string;
   location?: string;
   status?: JobStatus;
@@ -48,8 +49,14 @@ export const jobResolvers = {
     createJob: (
       _parent: unknown,
       { input }: { input: CreateJobInput },
-      { prisma }: GraphQLContext
+      { prisma, currentUser }: GraphQLContext
     ): Promise<Job> => {
+      // --- PERMISSION CHECK ---
+      if (!currentUser) throw new Error('Not authenticated');
+      if (!['OWNER', 'ADMIN', 'MANAGER', 'FOREMAN'].includes(currentUser.role)) {
+        throw new Error('Access Denied: You do not have permission to create jobs.');
+      }
+      // --- END CHECK ---
       return prisma.job.create({
         data: input,
       });
@@ -57,8 +64,14 @@ export const jobResolvers = {
     updateJob: (
       _parent: unknown,
       { id, input }: { id: string; input: UpdateJobInput },
-      { prisma }: GraphQLContext
+      { prisma, currentUser }: GraphQLContext
     ): Promise<Job> => {
+      // --- PERMISSION CHECK ---
+      if (!currentUser) throw new Error('Not authenticated');
+      if (!['OWNER', 'ADMIN', 'MANAGER', 'FOREMAN'].includes(currentUser.role)) {
+        throw new Error('Access Denied: You do not have permission to update jobs.');
+      }
+      // --- END CHECK ---
       return prisma.job.update({
         where: { id },
         data: input,
@@ -67,8 +80,14 @@ export const jobResolvers = {
     deleteJob: (
       _parent: unknown,
       { id }: { id: string },
-      { prisma }: GraphQLContext
+      { prisma, currentUser }: GraphQLContext
     ): Promise<Job> => {
+      // --- PERMISSION CHECK (Stricter) ---
+      if (!currentUser) throw new Error('Not authenticated');
+      if (currentUser.role !== 'OWNER' && currentUser.role !== 'ADMIN') {
+        throw new Error('Access Denied: You do not have permission to delete jobs.');
+      }
+      // --- END CHECK ---
       return prisma.job.delete({ where: { id } });
     },
   },
@@ -83,6 +102,12 @@ export const jobResolvers = {
     },
     quotes: (parent: Job, _args: unknown, { prisma }: GraphQLContext): Promise<Quote[]> => {
       return prisma.quote.findMany({ where: { jobId: parent.id } });
+    },
+    tasks: (parent: Job, _args: unknown, { prisma }: GraphQLContext): Promise<Task[]> => {
+      return prisma.task.findMany({ where: { jobId: parent.id } });
+    },
+    expenses: (parent: Job, _args: unknown, { prisma }: GraphQLContext): Promise<JobExpense[]> => {
+      return prisma.jobExpense.findMany({ where: { jobId: parent.id } });
     },
   },
 };

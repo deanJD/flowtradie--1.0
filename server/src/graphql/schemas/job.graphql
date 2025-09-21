@@ -1,4 +1,4 @@
-# Defines the Job type and its related API operations
+# Defines the Job type and its related API operations.
 
 type Job {
   id: ID!
@@ -10,14 +10,24 @@ type Job {
   endDate: DateTime
   createdAt: DateTime!
   updatedAt: DateTime!
+
+  # --- Relationships ---
+  # FIX: Added all the missing relational fields to match the resolver.
   customer: Customer!
+  manager: User
   quotes: [Quote!]
   invoices: [Invoice!]
+  tasks: [Task!]
+  expenses: [JobExpense!]
+  timeLogs: [TimeLog!]
 }
 
+# --- Input Types ---
+# These define the shape of data for creating and updating jobs.
 input CreateJobInput {
   title: String!
   customerId: ID!
+  managerId: ID # Allow assigning a manager on creation
   description: String
   location: String
   status: JobStatus
@@ -27,6 +37,7 @@ input CreateJobInput {
 
 input UpdateJobInput {
   title: String
+  managerId: ID
   description: String
   location: String
   status: JobStatus
@@ -34,8 +45,11 @@ input UpdateJobInput {
   endDate: DateTime
 }
 
+# --- API Operations ---
 extend type Query {
+  # Get all jobs, optionally filtered by customer
   jobs(customerId: ID): [Job!]
+  # Get a single job by its ID
   job(id: ID!): Job
 }
 
