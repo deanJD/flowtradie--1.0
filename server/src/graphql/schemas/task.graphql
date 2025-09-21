@@ -1,0 +1,50 @@
+# Defines the Task type and its related API operations for job checklists.
+
+type Task {
+  id: ID!
+  title: String!
+  description: String
+  isCompleted: Boolean!
+  dueDate: DateTime
+  createdAt: DateTime!
+  updatedAt: DateTime!
+
+  # Relationships
+  job: Job!
+  assignedTo: User
+}
+
+
+# --- Input Types ---
+
+input CreateTaskInput {
+  title: String!
+  jobId: ID!
+  description: String
+  assignedToId: ID # Optional: assign to a user on creation
+  dueDate: DateTime
+}
+
+input UpdateTaskInput {
+  title: String
+  description: String
+  isCompleted: Boolean
+  assignedToId: ID
+  dueDate: DateTime
+}
+
+
+# --- API Operations ---
+
+extend type Query {
+  # Get all tasks for a specific job
+  tasks(jobId: ID!): [Task!]
+  # Get a single task by its ID
+  task(id: ID!): Task
+}
+
+extend type Mutation {
+  createTask(input: CreateTaskInput!): Task!
+  updateTask(id: ID!, input: UpdateTaskInput!): Task!
+  deleteTask(id: ID!): Task!
+}

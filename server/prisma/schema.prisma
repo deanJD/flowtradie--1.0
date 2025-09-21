@@ -1,0 +1,195 @@
+// This is the single source of truth for your database schema.
+// It defines all data models, fields, and relationships for the application.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+// --- ENUMS ---
+// Enums provide type safety for status fields.
+// FIX: Corrected enum formatting to have one value per line.
+enum JobStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+}
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  PARTIALLY_PAID
+}
+
+
+// --- MODELS ---
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  role      String? // e.g., "Foreman", "Worker", "Admin"
+  phone     String?
+  // NEW FIELD: Store the pay rate to calculate labor costs.
+  hourlyRate Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tasks    Task[]
+  // A user can have many time logs recorded.
+  timeLogs TimeLog[]
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  phone     String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  jobs Job[]
+}
+
+model Job {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  location    String?
+  status      JobStatus @default(PENDING)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  quotes    Quote[]
+  invoices  Invoice[]
+  tasks     Task[]
+  expenses  JobExpense[]
+  // A job can have many time logs from different users.
+  timeLogs  TimeLog[]
+}
+
+model Quote {
+  id          String      @id @default(cuid())
+  quoteNumber String      @unique
+  status      QuoteStatus @default(DRAFT)
+  issueDate   DateTime    @default(now())
+  expiryDate  DateTime?
+  totalAmount Float
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  jobId       String
+  job         Job         @relation(fields: [jobId], references: [id])
+  items       QuoteItem[]
+}
+
+model QuoteItem {
+  id          String @id @default(cuid())
+  description String
+  quantity    Int    @default(1)
+  unitPrice   Float
+  total       Float
+  quoteId     String
+  quote       Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  invoiceNumber String        @unique
+  status        InvoiceStatus @default(DRAFT)
+  issueDate   DateTime      @default(now())
+  dueDate       DateTime
+  totalAmount   Float
+  createdAt     DateTime      @default(now())
+  // FIX: Added the missing 'updatedAt' field name.
+  updatedAt     DateTime      @updatedAt
+  jobId         String
+  job           Job           @relation(fields: [jobId], references: [id])
+  items         InvoiceItem[]
+  payments      Payment[]
+}
+
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  description String
+  quantity    Int     @default(1)
+  unitPrice   Float
+  total       Float
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  amount    Float
+  date      DateTime @default(now())
+  method    String
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  invoiceId String
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id])
+}
+
+model Task {
+  id           String    @id @default(cuid())
+  title        String
+  description  String?
+  isCompleted  Boolean   @default(false)
+  dueDate      DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  jobId        String
+  job          Job       @relation(fields: [jobId], references: [id])
+  assignedToId String?
+  assignedTo   User?     @relation(fields: [assignedToId], references: [id])
+}
+
+model JobExpense {
+  id          String   @id @default(cuid())
+  description String
+  amount      Float
+  date        DateTime @default(now())
+  category    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  jobId       String
+  job         Job      @relation(fields: [jobId], references: [id])
+}
+
+
+// --- NEW MODEL FOR TIME TRACKING ---
+model TimeLog {
+  id           String   @id @default(cuid())
+  date         DateTime // The day the work was done
+  hoursWorked  Float    // e.g., 8.0, 4.5
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Each time log must be for a specific job and user.
+  jobId String
+  job   Job    @relation(fields: [jobId], references: [id])
+  userId String
+  user  User   @relation(fields: [userId], references: [id])
+}
+// --- END NEW MODEL ---
+

@@ -1,0 +1,49 @@
+# Defines the User type and its related API operations.
+
+type User {
+  id: ID!
+  email: String!
+  name: String!
+  role: String
+  phone: String
+  hourlyRate: Float # <-- ADD THIS LINE
+  createdAt: DateTime!
+  updatedAt: DateTime!
+
+  # Relationships
+  tasks: [Task!]
+}
+
+
+# --- Input Types ---
+
+input CreateUserInput {
+  email: String!
+  name: String!
+  role: String
+  phone: String
+  hourlyRate: Float # <-- ADD THIS LINE
+}
+
+input UpdateUserInput {
+  email: String
+  name: String
+  role: String
+  phone: String
+  hourlyRate: Float # <-- ADD THIS LINE
+}
+
+
+# --- API Operations ---
+
+extend type Query {
+  users: [User!]
+  user(id: ID!): User
+}
+
+extend type Mutation {
+  createUser(input: CreateUserInput!): User!
+  updateUser(id: ID!, input: UpdateUserInput!): User!
+  deleteUser(id: ID!): User!
+}
+

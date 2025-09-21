@@ -1,0 +1,31 @@
+# Defines the Payment type and its related API operations for accounting.
+
+type Payment {
+  id: ID!
+  amount: Float!
+  date: DateTime!
+  method: String!
+  notes: String
+
+  # Relationship
+  invoice: Invoice!
+}
+
+
+# --- Input Types ---
+
+input RecordPaymentInput {
+  invoiceId: ID!
+  amount: Float!
+  date: DateTime!
+  method: String! # e.g., "Credit Card", "Bank Transfer", "Cash"
+  notes: String
+}
+
+
+# --- API Operations ---
+
+extend type Mutation {
+  # Records a new payment against a specific invoice.
+  recordPayment(input: RecordPaymentInput!): Payment!
+}

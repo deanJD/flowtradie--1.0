@@ -1,0 +1,42 @@
+# Defines the Invoice type and its related API operations
+
+type Invoice {
+  id: ID!
+  invoiceNumber: String!
+  status: InvoiceStatus!
+  issueDate: DateTime!
+  dueDate: DateTime!
+  totalAmount: Float!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  job: Job!
+  items: [InvoiceItem!]
+}
+
+type InvoiceItem {
+  id: ID!
+  description: String!
+  quantity: Int!
+  unitPrice: Float!
+  total: Float!
+}
+
+# Note: We can reuse the CreateItemInput from quote.graphql
+# as it has the same shape.
+
+input CreateInvoiceInput {
+  jobId: ID!
+  invoiceNumber: String!
+  dueDate: DateTime!
+  status: InvoiceStatus = DRAFT
+  items: [CreateItemInput!]!
+}
+
+extend type Query {
+  invoice(id: ID!): Invoice
+}
+
+extend type Mutation {
+  createInvoice(input: CreateInvoiceInput!): Invoice!
+}
+

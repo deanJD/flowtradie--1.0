@@ -1,0 +1,38 @@
+# Defines the JobExpense type and its related API operations for cost tracking.
+
+type JobExpense {
+  id: ID!
+  description: String!
+  amount: Float!
+  date: DateTime!
+  category: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+
+  # Relationship
+  job: Job!
+}
+
+
+# --- Input Types ---
+
+input CreateExpenseInput {
+  jobId: ID!
+  description: String!
+  amount: Float!
+  category: String! # e.g., "Materials", "Labor", "Permits"
+  date: DateTime
+}
+
+
+# --- API Operations ---
+
+extend type Query {
+  # Get all expenses for a specific job
+  expenses(jobId: ID!): [JobExpense!]
+}
+
+extend type Mutation {
+  createExpense(input: CreateExpenseInput!): JobExpense!
+  deleteExpense(id: ID!): JobExpense!
+}

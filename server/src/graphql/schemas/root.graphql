@@ -1,0 +1,31 @@
+# This file defines shared types and the base Query/Mutation types
+# that other schema files will extend.
+
+scalar DateTime
+
+enum JobStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+# Base types that will be extended by other schema files
+type Query
+type Mutation
+

@@ -1,0 +1,45 @@
+# Defines the Quote type and its related API operations
+
+type Quote {
+  id: ID!
+  quoteNumber: String!
+  status: QuoteStatus!
+  issueDate: DateTime!
+  expiryDate: DateTime
+  totalAmount: Float!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  job: Job!
+  items: [QuoteItem!]
+}
+
+type QuoteItem {
+  id: ID!
+  description: String!
+  quantity: Int!
+  unitPrice: Float!
+  total: Float!
+}
+
+input CreateItemInput {
+  description: String!
+  quantity: Int = 1
+  unitPrice: Float!
+}
+
+input CreateQuoteInput {
+  jobId: ID!
+  quoteNumber: String!
+  status: QuoteStatus = DRAFT
+  expiryDate: DateTime
+  items: [CreateItemInput!]!
+}
+
+extend type Query {
+  quote(id: ID!): Quote
+}
+
+extend type Mutation {
+  createQuote(input: CreateQuoteInput!): Quote!
+}
+

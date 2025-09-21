@@ -1,0 +1,47 @@
+# Defines the Job type and its related API operations
+
+type Job {
+  id: ID!
+  title: String!
+  description: String
+  location: String
+  status: JobStatus!
+  startDate: DateTime
+  endDate: DateTime
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  customer: Customer!
+  quotes: [Quote!]
+  invoices: [Invoice!]
+}
+
+input CreateJobInput {
+  title: String!
+  customerId: ID!
+  description: String
+  location: String
+  status: JobStatus
+  startDate: DateTime
+  endDate: DateTime
+}
+
+input UpdateJobInput {
+  title: String
+  description: String
+  location: String
+  status: JobStatus
+  startDate: DateTime
+  endDate: DateTime
+}
+
+extend type Query {
+  jobs(customerId: ID): [Job!]
+  job(id: ID!): Job
+}
+
+extend type Mutation {
+  createJob(input: CreateJobInput!): Job!
+  updateJob(id: ID!, input: UpdateJobInput!): Job!
+  deleteJob(id: ID!): Job!
+}
+
