@@ -1,4 +1,3 @@
-# Defines the Payment type and its related API operations for accounting.
 
 type Payment {
   id: ID!
@@ -6,26 +5,17 @@ type Payment {
   date: DateTime!
   method: String!
   notes: String
-
-  # Relationship
   invoice: Invoice!
 }
 
-
-# --- Input Types ---
-
-input RecordPaymentInput {
+input CreatePaymentInput {
   invoiceId: ID!
   amount: Float!
-  date: DateTime!
-  method: String! # e.g., "Credit Card", "Bank Transfer", "Cash"
+  method: String!
   notes: String
 }
 
-
-# --- API Operations ---
-
 extend type Mutation {
-  # Records a new payment against a specific invoice.
-  recordPayment(input: RecordPaymentInput!): Payment!
+  createPayment(input: CreatePaymentInput!): Payment!
+  deletePayment(id: ID!): Payment!
 }

@@ -105,7 +105,13 @@ model Quote {
   status      QuoteStatus @default(DRAFT)
   issueDate   DateTime    @default(now())
   expiryDate  DateTime?
-  totalAmount Float
+
+  // NEW: GST-related fields
+  subtotal    Float
+  gstRate     Float       @default(0.1) // 10% default GST
+  gstAmount   Float       @default(0.0)
+  totalAmount Float       // subtotal + gstAmount
+
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   jobId       String
@@ -129,7 +135,13 @@ model Invoice {
   status        InvoiceStatus @default(DRAFT)
   issueDate     DateTime      @default(now())
   dueDate       DateTime
+
+  // NEW: GST-related fields
+  subtotal      Float
+  gstRate       Float         @default(0.1)
+  gstAmount     Float         @default(0.0)
   totalAmount   Float
+
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   jobId         String
@@ -150,7 +162,7 @@ model InvoiceItem {
 
 model Payment {
   id        String   @id @default(cuid())
-  amount    Float
+  amount    Float    // still valid: this is the paid amount (incl. GST if invoice has it)
   date      DateTime @default(now())
   method    String
   notes     String?
