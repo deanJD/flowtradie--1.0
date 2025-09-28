@@ -1,80 +1,52 @@
-// src/graphql/resolvers/customer.ts
-import type { Customer, Job } from "@prisma/client";
+import { customerService } from "../../services/customer.service.js";
 import { GraphQLContext } from "../../context.js";
 
-type CreateCustomerInput = Pick<Customer, "name" | "email" | "phone" | "address">;
-type UpdateCustomerInput = Partial<CreateCustomerInput>;
+interface CreateCustomerArgs {
+  input: {
+    name: string;
+    email: string;
+    phone?: string;
+    address?: string;
+  };
+}
+
+interface UpdateCustomerArgs {
+  id: string;
+  input: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+  };
+}
+
+interface DeleteCustomerArgs {
+  id: string;
+}
 
 export const customerResolvers = {
   Query: {
-    customers: (
-      _parent: unknown,
-      _args: unknown,
-      { prisma }: GraphQLContext
-    ): Promise<Customer[]> => {
-      return prisma.customer.findMany({
-        orderBy: { createdAt: "desc" },
-      });
-    },
-    customer: (
-      _parent: unknown,
-      { id }: { id: string },
-      { prisma }: GraphQLContext
-    ): Promise<Customer | null> => {
-      return prisma.customer.findUnique({ where: { id } });
-    },
+    customers: (_p: unknown, _a: unknown, ctx: GraphQLContext) =>
+      customerService.getAll(ctx),
+
+    customer: (_p: unknown, args: { id: string }, ctx: GraphQLContext) =>
+      customerService.getById(args.id, ctx),
   },
 
   Mutation: {
-    createCustomer: async (
-      _parent: unknown,
-      { input }: { input: CreateCustomerInput },
-      { prisma }: GraphQLContext
-    ): Promise<Customer> => {
-      try {
-        return await prisma.customer.create({ data: input });
-      } catch (error: any) {
-        if (error.code === "P2002") {
-          throw new Error("A customer with this email already exists.");
-        }
-        throw error;
-      }
+    createCustomer: (_p: unknown, args: CreateCustomerArgs, ctx: GraphQLContext) => {
+      const input = {
+        ...args.input,
+        phone: args.input.phone ?? null,
+        address: args.input.address ?? null,
+      };
+      return customerService.create(input, ctx);
     },
 
-    updateCustomer: async (
-      _parent: unknown,
-      { id, input }: { id: string; input: UpdateCustomerInput },
-      { prisma }: GraphQLContext
-    ): Promise<Customer> => {
-      try {
-        return await prisma.customer.update({ where: { id }, data: input });
-      } catch (error: any) {
-        if (error.code === "P2002") {
-          throw new Error("Another customer already uses this email.");
-        }
-        throw error;
-      }
-    },
+    updateCustomer: (_p: unknown, args: UpdateCustomerArgs, ctx: GraphQLContext) =>
+      customerService.update(args.id, args.input, ctx),
 
-    deleteCustomer: (
-      _parent: unknown,
-      { id }: { id: string },
-      { prisma }: GraphQLContext
-    ): Promise<Customer> => {
-      return prisma.customer.delete({ where: { id } });
-    },
-  },
-
-  Customer: {
-    jobs: (
-      parent: Customer,
-      _args: unknown,
-      { prisma }: GraphQLContext
-    ): Promise<Job[]> => {
-      return prisma.job.findMany({
-        where: { customerId: parent.id },
-        orderBy: { createdAt: "desc" },
-      });
-    },
+    deleteCustomer: (_p: unknown, args: DeleteCustomerArgs, ctx: GraphQLContext) =>
+      customerService.delete(args.id, ctx),
   },
 };
