@@ -51,6 +51,7 @@ export const quoteResolvers = {
           status: input.status,
           expiryDate: input.expiryDate,
           totalAmount: totalAmount,
+          subtotal: totalAmount, // Add subtotal property, adjust calculation if needed
           // Create the related quote items in the same database transaction.
           items: {
             create: input.items.map(item => ({

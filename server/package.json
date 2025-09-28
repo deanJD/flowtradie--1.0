@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "node --watch --loader ts-node/esm src/index.ts",
-    "seed": "node --loader ts-node/esm prisma/seed.ts",
+    "dev": "nodemon --watch src --ext ts --exec ts-node-esm src/index.ts",
     "hash": "node --loader ts-node/esm hash-password.ts",
     "studio": "prisma studio",
     "migrate": "prisma migrate dev",
@@ -13,17 +12,23 @@
   },
   "dependencies": {
     "@apollo/server": "^4.12.2",
+    "@graphql-tools/load-files": "^7.0.1",
     "@graphql-tools/merge": "^9.1.1",
     "@prisma/client": "^6.15.0",
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.3.1",
     "graphql": "^16.11.0",
+    "jsonwebtoken": "^9.0.2",
+    "lodash.merge": "^4.6.2",
     "pg": "^8.11.3",
     "prisma": "^6.15.0"
   },
   "devDependencies": {
-    "@types/node": "^24.3.1",
     "@types/bcryptjs": "^2.4.2",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/lodash.merge": "^4.6.9",
+    "@types/node": "^24.3.1",
+    "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2"
   }

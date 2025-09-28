@@ -8,22 +8,50 @@ type Invoice {
   gstRate: Float!
   gstAmount: Float!
   totalAmount: Float!
-  job: Job!
   items: [InvoiceItem!]!
   payments: [Payment!]!
+  job: Job!
+}
+
+type InvoiceItem {
+  id: ID!
+  description: String!
+  quantity: Int!
+  unitPrice: Float!
+  total: Float!
+}
+
+extend type Query {
+  invoice(id: ID!): Invoice
+  invoices(jobId: ID!): [Invoice!]! # optional, if you want list queries
+}
+
+extend type Mutation {
+  createInvoice(input: CreateInvoiceInput!): Invoice!
+  updateInvoice(id: ID!, input: UpdateInvoiceInput!): Invoice!
+  deleteInvoice(id: ID!): Invoice!
 }
 
 input CreateInvoiceInput {
   jobId: ID!
   invoiceNumber: String!
   dueDate: DateTime!
+  status: InvoiceStatus
   subtotal: Float!
-  gstRate: Float = 0.1
+  gstRate: Float
+  items: [CreateInvoiceItemInput!]!
+}
+
+input CreateInvoiceItemInput {
+  description: String!
+  quantity: Int
+  unitPrice: Float!
 }
 
 input UpdateInvoiceInput {
-  status: InvoiceStatus
   dueDate: DateTime
+  status: InvoiceStatus
   subtotal: Float
   gstRate: Float
+  items: [CreateInvoiceItemInput!]
 }

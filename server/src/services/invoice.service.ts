@@ -1,5 +1,6 @@
-import { PrismaClient, Invoice, InvoiceStatus } from "@prisma/client";
+// src/services/invoice.service.ts
 import { GraphQLContext } from "../context.js";
+import { InvoiceStatus } from "@prisma/client";
 
 interface CreateItemInput {
   description: string;
@@ -12,39 +13,36 @@ interface CreateInvoiceInput {
   invoiceNumber: string;
   dueDate: Date;
   status?: InvoiceStatus;
+  gstRate?: number;
   items: CreateItemInput[];
-  subtotal: number;
-  gstRate?: number;
-}
-
-interface UpdateInvoiceInput {
-  invoiceNumber?: string;
-  dueDate?: Date;
-  status?: InvoiceStatus;
-  subtotal?: number;
-  gstRate?: number;
 }
 
 export const invoiceService = {
-  getById: (id: string, ctx: GraphQLContext): Promise<Invoice | null> => {
+  getById: (id: string, ctx: GraphQLContext) => {
     return ctx.prisma.invoice.findUnique({
       where: { id },
-      include: { items: true, payments: true, job: true },
+      include: { items: true, payments: true },
     });
   },
 
   create: async (input: CreateInvoiceInput, ctx: GraphQLContext) => {
+    // 🧮 subtotal from items
+    const subtotal = input.items.reduce((sum, item) => {
+      const qty = item.quantity ?? 1;
+      return sum + qty * item.unitPrice;
+    }, 0);
+
     const gstRate = input.gstRate ?? 0.1;
-    const gstAmount = input.subtotal * gstRate;
-    const totalAmount = input.subtotal + gstAmount;
+    const gstAmount = subtotal * gstRate;
+    const totalAmount = subtotal + gstAmount;
 
     return ctx.prisma.invoice.create({
       data: {
-        jobId: input.jobId,
         invoiceNumber: input.invoiceNumber,
         dueDate: input.dueDate,
         status: input.status ?? "DRAFT",
-        subtotal: input.subtotal,
+        job: { connect: { id: input.jobId } },
+        subtotal,
         gstRate,
         gstAmount,
         totalAmount,
@@ -61,21 +59,41 @@ export const invoiceService = {
     });
   },
 
-  update: async (id: string, input: UpdateInvoiceInput, ctx: GraphQLContext) => {
-    const existing = await ctx.prisma.invoice.findUnique({ where: { id } });
-    if (!existing) throw new Error("Invoice not found");
+  update: async (id: string, input: Partial<CreateInvoiceInput>, ctx: GraphQLContext) => {
+    let subtotal: number | undefined;
+    let gstAmount: number | undefined;
+    let totalAmount: number | undefined;
 
-    const baseSubtotal = input.subtotal ?? existing.subtotal;
-    const baseRate = input.gstRate ?? existing.gstRate;
-    const gstAmount = baseSubtotal * baseRate;
-    const totalAmount = baseSubtotal + gstAmount;
+    if (input.items) {
+      subtotal = input.items.reduce((sum, item) => {
+        const qty = item.quantity ?? 1;
+        return sum + qty * item.unitPrice;
+      }, 0);
+
+      const gstRate = input.gstRate ?? 0.1;
+      gstAmount = subtotal * gstRate;
+      totalAmount = subtotal + gstAmount;
+    }
 
     return ctx.prisma.invoice.update({
       where: { id },
       data: {
         ...input,
+        subtotal,
+        gstRate: input.gstRate,
         gstAmount,
         totalAmount,
+        items: input.items
+          ? {
+              deleteMany: {}, // clear old
+              create: input.items.map((item) => ({
+                description: item.description,
+                quantity: item.quantity ?? 1,
+                unitPrice: item.unitPrice,
+                total: (item.quantity ?? 1) * item.unitPrice,
+              })),
+            }
+          : undefined,
       },
       include: { items: true, payments: true },
     });

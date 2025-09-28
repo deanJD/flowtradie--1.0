@@ -1,21 +1,24 @@
-
 type Payment {
   id: ID!
   amount: Float!
   date: DateTime!
   method: String!
   notes: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
   invoice: Invoice!
 }
 
-input CreatePaymentInput {
+input RecordPaymentInput {
   invoiceId: ID!
   amount: Float!
+  date: DateTime
   method: String!
   notes: String
 }
 
 extend type Mutation {
-  createPayment(input: CreatePaymentInput!): Payment!
-  deletePayment(id: ID!): Payment!
+  recordPayment(input: RecordPaymentInput!): Payment!
 }
+
+
