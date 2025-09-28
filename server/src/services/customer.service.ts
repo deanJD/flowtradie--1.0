@@ -1,12 +1,13 @@
-import { PrismaClient, Customer } from "@prisma/client";
-import { GraphQLContext } from "../context.js";
+import { Customer } from "@prisma/client";
+import { GraphQLContext } from "../context.js"; // ✅ correct path
+import { handlePrismaError } from "../utils/handlePrismaError.js"; // ✅ correct path
 
 export const customerService = {
-  getAll: (ctx: GraphQLContext): Promise<Customer[]> => {
+  getAll: async (ctx: GraphQLContext): Promise<Customer[]> => {
     return ctx.prisma.customer.findMany({ orderBy: { createdAt: "desc" } });
   },
 
-  getById: (id: string, ctx: GraphQLContext): Promise<Customer | null> => {
+  getById: async (id: string, ctx: GraphQLContext): Promise<Customer | null> => {
     return ctx.prisma.customer.findUnique({ where: { id } });
   },
 
@@ -17,29 +18,23 @@ export const customerService = {
     try {
       return await ctx.prisma.customer.create({ data: input });
     } catch (error: any) {
-      if (error.code === "P2002") {
-        throw new Error("A customer with this email already exists.");
-      }
-      throw error;
+      handlePrismaError(error, "Customer creation"); // always throws -> never returns
     }
   },
 
-  update: async (
-    id: string,
-    input: Partial<Customer>,
-    ctx: GraphQLContext
-  ): Promise<Customer> => {
+  update: async (id: string, input: Partial<Customer>, ctx: GraphQLContext): Promise<Customer> => {
     try {
       return await ctx.prisma.customer.update({ where: { id }, data: input });
     } catch (error: any) {
-      if (error.code === "P2002") {
-        throw new Error("Another customer already uses this email.");
-      }
-      throw error;
+      handlePrismaError(error, "Customer update");
     }
   },
 
-  delete: (id: string, ctx: GraphQLContext): Promise<Customer> => {
-    return ctx.prisma.customer.delete({ where: { id } });
+  delete: async (id: string, ctx: GraphQLContext): Promise<Customer> => {
+    try {
+      return await ctx.prisma.customer.delete({ where: { id } });
+    } catch (error: any) {
+      handlePrismaError(error, "Customer deletion");
+    }
   },
 };

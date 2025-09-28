@@ -1,90 +1,66 @@
-// This file contains all the business logic for handling Task data.
 
-import type { Task, Job, User } from '@prisma/client';
-import { GraphQLContext } from '../../prisma/client.js';
+import { taskService } from "../../services/task.service.js";
+import { GraphQLContext } from "../../context.js";
 
-// --- Input Types ---
-// Define interfaces for the mutation arguments to ensure type safety.
-interface CreateTaskInput {
-  title: string;
-  jobId: string;
-  description?: string;
-  assignedToId?: string;
-  dueDate?: Date;
+interface CreateTaskArgs {
+  input: {
+    jobId: string;
+    title: string;
+    description?: string;
+    dueDate?: string;
+    assignedToId?: string;
+  };
 }
 
-interface UpdateTaskInput {
-  title?: string;
-  description?: string;
-  isCompleted?: boolean;
-  assignedToId?: string;
-  dueDate?: Date;
+interface UpdateTaskArgs {
+  id: string;
+  input: {
+    title?: string;
+    description?: string;
+    dueDate?: string;
+    isCompleted?: boolean;
+    assignedToId?: string;
+  };
+}
+
+interface DeleteTaskArgs {
+  id: string;
 }
 
 export const taskResolvers = {
   Query: {
-    tasks: (
-      _parent: unknown,
-      { jobId }: { jobId: string },
-      { prisma }: GraphQLContext
-    ): Promise<Task[]> => {
-      return prisma.task.findMany({
-        where: { jobId },
-        orderBy: { createdAt: 'asc' },
-      });
-    },
-    task: (
-      _parent: unknown,
-      { id }: { id: string },
-      { prisma }: GraphQLContext
-    ): Promise<Task | null> => {
-      return prisma.task.findUnique({ where: { id } });
-    },
-  },
-  Mutation: {
-    createTask: (
-      _parent: unknown,
-      { input }: { input: CreateTaskInput },
-      { prisma }: GraphQLContext
-    ): Promise<Task> => {
-      return prisma.task.create({ data: input });
-    },
-    updateTask: (
-      _parent: unknown,
-      { id, input }: { id: string; input: UpdateTaskInput },
-      { prisma }: GraphQLContext
-    ): Promise<Task> => {
-      return prisma.task.update({
-        where: { id },
-        data: input,
-      });
-    },
-    deleteTask: (
-      _parent: unknown,
-      { id }: { id: string },
-      { prisma }: GraphQLContext
-    ): Promise<Task> => {
-      return prisma.task.delete({ where: { id } });
-    },
+    task: (_p: unknown, args: { id: string }, ctx: GraphQLContext) =>
+      taskService.getById(args.id, ctx),
   },
 
-  // --- Relational Resolvers ---
-  // These functions run only when a query specifically asks for a Task's related data.
+  Mutation: {
+    createTask: (_p: unknown, args: CreateTaskArgs, ctx: GraphQLContext) => {
+      const input = {
+        ...args.input,
+        dueDate: args.input.dueDate ? new Date(args.input.dueDate) : undefined,
+      };
+      return taskService.create(input, ctx);
+    },
+
+    updateTask: (_p: unknown, args: UpdateTaskArgs, ctx: GraphQLContext) => {
+      const input = {
+        ...args.input,
+        dueDate: args.input.dueDate ? new Date(args.input.dueDate) : undefined,
+      };
+      return taskService.update(args.id, input, ctx);
+    },
+
+    deleteTask: (_p: unknown, args: DeleteTaskArgs, ctx: GraphQLContext) =>
+      taskService.delete(args.id, ctx),
+  },
+
   Task: {
-    job: (parent: Task, _args: unknown, { prisma }: GraphQLContext): Promise<Job | null> => {
-      // The `parent` argument is the Task object from the initial query.
-      return prisma.job.findUnique({ where: { id: parent.jobId } });
-    },
-    assignedTo: async (
-      parent: Task,
-      _args: unknown,
-      { prisma }: GraphQLContext
-    ): Promise<User | null> => {
-      // If there's no assigned user, return null immediately.
-      if (!parent.assignedToId) {
-        return null;
-      }
-      return prisma.user.findUnique({ where: { id: parent.assignedToId } });
-    },
+    job: (parent: any, _a: unknown, ctx: GraphQLContext) =>
+      ctx.prisma.job.findUnique({ where: { id: parent.jobId } }),
+
+    assignedTo: (parent: any, _a: unknown, ctx: GraphQLContext) =>
+      parent.assignedToId
+        ? ctx.prisma.user.findUnique({ where: { id: parent.assignedToId } })
+        : null,
   },
 };

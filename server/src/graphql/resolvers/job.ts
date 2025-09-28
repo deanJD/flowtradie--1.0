@@ -1,114 +1,73 @@
-// This file is now fully typed and secured with role-based permission checks.
+import { jobService } from "../../services/job.service.js";
+import { GraphQLContext } from "../../context.js";
 
-import type { Job, Customer, Invoice, Quote, JobStatus, Task, JobExpense } from '@prisma/client';
-import { GraphQLContext } from '../../prisma/client.js';
-
-// --- Input Types ---
-interface CreateJobInput {
-  title: string;
-  customerId: string;
-  managerId?: string; // Allow assigning a manager on creation
-  description?: string;
-  location?: string;
-  status?: JobStatus;
-  startDate?: Date;
-  endDate?: Date;
+interface CreateJobArgs {
+  input: {
+    title: string;
+    description?: string;
+    location?: string;
+    status?: "PENDING" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+    startDate?: string;
+    endDate?: string;
+    customerId: string;
+    managerId?: string;
+};
 }
 
-interface UpdateJobInput {
-  title?: string;
-  managerId?: string;
-  description?: string;
-  location?: string;
-  status?: JobStatus;
-  startDate?: Date;
-  endDate?: Date;
+interface UpdateJobArgs {
+  id: string;
+  input: {
+    title?: string;
+    description?: string;
+    location?: string;
+    status?: "PENDING" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+    startDate?: string;
+    endDate?: string;
+    managerId?: string;
+  };
+}
+
+interface DeleteJobArgs {
+  id: string;
 }
 
 export const jobResolvers = {
   Query: {
-    jobs: (
-      _parent: unknown,
-      { customerId }: { customerId?: string },
-      { prisma }: GraphQLContext
-    ): Promise<Job[]> => {
-      return prisma.job.findMany({
-        where: { customerId },
-        orderBy: { createdAt: 'desc' },
-      });
-    },
-    job: (
-      _parent: unknown,
-      { id }: { id: string },
-      { prisma }: GraphQLContext
-    ): Promise<Job | null> => {
-      return prisma.job.findUnique({ where: { id } });
-    },
+    jobs: (_p: unknown, _a: unknown, ctx: GraphQLContext) =>
+      jobService.getAll(ctx),
+
+    job: (_p: unknown, args: { id: string }, ctx: GraphQLContext) =>
+      jobService.getById(args.id, ctx),
   },
+
   Mutation: {
-    createJob: (
-      _parent: unknown,
-      { input }: { input: CreateJobInput },
-      { prisma, currentUser }: GraphQLContext
-    ): Promise<Job> => {
-      // --- PERMISSION CHECK ---
-      if (!currentUser) throw new Error('Not authenticated');
-      if (!['OWNER', 'ADMIN', 'MANAGER', 'FOREMAN'].includes(currentUser.role)) {
-        throw new Error('Access Denied: You do not have permission to create jobs.');
-      }
-      // --- END CHECK ---
-      return prisma.job.create({
-        data: input,
-      });
+    createJob: (_p: unknown, args: CreateJobArgs, ctx: GraphQLContext) => {
+      const input = {
+        ...args.input,
+        startDate: args.input.startDate
+          ? new Date(args.input.startDate)
+          : undefined,
+        endDate: args.input.endDate
+          ? new Date(args.input.endDate)
+          : undefined,
+      };
+      return jobService.create(input, ctx);
     },
-    updateJob: (
-      _parent: unknown,
-      { id, input }: { id: string; input: UpdateJobInput },
-      { prisma, currentUser }: GraphQLContext
-    ): Promise<Job> => {
-      // --- PERMISSION CHECK ---
-      if (!currentUser) throw new Error('Not authenticated');
-      if (!['OWNER', 'ADMIN', 'MANAGER', 'FOREMAN'].includes(currentUser.role)) {
-        throw new Error('Access Denied: You do not have permission to update jobs.');
-      }
-      // --- END CHECK ---
-      return prisma.job.update({
-        where: { id },
-        data: input,
-      });
-    },
-    deleteJob: (
-      _parent: unknown,
-      { id }: { id: string },
-      { prisma, currentUser }: GraphQLContext
-    ): Promise<Job> => {
-      // --- PERMISSION CHECK (Stricter) ---
-      if (!currentUser) throw new Error('Not authenticated');
-      if (currentUser.role !== 'OWNER' && currentUser.role !== 'ADMIN') {
-        throw new Error('Access Denied: You do not have permission to delete jobs.');
-      }
-      // --- END CHECK ---
-      return prisma.job.delete({ where: { id } });
-    },
-  },
 
-  // --- Relational Resolvers ---
-  Job: {
-    customer: (parent: Job, _args: unknown, { prisma }: GraphQLContext): Promise<Customer | null> => {
-      return prisma.customer.findUnique({ where: { id: parent.customerId } });
+    updateJob: (_p: unknown, args: UpdateJobArgs, ctx: GraphQLContext) => {
+      const input = {
+        ...args.input,
+        startDate: args.input.startDate
+          ? new Date(args.input.startDate)
+          : undefined,
+        endDate: args.input.endDate
+          ? new Date(args.input.endDate)
+          : undefined,
+      };
+      return jobService.update(args.id, input, ctx);
     },
-    invoices: (parent: Job, _args: unknown, { prisma }: GraphQLContext): Promise<Invoice[]> => {
-      return prisma.invoice.findMany({ where: { jobId: parent.id } });
-    },
-    quotes: (parent: Job, _args: unknown, { prisma }: GraphQLContext): Promise<Quote[]> => {
-      return prisma.quote.findMany({ where: { jobId: parent.id } });
-    },
-    tasks: (parent: Job, _args: unknown, { prisma }: GraphQLContext): Promise<Task[]> => {
-      return prisma.task.findMany({ where: { jobId: parent.id } });
-    },
-    expenses: (parent: Job, _args: unknown, { prisma }: GraphQLContext): Promise<JobExpense[]> => {
-      return prisma.jobExpense.findMany({ where: { jobId: parent.id } });
-    },
-  },
-};
 
+    deleteJob: (_p: unknown, args: DeleteJobArgs, ctx: GraphQLContext) =>
+      jobService.delete(args.id, ctx),
+  },
+}; // ✅ make sure this final closing brace exists

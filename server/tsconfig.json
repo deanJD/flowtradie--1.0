@@ -1,23 +1,21 @@
 {
   "compilerOptions": {
     /* Base Options */
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "target": "ES2022",
     "allowJs": true,
     "resolveJsonModule": true,
-    "moduleDetection": "force",
     "isolatedModules": true,
+    "moduleDetection": "force",
 
     /* Strictness */
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitAny": true,
 
-    /* Module settings - THIS IS THE FIX */
-    "moduleResolution": "NodeNext",
-    "module": "NodeNext",
-    
     /* Output */
     "outDir": "dist",
     "sourceMap": true,
@@ -28,7 +26,12 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules"]
-}
 
+  /* Include source + prisma + utilities */
+  "include": [
+    "src/**/*.ts",
+    "prisma/**/*.ts",
+    "hash-password.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
+}
