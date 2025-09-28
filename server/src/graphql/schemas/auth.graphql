@@ -1,17 +1,20 @@
-# Defines the types and API operations for user authentication.
-
 type AuthPayload {
   token: String!
   user: User!
 }
 
-# --- API Operations ---
-
 extend type Mutation {
-  # The 'role' now correctly uses our strict UserRole enum for type safety.
-  register(email: String!, password: String!, name: String!, role: UserRole): AuthPayload!
-
-  # Mutation for an existing user to log in.
-  login(email: String!, password: String!): AuthPayload!
+  register(input: RegisterInput!): AuthPayload!
+  login(input: LoginInput!): AuthPayload!
 }
 
+input RegisterInput {
+  name: String!
+  email: String!
+  password: String!
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+}

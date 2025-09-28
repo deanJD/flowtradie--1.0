@@ -1,74 +1,49 @@
-// This file contains all the business logic for user authentication.
+// src/graphql/resolvers/auth.resolver.ts
+import { authService } from "../../services/auth.service.js";
+import { GraphQLContext } from "../../context.js";
+import { User } from "@prisma/client";
 
-import type { User, UserRole } from '@prisma/client';
-import { GraphQLContext } from '../../prisma/client.js';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
+interface RegisterArgs {
+  input: {
+    name: string;
+    email: string;
+    password: string;
+  };
+}
 
-// This is a secret key for signing the JWT. In a real production app,
-// this should be stored securely in your .env file.
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key';
-const SALT_ROUNDS = 10;
+interface LoginArgs {
+  input: {
+    email: string;
+    password: string;
+  };
+}
 
 export const authResolvers = {
   Mutation: {
     register: async (
-      _parent: unknown,
-      args: { email: string; password: string; name: string; role?: UserRole },
-      { prisma }: GraphQLContext
-    ) => {
-      // 1. Hash the user's password for security.
-      const hashedPassword = await bcrypt.hash(args.password, SALT_ROUNDS);
-
-      // 2. Create the new user in the database.
-      const user = await prisma.user.create({
-        data: {
-          email: args.email,
-          password: hashedPassword,
-          name: args.name,
-          role: args.role, // Will use the default 'WORKER' if not provided
-        },
+      _p: unknown,
+      args: RegisterArgs,
+      _ctx: GraphQLContext
+    ): Promise<{ token: string; user: User }> => {
+      const user = await authService.register(args.input);
+      const token = await authService.login({
+        email: args.input.email,
+        password: args.input.password,
       });
-
-      // 3. Create a JWT "digital ID card" for the new user.
-      const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, {
-        expiresIn: '7d', // Token will be valid for 7 days
-      });
-
-      // 4. Return the token and the user's data.
-      return {
-        token,
-        user,
-      };
+      return { token, user };
     },
 
     login: async (
-      _parent: unknown,
-      { email, password }: { email: string; password: string },
-      { prisma }: GraphQLContext
-    ) => {
-      // 1. Find the user by their email.
-      const user = await prisma.user.findUnique({ where: { email } });
-      if (!user) {
-        throw new Error('Invalid login credentials');
-      }
-
-      // 2. Compare the provided password with the stored hash.
-      const passwordValid = await bcrypt.compare(password, user.password);
-      if (!passwordValid) {
-        throw new Error('Invalid login credentials');
-      }
-
-      // 3. If the password is valid, create a new JWT.
-      const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, {
-        expiresIn: '7d',
+      _p: unknown,
+      args: LoginArgs,
+      _ctx: GraphQLContext
+    ): Promise<{ token: string; user: User }> => {
+      const user = await authService.login(args.input);
+      const foundUser = await _ctx.prisma.user.findUnique({
+        where: { email: args.input.email },
       });
-
-      // 4. Return the token and the user's data.
-      return {
-        token,
-        user,
-      };
+      if (!foundUser) throw new Error("User not found");
+      return { token: user, user: foundUser };
     },
   },
 };

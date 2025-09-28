@@ -1,19 +1,9 @@
+// src/graphql/resolvers/customer.ts
+import type { Customer, Job } from "@prisma/client";
+import { GraphQLContext } from "../../context.js";
 
-// This file uses advanced TypeScript features for robust type safety.
-
-import type { Customer, Job } from '@prisma/client';
-// We import our shared context type for consistency across the app.
-import { GraphQLContext } from '../../prisma/client.js';
-
-// --- Input Types ---
-// Using TypeScript's utility types is a clean and scalable way to define inputs.
-// 'Pick' creates a new type by picking a set of properties from an existing type.
-type CreateCustomerInput = Pick<Customer, 'name' | 'email' | 'phone' | 'address'>;
-
-// 'Partial' makes all properties of a given type optional.
-// This is perfect for update mutations where any field can be changed.
+type CreateCustomerInput = Pick<Customer, "name" | "email" | "phone" | "address">;
 type UpdateCustomerInput = Partial<CreateCustomerInput>;
-
 
 export const customerResolvers = {
   Query: {
@@ -23,7 +13,7 @@ export const customerResolvers = {
       { prisma }: GraphQLContext
     ): Promise<Customer[]> => {
       return prisma.customer.findMany({
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       });
     },
     customer: (
@@ -34,21 +24,38 @@ export const customerResolvers = {
       return prisma.customer.findUnique({ where: { id } });
     },
   },
+
   Mutation: {
-    createCustomer: (
+    createCustomer: async (
       _parent: unknown,
       { input }: { input: CreateCustomerInput },
       { prisma }: GraphQLContext
     ): Promise<Customer> => {
-      return prisma.customer.create({ data: input });
+      try {
+        return await prisma.customer.create({ data: input });
+      } catch (error: any) {
+        if (error.code === "P2002") {
+          throw new Error("A customer with this email already exists.");
+        }
+        throw error;
+      }
     },
-    updateCustomer: (
+
+    updateCustomer: async (
       _parent: unknown,
       { id, input }: { id: string; input: UpdateCustomerInput },
       { prisma }: GraphQLContext
     ): Promise<Customer> => {
-      return prisma.customer.update({ where: { id }, data: input });
+      try {
+        return await prisma.customer.update({ where: { id }, data: input });
+      } catch (error: any) {
+        if (error.code === "P2002") {
+          throw new Error("Another customer already uses this email.");
+        }
+        throw error;
+      }
     },
+
     deleteCustomer: (
       _parent: unknown,
       { id }: { id: string },
@@ -57,15 +64,17 @@ export const customerResolvers = {
       return prisma.customer.delete({ where: { id } });
     },
   },
-  
-  // This relational resolver efficiently fetches related jobs for a customer.
+
   Customer: {
-    jobs: (parent: Customer, _args: unknown, { prisma }: GraphQLContext): Promise<Job[]> => {
+    jobs: (
+      parent: Customer,
+      _args: unknown,
+      { prisma }: GraphQLContext
+    ): Promise<Job[]> => {
       return prisma.job.findMany({
         where: { customerId: parent.id },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       });
     },
   },
 };
-

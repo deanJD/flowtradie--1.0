@@ -5,7 +5,6 @@ import { customerResolvers } from './resolvers/customer.js';
 import { jobResolvers } from './resolvers/job.js';
 import { quoteResolvers } from './resolvers/quote.js';
 import { invoiceResolvers } from './resolvers/invoice.js';
-import { userResolvers } from './resolvers/user.js';
 import { taskResolvers } from './resolvers/task.js';
 import { expenseResolvers } from './resolvers/expense.js';
 import { timeLogResolvers } from './resolvers/timelog.js';
@@ -15,6 +14,8 @@ import merge from 'lodash.merge'; // This line will now work correctly
 import { GraphQLScalarType, Kind } from 'graphql';
 import { paymentResolvers } from './resolvers/payment.js';
 import { authResolvers } from './resolvers/auth.js';
+import { userResolvers } from './resolvers/user.js';
+
 
 // Define a custom scalar for handling DateTime objects.
 const dateTimeScalar = new GraphQLScalarType({
@@ -47,12 +48,13 @@ export const resolvers = merge(
   jobResolvers,
   quoteResolvers,
   invoiceResolvers,
-  userResolvers,
+  
   taskResolvers,
   expenseResolvers,
   timeLogResolvers,
   paymentResolvers,
   reportingResolvers,
-  authResolvers
+  authResolvers,
+  userResolvers
 );
 
