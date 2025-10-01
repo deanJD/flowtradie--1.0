@@ -16,4 +16,4 @@ extend type Query {
   # Takes a Job ID and returns a full profitability report for that job.
   jobProfitability(jobId: ID!): JobProfitability!
 }
-
+//

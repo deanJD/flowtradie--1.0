@@ -21,7 +21,7 @@ input CreateTaskInput {
   title: String!
   jobId: ID!
   description: String
-  assignedToId: ID # Optional: assign to a user on creation
+  assignedToId: ID
   dueDate: DateTime
 }
 
@@ -38,13 +38,13 @@ input UpdateTaskInput {
 
 extend type Query {
   # Get all tasks for a specific job
-  tasks(jobId: ID!): [Task!]
+  tasks(jobId: ID!): [Task!]! # <-- Changed
   # Get a single task by its ID
   task(id: ID!): Task
 }
 
 extend type Mutation {
-  createTask(input: CreateTaskInput!): Task!
+  createTask(input: CreateTask-input!): Task!
   updateTask(id: ID!, input: UpdateTaskInput!): Task!
   deleteTask(id: ID!): Task!
 }

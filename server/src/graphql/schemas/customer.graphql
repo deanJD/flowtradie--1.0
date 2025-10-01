@@ -8,7 +8,7 @@ type Customer {
   address: String
   createdAt: DateTime!
   updatedAt: DateTime!
-  jobs: [Job!]
+  jobs: [Job!]! # <-- Changed
 }
 
 input CreateCustomerInput {
@@ -27,7 +27,7 @@ input UpdateCustomerInput {
 
 # Extend the root Query type with customer-specific queries
 extend type Query {
-  customers: [Customer!]
+  customers: [Customer!]! # <-- Changed
   customer(id: ID!): Customer
 }
 
@@ -37,4 +37,3 @@ extend type Mutation {
   updateCustomer(id: ID!, input: UpdateCustomerInput!): Customer!
   deleteCustomer(id: ID!): Customer!
 }
-

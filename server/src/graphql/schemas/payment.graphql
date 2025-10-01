@@ -17,8 +17,11 @@ input RecordPaymentInput {
   notes: String
 }
 
+# This is the new block you are adding
+extend type Query {
+  paymentsByInvoice(invoiceId: ID!): [Payment!]!
+}
+
 extend type Mutation {
   recordPayment(input: RecordPaymentInput!): Payment!
 }
-
-

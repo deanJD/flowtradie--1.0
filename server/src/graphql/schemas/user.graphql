@@ -6,19 +6,12 @@ type User {
   role: UserRole!
   phone: String
   hourlyRate: Float
-  createdAt: String!
-  updatedAt: String!
+  createdAt: DateTime!  # <-- Changed from String!
+  updatedAt: DateTime!  # <-- Changed from String!
   tasks: [Task!]!
 }
 
-enum UserRole {
-  OWNER
-  ADMIN
-  MANAGER
-  FOREMAN
-  WORKER
-  CONTRACTOR
-}
+
 
 extend type Query {
   users: [User!]!

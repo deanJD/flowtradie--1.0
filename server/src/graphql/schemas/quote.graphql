@@ -25,13 +25,6 @@ type QuoteItem {
   quote: Quote!
 }
 
-# --- QUOTE ENUMS ---
-enum QuoteStatus {
-  DRAFT
-  SENT
-  ACCEPTED
-  REJECTED
-}
 
 # --- QUOTE INPUTS ---
 input CreateQuoteItemInput {

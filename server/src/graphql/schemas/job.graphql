@@ -12,22 +12,22 @@ type Job {
   updatedAt: DateTime!
 
   # --- Relationships ---
-  # FIX: Added all the missing relational fields to match the resolver.
   customer: Customer!
   manager: User
-  quotes: [Quote!]
-  invoices: [Invoice!]
-  tasks: [Task!]
-  expenses: [JobExpense!]
-  timeLogs: [TimeLog!]
+  quotes: [Quote!]!        # <-- Changed
+  invoices: [Invoice!]!    # <-- Changed
+  tasks: [Task!]!          # <-- Changed
+  expenses: [JobExpense!]! # <-- Changed
+  timeLogs: [TimeLog!]!    # <-- Changed
 }
 
 # --- Input Types ---
 # These define the shape of data for creating and updating jobs.
+# (No changes were needed here)
 input CreateJobInput {
   title: String!
   customerId: ID!
-  managerId: ID # Allow assigning a manager on creation
+  managerId: ID
   description: String
   location: String
   status: JobStatus
@@ -48,14 +48,14 @@ input UpdateJobInput {
 # --- API Operations ---
 extend type Query {
   # Get all jobs, optionally filtered by customer
-  jobs(customerId: ID): [Job!]
+  jobs(customerId: ID): [Job!]! # <-- Changed
   # Get a single job by its ID
   job(id: ID!): Job
 }
 
 extend type Mutation {
-  createJob(input: CreateJobInput!): Job!
+  # (No changes were needed here)
+  createJob(input: CreateJob-input!): Job!
   updateJob(id: ID!, input: UpdateJobInput!): Job!
   deleteJob(id: ID!): Job!
 }
-

@@ -29,7 +29,7 @@ input CreateExpenseInput {
 
 extend type Query {
   # Get all expenses for a specific job
-  expenses(jobId: ID!): [JobExpense!]
+  expenses(jobId: ID!): [JobExpense!]! # <-- Changed
 }
 
 extend type Mutation {
