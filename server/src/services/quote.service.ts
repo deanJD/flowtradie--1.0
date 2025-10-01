@@ -1,40 +1,24 @@
-// src/services/quote.service.ts
-import { Quote, QuoteStatus } from "@prisma/client";
 import { GraphQLContext } from "../context.js";
-
-interface CreateQuoteItemInput {
-  description: string;
-  quantity?: number;
-  unitPrice: number;
-}
-
-interface CreateQuoteInput {
-  jobId: string;
-  quoteNumber: string;
-  expiryDate?: Date;
-  status?: QuoteStatus;
-  items: CreateQuoteItemInput[];
-  gstRate?: number; // default 10%
-}
+import { Prisma } from "@prisma/client";
+import { CreateQuoteInput, UpdateQuoteInput } from "@/__generated__/graphql.js";
 
 export const quoteService = {
-  getAllByJob: (jobId: string, ctx: GraphQLContext): Promise<Quote[]> => {
-    return ctx.prisma.quote.findMany({
-      where: { jobId },
-      include: { items: true },
-      orderBy: { createdAt: "desc" },
-    });
-  },
-
-  getById: (id: string, ctx: GraphQLContext): Promise<Quote | null> => {
+  getById: (id: string, ctx: GraphQLContext) => {
     return ctx.prisma.quote.findUnique({
       where: { id },
-      include: { items: true },
+      include: { items: true, job: true },
     });
   },
 
-  create: async (input: CreateQuoteInput, ctx: GraphQLContext): Promise<Quote> => {
-    // ✅ Calculate amounts before saving
+  getByJob: (jobId: string, ctx: GraphQLContext) => {
+    return ctx.prisma.quote.findMany({
+      where: { jobId },
+      include: { items: true, job: true },
+    });
+  },
+
+  create: async (input: CreateQuoteInput, ctx: GraphQLContext) => {
+    // Server-side calculation of totals
     const subtotal = input.items.reduce(
       (sum, item) => sum + (item.quantity ?? 1) * item.unitPrice,
       0
@@ -49,10 +33,6 @@ export const quoteService = {
         quoteNumber: input.quoteNumber,
         expiryDate: input.expiryDate,
         status: input.status ?? "DRAFT",
-        subtotal,
-        gstRate,
-        gstAmount,
-        totalAmount,
         items: {
           create: input.items.map((item) => ({
             description: item.description,
@@ -61,60 +41,81 @@ export const quoteService = {
             total: (item.quantity ?? 1) * item.unitPrice,
           })),
         },
-      },
-      include: { items: true },
-    });
-  },
-
-  update: async (
-    id: string,
-    input: Partial<CreateQuoteInput>,
-    ctx: GraphQLContext
-  ): Promise<Quote> => {
-    const existing = await ctx.prisma.quote.findUnique({
-      where: { id },
-      include: { items: true },
-    });
-    if (!existing) throw new Error("Quote not found");
-
-    // Recalculate if items or gstRate are changed
-    const subtotal =
-      input.items?.reduce(
-        (sum, item) => sum + (item.quantity ?? 1) * item.unitPrice,
-        0
-      ) ?? existing.subtotal;
-
-    const gstRate = input.gstRate ?? existing.gstRate;
-    const gstAmount = subtotal * gstRate;
-    const totalAmount = subtotal + gstAmount;
-
-    return ctx.prisma.quote.update({
-      where: { id },
-      data: {
-        quoteNumber: input.quoteNumber ?? existing.quoteNumber,
-        expiryDate: input.expiryDate ?? existing.expiryDate,
-        status: input.status ?? existing.status,
         subtotal,
         gstRate,
         gstAmount,
         totalAmount,
-        ...(input.items && {
-          items: {
-            deleteMany: { quoteId: id },
-            create: input.items.map((item) => ({
-              description: item.description,
-              quantity: item.quantity ?? 1,
-              unitPrice: item.unitPrice,
-              total: (item.quantity ?? 1) * item.unitPrice,
-            })),
-          },
-        }),
       },
-      include: { items: true },
+      include: {
+        items: true,
+        job: true,
+      },
     });
   },
 
-  delete: (id: string, ctx: GraphQLContext): Promise<Quote> => {
+  update: async (id: string, input: UpdateQuoteInput, ctx: GraphQLContext) => {
+    const { items, ...quoteDataWithNulls } = input;
+
+    const quoteData: Prisma.QuoteUpdateInput = {
+      quoteNumber: quoteDataWithNulls.quoteNumber ?? undefined,
+      expiryDate: quoteDataWithNulls.expiryDate ?? undefined,
+      status: quoteDataWithNulls.status ?? undefined,
+      gstRate: quoteDataWithNulls.gstRate ?? undefined,
+    };
+
+    return ctx.prisma.$transaction(async (prisma) => {
+      // Step 1: Update the scalar fields
+      let updatedQuote = await prisma.quote.update({
+        where: { id },
+        data: quoteData,
+      });
+
+      // Step 2: If items are provided, replace them
+      if (items) {
+        await prisma.quoteItem.deleteMany({ where: { quoteId: id } });
+        await prisma.quoteItem.createMany({
+          data: items.map((item) => ({
+            quoteId: id,
+            description: item.description,
+            quantity: item.quantity ?? 1,
+            unitPrice: item.unitPrice,
+            total: (item.quantity ?? 1) * item.unitPrice,
+          })),
+        });
+      }
+
+      // Step 3: Recalculate totals
+      const currentItems = await prisma.quoteItem.findMany({ where: { quoteId: id } });
+      const subtotal = currentItems.reduce((sum, i) => sum + i.total, 0);
+      const gstRate = updatedQuote.gstRate;
+      const gstAmount = subtotal * gstRate;
+      const totalAmount = subtotal + gstAmount;
+
+      // Step 4: Final update with new totals
+      updatedQuote = await prisma.quote.update({
+        where: { id },
+        data: { subtotal, gstAmount, totalAmount },
+      });
+      
+      // vvvvvvvvvv NEW LOGIC ADDED BELOW vvvvvvvvvv
+      // Step 5: If the quote was just accepted, update the parent job's budget
+      if (updatedQuote.status === "ACCEPTED") {
+        await prisma.job.update({
+          where: { id: updatedQuote.jobId },
+          data: { budgetedAmount: updatedQuote.totalAmount },
+        });
+      }
+      // ^^^^^^^^^^ NEW LOGIC ADDED ABOVE ^^^^^^^^^^
+
+      // Step 6: Return the fully updated quote with its relations
+      return prisma.quote.findUnique({
+        where: { id },
+        include: { items: true, job: true },
+      });
+    });
+  },
+
+  delete: (id: string, ctx: GraphQLContext) => {
     return ctx.prisma.quote.delete({ where: { id } });
   },
 };

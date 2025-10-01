@@ -12,6 +12,9 @@ type Mutation {
   updateInvoice(id: ID!, input: UpdateInvoiceInput!): Invoice! # update an invoice
   deleteInvoice(id: ID!): Invoice!                      # delete an invoice
 }
+extend type Mutation {
+  createInvoiceFromQuote(quoteId: ID!): Invoice!
+}
 
 # --- Invoice Type Definitions ---
 

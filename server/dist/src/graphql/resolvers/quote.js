@@ -2,7 +2,7 @@
 import { quoteService } from "../../services/quote.service.js";
 export const quoteResolvers = {
     Query: {
-        quotesByJob: (_p, { jobId }, ctx) => quoteService.getAllByJob(jobId, ctx),
+        quotesByJob: (_p, { jobId }, ctx) => quoteService.getByJob(jobId, ctx),
         quote: (_p, { id }, ctx) => quoteService.getById(id, ctx),
     },
     Mutation: {

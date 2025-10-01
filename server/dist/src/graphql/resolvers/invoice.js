@@ -26,6 +26,9 @@ export const invoiceResolvers = {
         deleteInvoice: async (_p, { id }, ctx) => {
             return await invoiceService.delete(id, ctx);
         },
+        // vvvv THIS IS THE NEW LINE YOU ARE ADDING vvvv
+        createInvoiceFromQuote: (_p, { quoteId }, ctx) => invoiceService.createFromQuote(quoteId, ctx),
+        // ^^^^ THIS IS THE NEW LINE YOU ARE ADDING ^^^^
     },
 };
 //# sourceMappingURL=invoice.js.map

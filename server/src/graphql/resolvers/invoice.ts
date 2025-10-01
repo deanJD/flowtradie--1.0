@@ -47,5 +47,11 @@ export const invoiceResolvers = {
     deleteInvoice: async (_p: unknown, { id }: { id: string }, ctx: GraphQLContext) => {
       return await invoiceService.delete(id, ctx);
     },
+   // vvvv THIS IS THE NEW LINE YOU ARE ADDING vvvv
+    createInvoiceFromQuote: (_p: unknown, { quoteId }: { quoteId: string }, ctx: GraphQLContext) =>
+      invoiceService.createFromQuote(quoteId, ctx),
+    // ^^^^ THIS IS THE NEW LINE YOU ARE ADDING ^^^^
   },
+  
+  
 };

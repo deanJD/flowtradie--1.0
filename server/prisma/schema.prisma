@@ -96,6 +96,8 @@ model Job {
   tasks       Task[]
   expenses    JobExpense[]
   timeLogs    TimeLog[]
+  // --- NEW BUDGET FIELD ---
+  budgetedAmount Float?   // This will store the total from the accepted quote
 }
 
 

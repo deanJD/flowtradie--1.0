@@ -10,7 +10,8 @@ type Job {
   endDate: DateTime
   createdAt: DateTime!
   updatedAt: DateTime!
-
+  budgetedAmount: Float  budgetedAmount: Float # <-- ADD THIS LINE
+  
   # --- Relationships ---
   customer: Customer!
   manager: User

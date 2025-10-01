@@ -42,10 +42,58 @@ export const invoiceService = {
             include: { items: true, payments: true },
         });
     },
+    // vvvvvvvvvv NEW FUNCTION ADDED BELOW vvvvvvvvvv
+    createFromQuote: async (quoteId, ctx) => {
+        // 1. Find the original quote and all its items
+        const quote = await ctx.prisma.quote.findUnique({
+            where: { id: quoteId },
+            include: { items: true },
+        });
+        if (!quote) {
+            throw new Error("Quote not found to create an invoice from.");
+        }
+        // 2. Prepare the data for the new invoice by copying from the quote
+        // For now, we'll create a simple invoice number and set a due date 30 days from now.
+        const newInvoiceNumber = `${quote.quoteNumber}-INV`;
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 30);
+        // 3. Use a transaction to create the new invoice and update the old quote's status
+        const newInvoice = await ctx.prisma.$transaction(async (prisma) => {
+            // A) Create the new invoice with all its items
+            const createdInvoice = await prisma.invoice.create({
+                data: {
+                    jobId: quote.jobId,
+                    invoiceNumber: newInvoiceNumber,
+                    dueDate: dueDate,
+                    status: "DRAFT", // Start the new invoice as a Draft
+                    subtotal: quote.subtotal,
+                    gstRate: quote.gstRate,
+                    gstAmount: quote.gstAmount,
+                    totalAmount: quote.totalAmount,
+                    items: {
+                        create: quote.items.map(item => ({
+                            description: item.description,
+                            quantity: item.quantity,
+                            unitPrice: item.unitPrice,
+                            total: item.total,
+                        })),
+                    },
+                },
+                include: { items: true, job: true } // Return the full new invoice object
+            });
+            // B) Update the original quote's status to show it's been converted
+            await prisma.quote.update({
+                where: { id: quoteId },
+                data: { status: "ACCEPTED" },
+            });
+            return createdInvoice;
+        });
+        return newInvoice;
+    },
+    // ^^^^^^^^^^ NEW FUNCTION ADDED ABOVE ^^^^^^^^^^
     // # [UPDATED] update invoice details
     update: async (id, input, ctx) => {
         const { items, ...invoiceDataWithNulls } = input;
-        // Convert any 'null' values to 'undefined' so Prisma ignores them.
         const invoiceData = {
             invoiceNumber: invoiceDataWithNulls.invoiceNumber ?? undefined,
             dueDate: invoiceDataWithNulls.dueDate ?? undefined,

@@ -5,7 +5,7 @@ import { GraphQLContext } from "../../context.js";
 export const quoteResolvers = {
   Query: {
     quotesByJob: (_p: unknown, { jobId }: { jobId: string }, ctx: GraphQLContext) =>
-      quoteService.getAllByJob(jobId, ctx),
+      quoteService.getByJob(jobId, ctx),
 
     quote: (_p: unknown, { id }: { id: string }, ctx: GraphQLContext) =>
       quoteService.getById(id, ctx),
