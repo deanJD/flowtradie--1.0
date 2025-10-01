@@ -1,3 +1,20 @@
+# --- Invoice Queries and Mutations ---
+
+type Query {
+  invoice(id: ID!): Invoice
+  invoices(jobId: ID): [Invoice!]!   # ✅ accepts jobId argument, never returns null
+  
+}
+
+
+type Mutation {
+  createInvoice(input: CreateInvoiceInput!): Invoice!   # create a new invoice
+  updateInvoice(id: ID!, input: UpdateInvoiceInput!): Invoice! # update an invoice
+  deleteInvoice(id: ID!): Invoice!                      # delete an invoice
+}
+
+# --- Invoice Type Definitions ---
+
 type Invoice {
   id: ID!
   invoiceNumber: String!
@@ -8,9 +25,11 @@ type Invoice {
   gstRate: Float!
   gstAmount: Float!
   totalAmount: Float!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  job: Job!
   items: [InvoiceItem!]!
   payments: [Payment!]!
-  job: Job!
 }
 
 type InvoiceItem {
@@ -19,39 +38,30 @@ type InvoiceItem {
   quantity: Int!
   unitPrice: Float!
   total: Float!
+  invoice: Invoice!
 }
 
-extend type Query {
-  invoice(id: ID!): Invoice
-  invoices(jobId: ID!): [Invoice!]! # optional, if you want list queries
-}
+# --- Input Types ---
 
-extend type Mutation {
-  createInvoice(input: CreateInvoiceInput!): Invoice!
-  updateInvoice(id: ID!, input: UpdateInvoiceInput!): Invoice!
-  deleteInvoice(id: ID!): Invoice!
+input CreateInvoiceItemInput {
+  description: String!
+  quantity: Int = 1
+  unitPrice: Float!
 }
 
 input CreateInvoiceInput {
   jobId: ID!
   invoiceNumber: String!
   dueDate: DateTime!
-  status: InvoiceStatus
-  subtotal: Float!
-  gstRate: Float
+  status: InvoiceStatus = DRAFT
   items: [CreateInvoiceItemInput!]!
-}
-
-input CreateInvoiceItemInput {
-  description: String!
-  quantity: Int
-  unitPrice: Float!
+  gstRate: Float = 0.1
 }
 
 input UpdateInvoiceInput {
+  invoiceNumber: String
   dueDate: DateTime
   status: InvoiceStatus
-  subtotal: Float
-  gstRate: Float
   items: [CreateInvoiceItemInput!]
+  gstRate: Float
 }

@@ -1,4 +1,4 @@
-# Defines the Quote type and its related API operations
+# --- QUOTE TYPES ---
 
 type Quote {
   id: ID!
@@ -6,11 +6,14 @@ type Quote {
   status: QuoteStatus!
   issueDate: DateTime!
   expiryDate: DateTime
+  subtotal: Float!
+  gstRate: Float!
+  gstAmount: Float!
   totalAmount: Float!
   createdAt: DateTime!
   updatedAt: DateTime!
   job: Job!
-  items: [QuoteItem!]
+  items: [QuoteItem!]!
 }
 
 type QuoteItem {
@@ -19,9 +22,19 @@ type QuoteItem {
   quantity: Int!
   unitPrice: Float!
   total: Float!
+  quote: Quote!
 }
 
-input CreateItemInput {
+# --- QUOTE ENUMS ---
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+}
+
+# --- QUOTE INPUTS ---
+input CreateQuoteItemInput {
   description: String!
   quantity: Int = 1
   unitPrice: Float!
@@ -30,16 +43,28 @@ input CreateItemInput {
 input CreateQuoteInput {
   jobId: ID!
   quoteNumber: String!
-  status: QuoteStatus = DRAFT
   expiryDate: DateTime
-  items: [CreateItemInput!]!
+  status: QuoteStatus = DRAFT
+  items: [CreateQuoteItemInput!]!
+  gstRate: Float = 0.1
 }
 
+input UpdateQuoteInput {
+  quoteNumber: String
+  expiryDate: DateTime
+  status: QuoteStatus
+  items: [CreateQuoteItemInput!]
+  gstRate: Float
+}
+
+# --- QUOTE QUERIES & MUTATIONS ---
 extend type Query {
+  quotesByJob(jobId: ID!): [Quote!]!
   quote(id: ID!): Quote
 }
 
 extend type Mutation {
   createQuote(input: CreateQuoteInput!): Quote!
+  updateQuote(id: ID!, input: UpdateQuoteInput!): Quote!
+  deleteQuote(id: ID!): Quote!
 }
-

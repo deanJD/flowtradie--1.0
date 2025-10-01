@@ -1,0 +1,14 @@
+# codegen.yml
+
+# This tells the generator where your GraphQL schema is.
+# IMPORTANT: You may need to adjust this path if it's incorrect.
+schema: "server/src/graphql/**/*.graphql"
+
+generates:
+  # This is the path for the new file that will be created.
+  server/src/__generated__/graphql.ts:
+    plugins:
+      - "typescript"
+      - "typescript-resolvers"
+    config:
+      useIndexSignature: true

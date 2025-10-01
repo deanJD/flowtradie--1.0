@@ -1,11 +1,31 @@
 import { invoiceService } from "../../services/invoice.service.js";
 export const invoiceResolvers = {
     Query: {
-        invoice: (_p, { id }, ctx) => invoiceService.getById(id, ctx),
+        // # fetch single invoice by ID
+        invoice: async (_p, { id }, ctx) => {
+            return await invoiceService.getById(id, ctx);
+        },
+        // # fetch all invoices for a job
+        invoices: async (_p, { jobId }, ctx) => {
+            const result = await invoiceService.getAllByJob(jobId, ctx);
+            return result ?? [];
+        },
     },
     Mutation: {
-        createInvoice: (_p, { input }, ctx) => invoiceService.create(input, ctx),
-        updateInvoice: (_p, { id, input }, ctx) => invoiceService.update(id, input, ctx),
+        // # create invoice
+        createInvoice: async (_p, { input }, // No longer 'any'
+        ctx) => {
+            return await invoiceService.create(input, ctx);
+        },
+        // # update invoice
+        updateInvoice: async (_p, { id, input }, // No longer 'any'
+        ctx) => {
+            return await invoiceService.update(id, input, ctx);
+        },
+        // # delete invoice
+        deleteInvoice: async (_p, { id }, ctx) => {
+            return await invoiceService.delete(id, ctx);
+        },
     },
 };
 //# sourceMappingURL=invoice.js.map

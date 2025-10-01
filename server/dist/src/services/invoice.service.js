@@ -1,53 +1,89 @@
 export const invoiceService = {
-    getById: (id, ctx) => {
-        return ctx.prisma.invoice.findUnique({
+    // # returns invoices for a job
+    getAllByJob: async (jobId, ctx) => {
+        const invoices = await ctx.prisma.invoice.findMany({
+            where: jobId ? { jobId } : {},
+            include: { items: true, payments: true },
+        });
+        return invoices || [];
+    },
+    // # fetch single invoice
+    getById: async (id, ctx) => {
+        return await ctx.prisma.invoice.findUnique({
             where: { id },
-            include: { items: true, payments: true, job: true },
+            include: { items: true, payments: true },
         });
     },
+    // # create invoice
     create: async (input, ctx) => {
+        const subtotal = input.items.reduce((sum, i) => sum + (i.quantity ?? 1) * i.unitPrice, 0);
         const gstRate = input.gstRate ?? 0.1;
-        const gstAmount = input.subtotal * gstRate;
-        const totalAmount = input.subtotal + gstAmount;
+        const gstAmount = subtotal * gstRate;
+        const totalAmount = subtotal + gstAmount;
         return ctx.prisma.invoice.create({
             data: {
                 jobId: input.jobId,
                 invoiceNumber: input.invoiceNumber,
                 dueDate: input.dueDate,
                 status: input.status ?? "DRAFT",
-                subtotal: input.subtotal,
+                subtotal,
                 gstRate,
                 gstAmount,
                 totalAmount,
                 items: {
-                    create: input.items.map((item) => ({
-                        description: item.description,
-                        quantity: item.quantity ?? 1,
-                        unitPrice: item.unitPrice,
-                        total: (item.quantity ?? 1) * item.unitPrice,
+                    create: input.items.map((i) => ({
+                        description: i.description,
+                        quantity: i.quantity ?? 1,
+                        unitPrice: i.unitPrice,
+                        total: (i.quantity ?? 1) * i.unitPrice,
                     })),
                 },
             },
             include: { items: true, payments: true },
         });
     },
+    // # [UPDATED] update invoice details
     update: async (id, input, ctx) => {
-        const existing = await ctx.prisma.invoice.findUnique({ where: { id } });
-        if (!existing)
-            throw new Error("Invoice not found");
-        const baseSubtotal = input.subtotal ?? existing.subtotal;
-        const baseRate = input.gstRate ?? existing.gstRate;
-        const gstAmount = baseSubtotal * baseRate;
-        const totalAmount = baseSubtotal + gstAmount;
-        return ctx.prisma.invoice.update({
-            where: { id },
-            data: {
-                ...input,
-                gstAmount,
-                totalAmount,
-            },
-            include: { items: true, payments: true },
+        const { items, ...invoiceDataWithNulls } = input;
+        // Convert any 'null' values to 'undefined' so Prisma ignores them.
+        const invoiceData = {
+            invoiceNumber: invoiceDataWithNulls.invoiceNumber ?? undefined,
+            dueDate: invoiceDataWithNulls.dueDate ?? undefined,
+            status: invoiceDataWithNulls.status ?? undefined,
+            gstRate: invoiceDataWithNulls.gstRate ?? undefined,
+        };
+        return await ctx.prisma.$transaction(async (prisma) => {
+            const updatedInvoice = await prisma.invoice.update({
+                where: { id },
+                data: invoiceData,
+            });
+            if (items) {
+                await prisma.invoiceItem.deleteMany({ where: { invoiceId: id } });
+                await prisma.invoiceItem.createMany({
+                    data: items.map((item) => ({
+                        invoiceId: id,
+                        description: item.description,
+                        quantity: item.quantity ?? 1, // This logic already correctly handles null
+                        unitPrice: item.unitPrice,
+                        total: (item.quantity ?? 1) * item.unitPrice,
+                    })),
+                });
+            }
+            const currentItems = await prisma.invoiceItem.findMany({ where: { invoiceId: id } });
+            const subtotal = currentItems.reduce((sum, i) => sum + i.total, 0);
+            const gstRate = updatedInvoice.gstRate;
+            const gstAmount = subtotal * gstRate;
+            const totalAmount = subtotal + gstAmount;
+            return await prisma.invoice.update({
+                where: { id },
+                data: { subtotal, gstAmount, totalAmount },
+                include: { items: true, payments: true },
+            });
         });
+    },
+    // # delete invoice by ID
+    delete: async (id, ctx) => {
+        return await ctx.prisma.invoice.delete({ where: { id } });
     },
 };
 //# sourceMappingURL=invoice.service.js.map
