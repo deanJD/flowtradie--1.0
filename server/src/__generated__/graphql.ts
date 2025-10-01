@@ -153,6 +153,7 @@ export enum InvoiceStatus {
 
 export type Job = {
   __typename?: 'Job';
+  budgetedAmount?: Maybe<Scalars['Float']['output']>;
   createdAt: Scalars['DateTime']['output'];
   customer: Customer;
   description?: Maybe<Scalars['String']['output']>;
@@ -210,6 +211,7 @@ export type Mutation = {
   createCustomer: Customer;
   createExpense: JobExpense;
   createInvoice: Invoice;
+  createInvoiceFromQuote: Invoice;
   createJob: Job;
   createQuote: Quote;
   createTask: Task;
@@ -250,6 +252,11 @@ export type MutationCreateExpenseArgs = {
 
 export type MutationCreateInvoiceArgs = {
   input: CreateInvoiceInput;
+};
+
+
+export type MutationCreateInvoiceFromQuoteArgs = {
+  quoteId: Scalars['ID']['input'];
 };
 
 
@@ -581,6 +588,7 @@ export type UpdateInvoiceInput = {
 };
 
 export type UpdateJobInput = {
+  budgetedAmount?: InputMaybe<Scalars['Float']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   endDate?: InputMaybe<Scalars['DateTime']['input']>;
   location?: InputMaybe<Scalars['String']['input']>;
@@ -864,6 +872,7 @@ export type InvoiceItemResolvers<ContextType = any, ParentType extends Resolvers
 }>;
 
 export type JobResolvers<ContextType = any, ParentType extends ResolversParentTypes['Job'] = ResolversParentTypes['Job']> = ResolversObject<{
+  budgetedAmount?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   customer?: Resolver<ResolversTypes['Customer'], ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -906,6 +915,7 @@ export type MutationResolvers<ContextType = any, ParentType extends ResolversPar
   createCustomer?: Resolver<ResolversTypes['Customer'], ParentType, ContextType, RequireFields<MutationCreateCustomerArgs, 'input'>>;
   createExpense?: Resolver<ResolversTypes['JobExpense'], ParentType, ContextType, RequireFields<MutationCreateExpenseArgs, 'input'>>;
   createInvoice?: Resolver<ResolversTypes['Invoice'], ParentType, ContextType, RequireFields<MutationCreateInvoiceArgs, 'input'>>;
+  createInvoiceFromQuote?: Resolver<ResolversTypes['Invoice'], ParentType, ContextType, RequireFields<MutationCreateInvoiceFromQuoteArgs, 'quoteId'>>;
   createJob?: Resolver<ResolversTypes['Job'], ParentType, ContextType, RequireFields<MutationCreateJobArgs, 'input'>>;
   createQuote?: Resolver<ResolversTypes['Quote'], ParentType, ContextType, RequireFields<MutationCreateQuoteArgs, 'input'>>;
   createTask?: Resolver<ResolversTypes['Task'], ParentType, ContextType, RequireFields<MutationCreateTaskArgs, 'input'>>;

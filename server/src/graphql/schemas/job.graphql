@@ -10,7 +10,7 @@ type Job {
   endDate: DateTime
   createdAt: DateTime!
   updatedAt: DateTime!
-  budgetedAmount: Float  budgetedAmount: Float # <-- ADD THIS LINE
+  budgetedAmount: Float 
   
   # --- Relationships ---
   customer: Customer!
@@ -34,6 +34,7 @@ input CreateJobInput {
   status: JobStatus
   startDate: DateTime
   endDate: DateTime
+  
 }
 
 input UpdateJobInput {
@@ -44,6 +45,7 @@ input UpdateJobInput {
   status: JobStatus
   startDate: DateTime
   endDate: DateTime
+  budgetedAmount: Float
 }
 
 # --- API Operations ---
