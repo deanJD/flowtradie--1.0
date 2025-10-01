@@ -55,7 +55,7 @@ extend type Query {
 
 extend type Mutation {
   # (No changes were needed here)
-  createJob(input: CreateJob-input!): Job!
+  createJob(input: CreateJobInput!): Job!
   updateJob(id: ID!, input: UpdateJobInput!): Job!
   deleteJob(id: ID!): Job!
 }

@@ -3,7 +3,7 @@ import { invoiceService } from "../../services/invoice.service.js";
 
 // FINAL STEP: Import the newly generated types.
 // You may need to adjust the relative path ('../') to be correct.
-import { CreateInvoiceInput, UpdateInvoiceInput } from "../../__generated__/graphql.js";
+import { CreateInvoiceInput, UpdateInvoiceInput } from "@/__generated__/graphql.js";
 
 
 export const invoiceResolvers = {

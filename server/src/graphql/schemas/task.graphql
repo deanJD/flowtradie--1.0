@@ -44,7 +44,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  createTask(input: CreateTask-input!): Task!
+  createTask(input: CreateTaskInput!): Task!
   updateTask(id: ID!, input: UpdateTaskInput!): Task!
   deleteTask(id: ID!): Task!
 }

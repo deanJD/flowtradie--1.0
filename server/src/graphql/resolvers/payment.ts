@@ -1,5 +1,6 @@
 import { paymentService } from "../../services/payment.service.js";
 import { GraphQLContext } from "../../context.js";
+import { RecordPaymentInput } from "@/__generated__/graphql.js";
 
 interface CreatePaymentArgs {
   input: {
@@ -27,10 +28,13 @@ export const paymentResolvers = {
       paymentService.getByInvoice(invoiceId, ctx),
   },
 
-  Mutation: {
-    createPayment: (_p: unknown, { input }: CreatePaymentArgs, ctx: GraphQLContext) =>
-      paymentService.create(input, ctx),
-
+   Mutation: {
+    // THIS IS THE FIX: Renamed to match the schema
+    recordPayment: (
+      _p: unknown,
+      { input }: { input: RecordPaymentInput },
+      ctx: GraphQLContext
+    ) => paymentService.create(input, ctx),
     updatePayment: (_p: unknown, { id, input }: UpdatePaymentArgs, ctx: GraphQLContext) =>
       paymentService.update(id, input, ctx),
 

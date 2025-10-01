@@ -109,7 +109,7 @@ export type Customer = {
   createdAt: Scalars['DateTime']['output'];
   email: Scalars['String']['output'];
   id: Scalars['ID']['output'];
-  jobs?: Maybe<Array<Job>>;
+  jobs: Array<Job>;
   name: Scalars['String']['output'];
   phone?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
@@ -157,16 +157,16 @@ export type Job = {
   customer: Customer;
   description?: Maybe<Scalars['String']['output']>;
   endDate?: Maybe<Scalars['DateTime']['output']>;
-  expenses?: Maybe<Array<JobExpense>>;
+  expenses: Array<JobExpense>;
   id: Scalars['ID']['output'];
-  invoices?: Maybe<Array<Invoice>>;
+  invoices: Array<Invoice>;
   location?: Maybe<Scalars['String']['output']>;
   manager?: Maybe<User>;
-  quotes?: Maybe<Array<Quote>>;
+  quotes: Array<Quote>;
   startDate?: Maybe<Scalars['DateTime']['output']>;
   status: JobStatus;
-  tasks?: Maybe<Array<Task>>;
-  timeLogs?: Maybe<Array<TimeLog>>;
+  tasks: Array<Task>;
+  timeLogs: Array<TimeLog>;
   title: Scalars['String']['output'];
   updatedAt: Scalars['DateTime']['output'];
 };
@@ -219,6 +219,7 @@ export type Mutation = {
   deleteExpense: JobExpense;
   deleteInvoice: Invoice;
   deleteJob: Job;
+  deletePayment: Payment;
   deleteQuote: Quote;
   deleteTask: Task;
   deleteTimeLog: TimeLog;
@@ -229,6 +230,7 @@ export type Mutation = {
   updateCustomer: Customer;
   updateInvoice: Invoice;
   updateJob: Job;
+  updatePayment: Payment;
   updateQuote: Quote;
   updateTask: Task;
   updateTimeLog: TimeLog;
@@ -296,6 +298,11 @@ export type MutationDeleteJobArgs = {
 };
 
 
+export type MutationDeletePaymentArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationDeleteQuoteArgs = {
   id: Scalars['ID']['input'];
 };
@@ -349,6 +356,12 @@ export type MutationUpdateJobArgs = {
 };
 
 
+export type MutationUpdatePaymentArgs = {
+  id: Scalars['ID']['input'];
+  input: UpdatePaymentInput;
+};
+
+
 export type MutationUpdateQuoteArgs = {
   id: Scalars['ID']['input'];
   input: UpdateQuoteInput;
@@ -388,19 +401,20 @@ export type Query = {
   __typename?: 'Query';
   _empty?: Maybe<Scalars['String']['output']>;
   customer?: Maybe<Customer>;
-  customers?: Maybe<Array<Customer>>;
-  expenses?: Maybe<Array<JobExpense>>;
+  customers: Array<Customer>;
+  expenses: Array<JobExpense>;
   invoice?: Maybe<Invoice>;
   invoices: Array<Invoice>;
   job?: Maybe<Job>;
   jobProfitability: JobProfitability;
-  jobs?: Maybe<Array<Job>>;
+  jobs: Array<Job>;
+  paymentsByInvoice: Array<Payment>;
   quote?: Maybe<Quote>;
   quotesByJob: Array<Quote>;
   task?: Maybe<Task>;
-  tasks?: Maybe<Array<Task>>;
-  timeLogsForJob?: Maybe<Array<TimeLog>>;
-  timeLogsForUser?: Maybe<Array<TimeLog>>;
+  tasks: Array<Task>;
+  timeLogsForJob: Array<TimeLog>;
+  timeLogsForUser: Array<TimeLog>;
   user?: Maybe<User>;
   users: Array<User>;
 };
@@ -438,6 +452,11 @@ export type QueryJobProfitabilityArgs = {
 
 export type QueryJobsArgs = {
   customerId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+export type QueryPaymentsByInvoiceArgs = {
+  invoiceId: Scalars['ID']['input'];
 };
 
 
@@ -571,6 +590,13 @@ export type UpdateJobInput = {
   title?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type UpdatePaymentInput = {
+  amount?: InputMaybe<Scalars['Float']['input']>;
+  date?: InputMaybe<Scalars['DateTime']['input']>;
+  method?: InputMaybe<Scalars['String']['input']>;
+  notes?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpdateQuoteInput = {
   expiryDate?: InputMaybe<Scalars['DateTime']['input']>;
   gstRate?: InputMaybe<Scalars['Float']['input']>;
@@ -603,7 +629,7 @@ export type UpdateUserInput = {
 
 export type User = {
   __typename?: 'User';
-  createdAt: Scalars['String']['output'];
+  createdAt: Scalars['DateTime']['output'];
   email: Scalars['String']['output'];
   hourlyRate?: Maybe<Scalars['Float']['output']>;
   id: Scalars['ID']['output'];
@@ -611,7 +637,7 @@ export type User = {
   phone?: Maybe<Scalars['String']['output']>;
   role: UserRole;
   tasks: Array<Task>;
-  updatedAt: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
 };
 
 export enum UserRole {
@@ -736,6 +762,7 @@ export type ResolversTypes = ResolversObject<{
   UpdateCustomerInput: UpdateCustomerInput;
   UpdateInvoiceInput: UpdateInvoiceInput;
   UpdateJobInput: UpdateJobInput;
+  UpdatePaymentInput: UpdatePaymentInput;
   UpdateQuoteInput: UpdateQuoteInput;
   UpdateTaskInput: UpdateTaskInput;
   UpdateTimeLogInput: UpdateTimeLogInput;
@@ -782,6 +809,7 @@ export type ResolversParentTypes = ResolversObject<{
   UpdateCustomerInput: UpdateCustomerInput;
   UpdateInvoiceInput: UpdateInvoiceInput;
   UpdateJobInput: UpdateJobInput;
+  UpdatePaymentInput: UpdatePaymentInput;
   UpdateQuoteInput: UpdateQuoteInput;
   UpdateTaskInput: UpdateTaskInput;
   UpdateTimeLogInput: UpdateTimeLogInput;
@@ -799,7 +827,7 @@ export type CustomerResolvers<ContextType = any, ParentType extends ResolversPar
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  jobs?: Resolver<Maybe<Array<ResolversTypes['Job']>>, ParentType, ContextType>;
+  jobs?: Resolver<Array<ResolversTypes['Job']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   phone?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
@@ -840,16 +868,16 @@ export type JobResolvers<ContextType = any, ParentType extends ResolversParentTy
   customer?: Resolver<ResolversTypes['Customer'], ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   endDate?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
-  expenses?: Resolver<Maybe<Array<ResolversTypes['JobExpense']>>, ParentType, ContextType>;
+  expenses?: Resolver<Array<ResolversTypes['JobExpense']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  invoices?: Resolver<Maybe<Array<ResolversTypes['Invoice']>>, ParentType, ContextType>;
+  invoices?: Resolver<Array<ResolversTypes['Invoice']>, ParentType, ContextType>;
   location?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   manager?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
-  quotes?: Resolver<Maybe<Array<ResolversTypes['Quote']>>, ParentType, ContextType>;
+  quotes?: Resolver<Array<ResolversTypes['Quote']>, ParentType, ContextType>;
   startDate?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   status?: Resolver<ResolversTypes['JobStatus'], ParentType, ContextType>;
-  tasks?: Resolver<Maybe<Array<ResolversTypes['Task']>>, ParentType, ContextType>;
-  timeLogs?: Resolver<Maybe<Array<ResolversTypes['TimeLog']>>, ParentType, ContextType>;
+  tasks?: Resolver<Array<ResolversTypes['Task']>, ParentType, ContextType>;
+  timeLogs?: Resolver<Array<ResolversTypes['TimeLog']>, ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
 }>;
@@ -887,6 +915,7 @@ export type MutationResolvers<ContextType = any, ParentType extends ResolversPar
   deleteExpense?: Resolver<ResolversTypes['JobExpense'], ParentType, ContextType, RequireFields<MutationDeleteExpenseArgs, 'id'>>;
   deleteInvoice?: Resolver<ResolversTypes['Invoice'], ParentType, ContextType, RequireFields<MutationDeleteInvoiceArgs, 'id'>>;
   deleteJob?: Resolver<ResolversTypes['Job'], ParentType, ContextType, RequireFields<MutationDeleteJobArgs, 'id'>>;
+  deletePayment?: Resolver<ResolversTypes['Payment'], ParentType, ContextType, RequireFields<MutationDeletePaymentArgs, 'id'>>;
   deleteQuote?: Resolver<ResolversTypes['Quote'], ParentType, ContextType, RequireFields<MutationDeleteQuoteArgs, 'id'>>;
   deleteTask?: Resolver<ResolversTypes['Task'], ParentType, ContextType, RequireFields<MutationDeleteTaskArgs, 'id'>>;
   deleteTimeLog?: Resolver<ResolversTypes['TimeLog'], ParentType, ContextType, RequireFields<MutationDeleteTimeLogArgs, 'id'>>;
@@ -897,6 +926,7 @@ export type MutationResolvers<ContextType = any, ParentType extends ResolversPar
   updateCustomer?: Resolver<ResolversTypes['Customer'], ParentType, ContextType, RequireFields<MutationUpdateCustomerArgs, 'id' | 'input'>>;
   updateInvoice?: Resolver<ResolversTypes['Invoice'], ParentType, ContextType, RequireFields<MutationUpdateInvoiceArgs, 'id' | 'input'>>;
   updateJob?: Resolver<ResolversTypes['Job'], ParentType, ContextType, RequireFields<MutationUpdateJobArgs, 'id' | 'input'>>;
+  updatePayment?: Resolver<ResolversTypes['Payment'], ParentType, ContextType, RequireFields<MutationUpdatePaymentArgs, 'id' | 'input'>>;
   updateQuote?: Resolver<ResolversTypes['Quote'], ParentType, ContextType, RequireFields<MutationUpdateQuoteArgs, 'id' | 'input'>>;
   updateTask?: Resolver<ResolversTypes['Task'], ParentType, ContextType, RequireFields<MutationUpdateTaskArgs, 'id' | 'input'>>;
   updateTimeLog?: Resolver<ResolversTypes['TimeLog'], ParentType, ContextType, RequireFields<MutationUpdateTimeLogArgs, 'id' | 'input'>>;
@@ -917,19 +947,20 @@ export type PaymentResolvers<ContextType = any, ParentType extends ResolversPare
 export type QueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = ResolversObject<{
   _empty?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   customer?: Resolver<Maybe<ResolversTypes['Customer']>, ParentType, ContextType, RequireFields<QueryCustomerArgs, 'id'>>;
-  customers?: Resolver<Maybe<Array<ResolversTypes['Customer']>>, ParentType, ContextType>;
-  expenses?: Resolver<Maybe<Array<ResolversTypes['JobExpense']>>, ParentType, ContextType, RequireFields<QueryExpensesArgs, 'jobId'>>;
+  customers?: Resolver<Array<ResolversTypes['Customer']>, ParentType, ContextType>;
+  expenses?: Resolver<Array<ResolversTypes['JobExpense']>, ParentType, ContextType, RequireFields<QueryExpensesArgs, 'jobId'>>;
   invoice?: Resolver<Maybe<ResolversTypes['Invoice']>, ParentType, ContextType, RequireFields<QueryInvoiceArgs, 'id'>>;
   invoices?: Resolver<Array<ResolversTypes['Invoice']>, ParentType, ContextType, Partial<QueryInvoicesArgs>>;
   job?: Resolver<Maybe<ResolversTypes['Job']>, ParentType, ContextType, RequireFields<QueryJobArgs, 'id'>>;
   jobProfitability?: Resolver<ResolversTypes['JobProfitability'], ParentType, ContextType, RequireFields<QueryJobProfitabilityArgs, 'jobId'>>;
-  jobs?: Resolver<Maybe<Array<ResolversTypes['Job']>>, ParentType, ContextType, Partial<QueryJobsArgs>>;
+  jobs?: Resolver<Array<ResolversTypes['Job']>, ParentType, ContextType, Partial<QueryJobsArgs>>;
+  paymentsByInvoice?: Resolver<Array<ResolversTypes['Payment']>, ParentType, ContextType, RequireFields<QueryPaymentsByInvoiceArgs, 'invoiceId'>>;
   quote?: Resolver<Maybe<ResolversTypes['Quote']>, ParentType, ContextType, RequireFields<QueryQuoteArgs, 'id'>>;
   quotesByJob?: Resolver<Array<ResolversTypes['Quote']>, ParentType, ContextType, RequireFields<QueryQuotesByJobArgs, 'jobId'>>;
   task?: Resolver<Maybe<ResolversTypes['Task']>, ParentType, ContextType, RequireFields<QueryTaskArgs, 'id'>>;
-  tasks?: Resolver<Maybe<Array<ResolversTypes['Task']>>, ParentType, ContextType, RequireFields<QueryTasksArgs, 'jobId'>>;
-  timeLogsForJob?: Resolver<Maybe<Array<ResolversTypes['TimeLog']>>, ParentType, ContextType, RequireFields<QueryTimeLogsForJobArgs, 'jobId'>>;
-  timeLogsForUser?: Resolver<Maybe<Array<ResolversTypes['TimeLog']>>, ParentType, ContextType, RequireFields<QueryTimeLogsForUserArgs, 'userId'>>;
+  tasks?: Resolver<Array<ResolversTypes['Task']>, ParentType, ContextType, RequireFields<QueryTasksArgs, 'jobId'>>;
+  timeLogsForJob?: Resolver<Array<ResolversTypes['TimeLog']>, ParentType, ContextType, RequireFields<QueryTimeLogsForJobArgs, 'jobId'>>;
+  timeLogsForUser?: Resolver<Array<ResolversTypes['TimeLog']>, ParentType, ContextType, RequireFields<QueryTimeLogsForUserArgs, 'userId'>>;
   user?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType, RequireFields<QueryUserArgs, 'id'>>;
   users?: Resolver<Array<ResolversTypes['User']>, ParentType, ContextType>;
 }>;
@@ -981,7 +1012,7 @@ export type TimeLogResolvers<ContextType = any, ParentType extends ResolversPare
 }>;
 
 export type UserResolvers<ContextType = any, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = ResolversObject<{
-  createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   hourlyRate?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
@@ -989,7 +1020,7 @@ export type UserResolvers<ContextType = any, ParentType extends ResolversParentT
   phone?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   role?: Resolver<ResolversTypes['UserRole'], ParentType, ContextType>;
   tasks?: Resolver<Array<ResolversTypes['Task']>, ParentType, ContextType>;
-  updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
 }>;
 
 export type Resolvers<ContextType = any> = ResolversObject<{

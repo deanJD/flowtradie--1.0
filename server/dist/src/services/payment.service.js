@@ -1,3 +1,29 @@
+// Helper function to keep logic DRY (Don't Repeat Yourself)
+const _updateInvoiceStatus = async (invoiceId, prisma) => {
+    const invoice = await prisma.invoice.findUnique({
+        where: { id: invoiceId },
+        include: { payments: true },
+    });
+    if (!invoice)
+        return;
+    const paidSoFar = invoice.payments.reduce((sum, p) => sum + p.amount, 0);
+    let newStatus = invoice.status;
+    if (paidSoFar <= 0) {
+        newStatus = invoice.status === "PARTIALLY_PAID" ? "SENT" : invoice.status;
+    }
+    else if (paidSoFar >= invoice.totalAmount) {
+        newStatus = "PAID";
+    }
+    else {
+        newStatus = "PARTIALLY_PAID";
+    }
+    if (newStatus !== invoice.status) {
+        await prisma.invoice.update({
+            where: { id: invoiceId },
+            data: { status: newStatus },
+        });
+    }
+};
 export const paymentService = {
     getByInvoice: (invoiceId, ctx) => {
         return ctx.prisma.payment.findMany({
@@ -6,41 +32,41 @@ export const paymentService = {
         });
     },
     create: async (input, ctx) => {
-        const payment = await ctx.prisma.payment.create({
-            data: {
-                ...input,
-                date: input.date ?? new Date(),
-            },
-        });
-        // Update invoice status if fully or partially paid
-        const invoice = await ctx.prisma.invoice.findUnique({
-            where: { id: input.invoiceId },
-            include: { payments: true },
-        });
-        if (invoice) {
-            const paidSoFar = invoice.payments.reduce((sum, p) => sum + p.amount, 0) + input.amount;
-            let newStatus = invoice.status;
-            if (paidSoFar >= invoice.totalAmount) {
-                newStatus = "PAID";
-            }
-            else if (paidSoFar > 0) {
-                newStatus = "PARTIALLY_PAID";
-            }
-            await ctx.prisma.invoice.update({
-                where: { id: invoice.id },
-                data: { status: newStatus },
+        return ctx.prisma.$transaction(async (prisma) => {
+            const payment = await prisma.payment.create({
+                data: { ...input, date: input.date ?? new Date() },
             });
-        }
-        return payment;
-    },
-    update: (id, input, ctx) => {
-        return ctx.prisma.payment.update({
-            where: { id },
-            data: input,
+            await _updateInvoiceStatus(input.invoiceId, prisma);
+            return payment;
         });
     },
-    delete: (id, ctx) => {
-        return ctx.prisma.payment.delete({ where: { id } });
+    update: async (id, input, ctx) => {
+        // THIS IS THE FIX: Convert nulls to undefined before sending to Prisma
+        const dataForPrisma = {
+            amount: input.amount ?? undefined,
+            date: input.date ?? undefined,
+            method: input.method ?? undefined,
+            notes: input.notes ?? undefined,
+        };
+        return ctx.prisma.$transaction(async (prisma) => {
+            const updatedPayment = await prisma.payment.update({
+                where: { id },
+                data: dataForPrisma, // Use the cleaned data here
+            });
+            await _updateInvoiceStatus(updatedPayment.invoiceId, prisma);
+            return updatedPayment;
+        });
+    },
+    delete: async (id, ctx) => {
+        return ctx.prisma.$transaction(async (prisma) => {
+            const paymentToDelete = await prisma.payment.findUnique({ where: { id } });
+            if (!paymentToDelete)
+                throw new Error("Payment not found");
+            const { invoiceId } = paymentToDelete;
+            await prisma.payment.delete({ where: { id } });
+            await _updateInvoiceStatus(invoiceId, prisma);
+            return paymentToDelete;
+        });
     },
 };
 //# sourceMappingURL=payment.service.js.map

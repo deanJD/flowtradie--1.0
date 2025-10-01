@@ -63,7 +63,7 @@ export const invoiceService = {
                     data: items.map((item) => ({
                         invoiceId: id,
                         description: item.description,
-                        quantity: item.quantity ?? 1, // This logic already correctly handles null
+                        quantity: item.quantity ?? 1,
                         unitPrice: item.unitPrice,
                         total: (item.quantity ?? 1) * item.unitPrice,
                     })),

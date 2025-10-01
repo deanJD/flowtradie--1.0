@@ -1,14 +1,15 @@
 import { GraphQLContext } from "../context.js";
 import { Prisma, InvoiceStatus } from "@prisma/client";
+import { CreateInvoiceInput } from "../__generated__/graphql.js"; // <-- NEW: Import for type safety
 
-// Update the type to accept 'null' for all optional fields, INCLUDING nested ones.
+// This helper type for the update function is correct
 type UpdateInvoiceInput = {
   invoiceNumber?: string | null;
   dueDate?: Date | null;
   status?: InvoiceStatus | null;
   items?: {
     description: string;
-    quantity?: number | null; // <--- THIS IS THE FIX
+    quantity?: number | null;
     unitPrice: number;
   }[] | null;
   gstRate?: number | null;
@@ -34,7 +35,7 @@ export const invoiceService = {
   },
 
   // # create invoice
-  create: async (input: any, ctx: GraphQLContext) => {
+  create: async (input: CreateInvoiceInput, ctx: GraphQLContext) => { // <-- CHANGED from 'any'
     const subtotal = input.items.reduce(
       (sum: number, i: any) => sum + (i.quantity ?? 1) * i.unitPrice,
       0
@@ -90,7 +91,7 @@ export const invoiceService = {
           data: items.map((item) => ({
             invoiceId: id,
             description: item.description,
-            quantity: item.quantity ?? 1, // This logic already correctly handles null
+            quantity: item.quantity ?? 1,
             unitPrice: item.unitPrice,
             total: (item.quantity ?? 1) * item.unitPrice,
           })),

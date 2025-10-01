@@ -17,11 +17,21 @@ input RecordPaymentInput {
   notes: String
 }
 
-# This is the new block you are adding
+# This input type was missing
+input UpdatePaymentInput {
+  amount: Float
+  date: DateTime
+  method: String
+  notes: String
+}
+
 extend type Query {
   paymentsByInvoice(invoiceId: ID!): [Payment!]!
 }
 
 extend type Mutation {
   recordPayment(input: RecordPaymentInput!): Payment!
+  # These two mutations were missing
+  updatePayment(id: ID!, input: UpdatePaymentInput!): Payment!
+  deletePayment(id: ID!): Payment!
 }
