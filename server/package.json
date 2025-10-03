@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "nodemon --watch src --ext ts --exec ts-node-esm src/index.ts",
+    "dev": "nodemon",
     "hash": "node --loader ts-node/esm hash-password.ts",
     "studio": "prisma studio",
     "migrate": "prisma migrate dev",
-     "start": "node dist/src/index.js",
-      "build": "tsc"
+    "start": "node dist/src/index.js",
+    "build": "tsc"
   },
   "dependencies": {
     "@apollo/server": "^4.12.2",

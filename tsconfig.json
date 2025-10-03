@@ -22,6 +22,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "server/src/config/database.ts", "server/src/index.ts", "server/src/config/env.ts", "server/src/config/index.ts", "server/src/graphql/index.ts", "server/src/graphql/resolvers/ping.resolver.ts", "server/src/graphql/resolvers/customer.js", "server/prisma/client.js"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "server/src/config/database.ts", "server/src/index.ts", "server/src/config/env.ts", "server/src/config/index.ts", "server/src/graphql/index.ts", "server/src/graphql/resolvers/ping.resolver.ts", "server/src/graphql/resolvers/customer.js", "server/prisma/client.js", "client/next.config.mjs"],
   "exclude": ["node_modules"]
 }
