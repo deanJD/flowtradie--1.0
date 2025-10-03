@@ -1,23 +1,29 @@
-// src/index.ts
+// server/src/index.ts
 import { ApolloServer } from "@apollo/server";
-import { startStandaloneServer } from "@apollo/server/standalone";
+import { expressMiddleware } from "@apollo/server/express4";
 import { loadFilesSync } from "@graphql-tools/load-files";
 import { mergeTypeDefs } from "@graphql-tools/merge";
+import express from "express";
+import http from "http";
+import cors from "cors";
 import { resolvers } from "./graphql/index.js";
 import { buildContext } from "./context.js";
-// ✅ Load ALL schema files
-const typesArray = loadFilesSync("src/graphql/schemas/**/*.graphql");
-const typeDefs = mergeTypeDefs(typesArray);
-const server = new ApolloServer({
-    typeDefs,
-    resolvers,
-});
 async function startServer() {
-    const { url } = await startStandaloneServer(server, {
-        listen: { port: 4000 },
-        context: async ({ req }) => buildContext({ req }),
+    const app = express();
+    const httpServer = http.createServer(app);
+    const typesArray = loadFilesSync("src/graphql/schemas/**/*.graphql");
+    const typeDefs = mergeTypeDefs(typesArray);
+    const server = new ApolloServer({
+        typeDefs,
+        resolvers,
     });
-    console.log(`🚀 Server ready at ${url}`);
+    await server.start();
+    app.use("/", cors(), express.json(), // This line is essential and must be here
+    expressMiddleware(server, {
+        context: async ({ req }) => buildContext({ req }),
+    }));
+    await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve));
+    console.log(`🚀 Server ready at http://localhost:4000/`);
 }
 startServer();
 //# sourceMappingURL=index.js.map

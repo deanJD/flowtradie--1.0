@@ -1,29 +1,27 @@
-// client/app/login/page.tsx
+// client/app/register/page.tsx
 'use client';
 
 import React, { useState } from 'react';
 import { useMutation } from '@apollo/client';
-import { useRouter } from 'next/navigation'; // <-- 1. Import the router for redirects
-import { useAuth } from '../context/AuthContext'; // <-- 2. Import our new useAuth hook
-import { LOGIN_MUTATION } from '../lib/graphql/mutations/login';
-import styles from './LoginPage.module.css';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../context/AuthContext';
+import { REGISTER_MUTATION } from '../lib/graphql/mutations/register';
+import styles from './RegisterPage.module.css';
 
-export default function LoginPage() {
+export default function RegisterPage() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const router = useRouter();
-  const { login: authLogin } = useAuth(); // <-- 3. Get the login function from our context
+  const { login: authLogin } = useAuth();
 
-  // 4. Add an 'onCompleted' callback to useMutation.
-  // This function will automatically run when the login is successful.
-  const [login, { loading, error }] = useMutation(LOGIN_MUTATION, {
+  const [register, { loading, error }] = useMutation(REGISTER_MUTATION, {
     onCompleted: (data) => {
-      console.log('Login successful!', data);
-      // Get the token and user from the response
-      const { token, user } = data.login;
-      // Call the login function from our AuthContext to save the state
+      console.log('Registration successful!', data);
+      const { token, user } = data.register;
+      // After a successful registration, automatically log the user in
       authLogin(token, user);
-      // Redirect the user to their dashboard
+      // And redirect them to the dashboard
       router.push('/dashboard');
     },
   });
@@ -31,23 +29,36 @@ export default function LoginPage() {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     try {
-      await login({
+      await register({
         variables: {
           input: {
+            name,
             email,
             password,
           },
         },
       });
     } catch (e) {
-      console.error('Login submission error:', e);
+      console.error('Registration submission error:', e);
     }
   };
 
   return (
     <div className={styles.container}>
       <form className={styles.form} onSubmit={handleSubmit}>
-        <h1 className={styles.title}>Login</h1>
+        <h1 className={styles.title}>Create Account</h1>
+
+        <div className={styles.inputGroup}>
+          <label htmlFor="name" className={styles.label}>Full Name</label>
+          <input
+            id="name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className={styles.input}
+            required
+          />
+        </div>
 
         <div className={styles.inputGroup}>
           <label htmlFor="email" className={styles.label}>Email</label>
@@ -74,12 +85,10 @@ export default function LoginPage() {
         </div>
 
         <button type="submit" className={styles.button} disabled={loading}>
-          {loading ? 'Logging in...' : 'Log In'}
+          {loading ? 'Creating Account...' : 'Sign Up'}
         </button>
 
         {error && <p style={{ color: 'red', marginTop: '1rem' }}>Error: {error.message}</p>}
-        
-        {/* We no longer need to display the raw data here */}
       </form>
     </div>
   );

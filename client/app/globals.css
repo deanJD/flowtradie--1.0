@@ -1,42 +1,40 @@
+/* client/app/globals.css */
+
+/* 1. A simple, modern CSS Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* 2. CSS Custom Properties (Variables) for our "eBay" theme */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background-color: #f7f7f7;         /* eBay's light gray page background */
+  --text-color: #333333;               /* A standard dark gray for text */
+  --primary-accent: #3665f3;            /* The iconic eBay blue for primary buttons */
+  --primary-accent-hover: #2f58d0;    /* A slightly darker blue for hover effects */
+  --link-color: #3665f3;               /* Use the same blue for links */
+  --card-background: #ffffff;           /* White for cards and forms */
+  --border-color: #cccccc;               /* A neutral gray for borders */
+
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-html,
+/* 3. Base Body Styles */
 body {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
-
+/* Optional: Global style for links */
 a {
-  color: inherit;
+  color: var(--link-color);
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+a:hover {
+  text-decoration: underline;
 }

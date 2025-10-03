@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "nodemon",
     "hash": "node --loader ts-node/esm hash-password.ts",
+    "seed": "node --loader ts-node/esm prisma/seed.ts",
     "studio": "prisma studio",
     "migrate": "prisma migrate dev",
     "start": "node dist/src/index.js",
@@ -16,7 +17,9 @@
     "@graphql-tools/merge": "^9.1.1",
     "@prisma/client": "^6.15.0",
     "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
     "dotenv": "^16.3.1",
+    "express": "^4.18.2",
     "graphql": "^16.11.0",
     "jsonwebtoken": "^9.0.2",
     "lodash.merge": "^4.6.2",
@@ -25,11 +28,16 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.2",
+    "@types/cors": "^2.8.19",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/lodash.merge": "^4.6.9",
     "@types/node": "^24.3.1",
+    "@types/express": "4.17.21",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2"
+  },
+  "overrides": {
+    "@types/express": "4.17.21"
   }
 }
