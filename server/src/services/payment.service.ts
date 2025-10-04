@@ -1,6 +1,6 @@
 import { GraphQLContext } from "../context.js";
 import { Prisma } from "@prisma/client";
-import { RecordPaymentInput, UpdatePaymentInput } from "../__generated__/graphql.js" ; // <-- Using generated types
+import { RecordPaymentInput, UpdatePaymentInput } from "@/__generated__/graphql.js" ; // <-- Using generated types
 
 
 // Helper function to keep logic DRY (Don't Repeat Yourself)

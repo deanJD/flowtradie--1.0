@@ -1,80 +1,44 @@
-// This file contains all the business logic for handling TimeLog data.
+// server/src/graphql/resolvers/timelog.ts
 
-import type { TimeLog, Job, User } from '@prisma/client';
-import { GraphQLContext } from '../../prisma/client.js';
-
-// --- Input Types ---
-interface CreateTimeLogInput {
-  date: Date;
-  hoursWorked: number;
-  jobId: string;
-  userId: string;
-  notes?: string;
-}
-
-interface UpdateTimeLogInput {
-  date?: Date;
-  hoursWorked?: number;
-  notes?: string;
-}
+import { GraphQLContext } from "../../context.js";
+import { timeLogService } from "../../services/timelog.service.js";
+import { CreateTimeLogInput, UpdateTimeLogInput } from "@/__generated__/graphql.js";
 
 export const timeLogResolvers = {
   Query: {
     timeLogsForJob: (
-      _parent: unknown,
+      _p: unknown,
       { jobId }: { jobId: string },
-      { prisma }: GraphQLContext
-    ): Promise<TimeLog[]> => {
-      return prisma.timeLog.findMany({
-        where: { jobId },
-        orderBy: { date: 'desc' },
-      });
-    },
+      ctx: GraphQLContext
+    ) => timeLogService.getAllByJob(jobId, ctx),
+
     timeLogsForUser: (
-      _parent: unknown,
+      _p: unknown,
       { userId }: { userId: string },
-      { prisma }: GraphQLContext
-    ): Promise<TimeLog[]> => {
-      return prisma.timeLog.findMany({
-        where: { userId },
-        orderBy: { date: 'desc' },
-      });
-    },
+      ctx: GraphQLContext
+    ) => timeLogService.getAllByUser(userId, ctx),
   },
   Mutation: {
     createTimeLog: (
-      _parent: unknown,
+      _p: unknown,
       { input }: { input: CreateTimeLogInput },
-      { prisma }: GraphQLContext
-    ): Promise<TimeLog> => {
-      return prisma.timeLog.create({ data: input });
-    },
+      ctx: GraphQLContext
+    ) => timeLogService.create(input, ctx),
+
     updateTimeLog: (
-      _parent: unknown,
+      _p: unknown,
       { id, input }: { id: string; input: UpdateTimeLogInput },
-      { prisma }: GraphQLContext
-    ): Promise<TimeLog> => {
-      return prisma.timeLog.update({
-        where: { id },
-        data: input,
-      });
-    },
+      ctx: GraphQLContext
+    ) => timeLogService.update(id, input, ctx),
+
     deleteTimeLog: (
-      _parent: unknown,
+      _p: unknown,
       { id }: { id: string },
-      { prisma }: GraphQLContext
-    ): Promise<TimeLog> => {
-      return prisma.timeLog.delete({ where: { id } });
-    },
+      ctx: GraphQLContext
+    ) => timeLogService.delete(id, ctx),
   },
 
-  // --- Relational Resolvers ---
-  TimeLog: {
-    job: (parent: TimeLog, _args: unknown, { prisma }: GraphQLContext): Promise<Job | null> => {
-      return prisma.job.findUnique({ where: { id: parent.jobId } });
-    },
-    user: (parent: TimeLog, _args: unknown, { prisma }: GraphQLContext): Promise<User | null> => {
-      return prisma.user.findUnique({ where: { id: parent.userId } });
-    },
-  },
+  // Note: The relational resolvers for `TimeLog.job` and `TimeLog.user`
+  // are no longer needed because our new service functions automatically
+  // include that data.
 };

@@ -115,6 +115,14 @@ export type Customer = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
+export type DashboardSummary = {
+  __typename?: 'DashboardSummary';
+  invoicesDueSoon: Scalars['Int']['output'];
+  tasksDueToday: Scalars['Int']['output'];
+  totalOpenJobs: Scalars['Int']['output'];
+  totalRevenueYTD: Scalars['Float']['output'];
+};
+
 export type Invoice = {
   __typename?: 'Invoice';
   createdAt: Scalars['DateTime']['output'];
@@ -410,11 +418,13 @@ export type Query = {
   customer?: Maybe<Customer>;
   customers: Array<Customer>;
   expenses: Array<JobExpense>;
+  getDashboardSummary: DashboardSummary;
   invoice?: Maybe<Invoice>;
   invoices: Array<Invoice>;
   job?: Maybe<Job>;
   jobProfitability: JobProfitability;
   jobs: Array<Job>;
+  me?: Maybe<User>;
   paymentsByInvoice: Array<Payment>;
   quote?: Maybe<Quote>;
   quotesByJob: Array<Quote>;
@@ -744,6 +754,7 @@ export type ResolversTypes = ResolversObject<{
   CreateTimeLogInput: CreateTimeLogInput;
   CreateUserInput: CreateUserInput;
   Customer: ResolverTypeWrapper<Customer>;
+  DashboardSummary: ResolverTypeWrapper<DashboardSummary>;
   DateTime: ResolverTypeWrapper<Scalars['DateTime']['output']>;
   Float: ResolverTypeWrapper<Scalars['Float']['output']>;
   ID: ResolverTypeWrapper<Scalars['ID']['output']>;
@@ -794,6 +805,7 @@ export type ResolversParentTypes = ResolversObject<{
   CreateTimeLogInput: CreateTimeLogInput;
   CreateUserInput: CreateUserInput;
   Customer: Customer;
+  DashboardSummary: DashboardSummary;
   DateTime: Scalars['DateTime']['output'];
   Float: Scalars['Float']['output'];
   ID: Scalars['ID']['output'];
@@ -839,6 +851,13 @@ export type CustomerResolvers<ContextType = any, ParentType extends ResolversPar
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   phone?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+}>;
+
+export type DashboardSummaryResolvers<ContextType = any, ParentType extends ResolversParentTypes['DashboardSummary'] = ResolversParentTypes['DashboardSummary']> = ResolversObject<{
+  invoicesDueSoon?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  tasksDueToday?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  totalOpenJobs?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  totalRevenueYTD?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
 }>;
 
 export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['DateTime'], any> {
@@ -959,11 +978,13 @@ export type QueryResolvers<ContextType = any, ParentType extends ResolversParent
   customer?: Resolver<Maybe<ResolversTypes['Customer']>, ParentType, ContextType, RequireFields<QueryCustomerArgs, 'id'>>;
   customers?: Resolver<Array<ResolversTypes['Customer']>, ParentType, ContextType>;
   expenses?: Resolver<Array<ResolversTypes['JobExpense']>, ParentType, ContextType, RequireFields<QueryExpensesArgs, 'jobId'>>;
+  getDashboardSummary?: Resolver<ResolversTypes['DashboardSummary'], ParentType, ContextType>;
   invoice?: Resolver<Maybe<ResolversTypes['Invoice']>, ParentType, ContextType, RequireFields<QueryInvoiceArgs, 'id'>>;
   invoices?: Resolver<Array<ResolversTypes['Invoice']>, ParentType, ContextType, Partial<QueryInvoicesArgs>>;
   job?: Resolver<Maybe<ResolversTypes['Job']>, ParentType, ContextType, RequireFields<QueryJobArgs, 'id'>>;
   jobProfitability?: Resolver<ResolversTypes['JobProfitability'], ParentType, ContextType, RequireFields<QueryJobProfitabilityArgs, 'jobId'>>;
   jobs?: Resolver<Array<ResolversTypes['Job']>, ParentType, ContextType, Partial<QueryJobsArgs>>;
+  me?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
   paymentsByInvoice?: Resolver<Array<ResolversTypes['Payment']>, ParentType, ContextType, RequireFields<QueryPaymentsByInvoiceArgs, 'invoiceId'>>;
   quote?: Resolver<Maybe<ResolversTypes['Quote']>, ParentType, ContextType, RequireFields<QueryQuoteArgs, 'id'>>;
   quotesByJob?: Resolver<Array<ResolversTypes['Quote']>, ParentType, ContextType, RequireFields<QueryQuotesByJobArgs, 'jobId'>>;
@@ -1036,6 +1057,7 @@ export type UserResolvers<ContextType = any, ParentType extends ResolversParentT
 export type Resolvers<ContextType = any> = ResolversObject<{
   AuthPayload?: AuthPayloadResolvers<ContextType>;
   Customer?: CustomerResolvers<ContextType>;
+  DashboardSummary?: DashboardSummaryResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
   Invoice?: InvoiceResolvers<ContextType>;
   InvoiceItem?: InvoiceItemResolvers<ContextType>;

@@ -1,62 +1,48 @@
-import { Customer } from "@prisma/client";
+// server/src/graphql/resolvers/customer.ts
 import { GraphQLContext } from "../../context.js";
-import { handlePrismaError } from "../../utils/handlePrismaError.js";
+import { customerService } from "../../services/customer.service.js";
+import { CreateCustomerInput, UpdateCustomerInput } from "@/__generated__/graphql.js";
 
-// ✅ Actual resolvers
 export const customerResolvers = {
   Query: {
-    customers: (_p: unknown, _a: unknown, ctx: GraphQLContext) =>
-      customerService.getAll(ctx),
-    customer: (_p: unknown, args: { id: string }, ctx: GraphQLContext) =>
-      customerService.getById(args.id, ctx),
+    customers: (_p: unknown, _a: unknown, ctx: GraphQLContext) => {
+      return customerService.getAll(ctx);
+    },
+    customer: (_p: unknown, { id }: { id: string }, ctx: GraphQLContext) => {
+      return customerService.getById(id, ctx);
+    },
   },
-
   Mutation: {
-    createCustomer: (_p: unknown, args: { input: Omit<Customer, "id" | "createdAt" | "updatedAt"> }, ctx: GraphQLContext) =>
-      customerService.create(args.input, ctx),
-
-    updateCustomer: (_p: unknown, args: { id: string; input: Partial<Customer> }, ctx: GraphQLContext) =>
-      customerService.update(args.id, args.input, ctx),
-
-    deleteCustomer: (_p: unknown, args: { id: string }, ctx: GraphQLContext) =>
-      customerService.delete(args.id, ctx),
-  },
-};
-
-// ✅ Keep your service
-export const customerService = {
-  getAll: async (ctx: GraphQLContext): Promise<Customer[]> => {
-    return ctx.prisma.customer.findMany({ orderBy: { createdAt: "desc" } });
-  },
-
-  getById: async (id: string, ctx: GraphQLContext): Promise<Customer | null> => {
-    return ctx.prisma.customer.findUnique({ where: { id } });
-  },
-
-  create: async (
-    input: Omit<Customer, "id" | "createdAt" | "updatedAt">,
-    ctx: GraphQLContext
-  ): Promise<Customer> => {
-    try {
-      return await ctx.prisma.customer.create({ data: input });
-    } catch (error: any) {
-      handlePrismaError(error, "Customer creation");
-    }
+    createCustomer: (
+      _p: unknown,
+      { input }: { input: CreateCustomerInput },
+      ctx: GraphQLContext
+    ) => {
+      return customerService.create(input, ctx);
+    },
+    updateCustomer: (
+      _p: unknown,
+      { id, input }: { id: string; input: UpdateCustomerInput },
+      ctx: GraphQLContext
+    ) => {
+      return customerService.update(id, input, ctx);
+    },
+    deleteCustomer: (
+      _p: unknown,
+      { id }: { id: string },
+      ctx: GraphQLContext
+    ) => {
+      return customerService.delete(id, ctx);
+    },
   },
 
-  update: async (id: string, input: Partial<Customer>, ctx: GraphQLContext): Promise<Customer> => {
-    try {
-      return await ctx.prisma.customer.update({ where: { id }, data: input });
-    } catch (error: any) {
-      handlePrismaError(error, "Customer update");
-    }
-  },
-
-  delete: async (id: string, ctx: GraphQLContext): Promise<Customer> => {
-    try {
-      return await ctx.prisma.customer.delete({ where: { id } });
-    } catch (error: any) {
-      handlePrismaError(error, "Customer deletion");
-    }
+  // Since our service calls don't include the 'jobs' relation,
+  // this relational resolver is still needed for now.
+  Customer: {
+    jobs: (parent: { id: string }, _a: unknown, ctx: GraphQLContext) => {
+      return ctx.prisma.job.findMany({
+        where: { customerId: parent.id },
+      });
+    },
   },
 };

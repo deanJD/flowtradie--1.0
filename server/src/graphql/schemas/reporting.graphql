@@ -10,6 +10,18 @@ type JobProfitability {
 }
 
 
+type DashboardSummary {
+  totalOpenJobs: Int!
+  invoicesDueSoon: Int!
+  tasksDueToday: Int!
+  totalRevenueYTD: Float!
+}
+
+extend type Query {
+  # Add the @auth directive here if you use it in your schema files
+  getDashboardSummary: DashboardSummary! 
+}
+
 # --- API Operations ---
 
 extend type Query {

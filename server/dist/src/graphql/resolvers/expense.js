@@ -1,26 +1,14 @@
-// This file contains all the business logic for handling JobExpense data.
+// server/src/graphql/resolvers/expense.ts
+import { expenseService } from "../../services/expense.service.js";
 export const expenseResolvers = {
     Query: {
-        expenses: (_parent, { jobId }, { prisma }) => {
-            return prisma.jobExpense.findMany({
-                where: { jobId },
-                orderBy: { date: 'desc' },
-            });
-        },
+        expenses: (_p, { jobId }, ctx) => expenseService.getAllByJob(jobId, ctx),
     },
     Mutation: {
-        createExpense: (_parent, { input }, { prisma }) => {
-            return prisma.jobExpense.create({ data: input });
-        },
-        deleteExpense: (_parent, { id }, { prisma }) => {
-            return prisma.jobExpense.delete({ where: { id } });
-        },
+        createExpense: (_p, { input }, ctx) => expenseService.create(input, ctx),
+        deleteExpense: (_p, { id }, ctx) => expenseService.delete(id, ctx),
     },
-    // --- Relational Resolver ---
-    JobExpense: {
-        job: (parent, _args, { prisma }) => {
-            return prisma.job.findUnique({ where: { id: parent.jobId } });
-        },
-    },
+    // Note: The relational resolver for `JobExpense.job` is no longer needed
+    // because our new service functions automatically include that data.
 };
 //# sourceMappingURL=expense.js.map

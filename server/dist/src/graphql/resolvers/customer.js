@@ -1,47 +1,32 @@
-import { handlePrismaError } from "../../utils/handlePrismaError.js";
-// ✅ Actual resolvers
+import { customerService } from "../../services/customer.service.js";
 export const customerResolvers = {
     Query: {
-        customers: (_p, _a, ctx) => customerService.getAll(ctx),
-        customer: (_p, args, ctx) => customerService.getById(args.id, ctx),
+        customers: (_p, _a, ctx) => {
+            return customerService.getAll(ctx);
+        },
+        customer: (_p, { id }, ctx) => {
+            return customerService.getById(id, ctx);
+        },
     },
     Mutation: {
-        createCustomer: (_p, args, ctx) => customerService.create(args.input, ctx),
-        updateCustomer: (_p, args, ctx) => customerService.update(args.id, args.input, ctx),
-        deleteCustomer: (_p, args, ctx) => customerService.delete(args.id, ctx),
+        createCustomer: (_p, { input }, ctx) => {
+            return customerService.create(input, ctx);
+        },
+        updateCustomer: (_p, { id, input }, ctx) => {
+            return customerService.update(id, input, ctx);
+        },
+        deleteCustomer: (_p, { id }, ctx) => {
+            return customerService.delete(id, ctx);
+        },
     },
-};
-// ✅ Keep your service
-export const customerService = {
-    getAll: async (ctx) => {
-        return ctx.prisma.customer.findMany({ orderBy: { createdAt: "desc" } });
-    },
-    getById: async (id, ctx) => {
-        return ctx.prisma.customer.findUnique({ where: { id } });
-    },
-    create: async (input, ctx) => {
-        try {
-            return await ctx.prisma.customer.create({ data: input });
-        }
-        catch (error) {
-            handlePrismaError(error, "Customer creation");
-        }
-    },
-    update: async (id, input, ctx) => {
-        try {
-            return await ctx.prisma.customer.update({ where: { id }, data: input });
-        }
-        catch (error) {
-            handlePrismaError(error, "Customer update");
-        }
-    },
-    delete: async (id, ctx) => {
-        try {
-            return await ctx.prisma.customer.delete({ where: { id } });
-        }
-        catch (error) {
-            handlePrismaError(error, "Customer deletion");
-        }
+    // Since our service calls don't include the 'jobs' relation,
+    // this relational resolver is still needed for now.
+    Customer: {
+        jobs: (parent, _a, ctx) => {
+            return ctx.prisma.job.findMany({
+                where: { customerId: parent.id },
+            });
+        },
     },
 };
 //# sourceMappingURL=customer.js.map

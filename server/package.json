@@ -10,6 +10,7 @@
     "migrate": "prisma migrate dev",
     "start": "node dist/src/index.js",
     "build": "tsc"
+
   },
   "dependencies": {
     "@apollo/server": "^4.12.2",

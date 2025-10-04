@@ -1,60 +1,42 @@
-// src/services/user.service.ts
-import { PrismaClient, UserRole, User, Task } from "@prisma/client";
+// server/src/services/user.service.ts
 import { GraphQLContext } from "../context.js";
-import { requireRole } from "../middleware/permissions.js";
 
-const prisma = new PrismaClient();
-
-interface CreateUserInput {
-  email: string;
-  name: string;
-  role?: UserRole;
-  phone?: string;
-  hourlyRate?: number;
-}
-
-interface UpdateUserInput {
-  email?: string;
-  name?: string;
-  role?: UserRole;
-  phone?: string;
-  hourlyRate?: number;
-}
+// Define the Prisma select object for a "safe" user once.
+const selectSafeUser = {
+  id: true,
+  email: true,
+  name: true,
+  role: true,
+  phone: true,
+  hourlyRate: true,
+  createdAt: true,
+  updatedAt: true,
+};
 
 export const userService = {
-  async getAllUsers({ prisma, user }: GraphQLContext): Promise<User[]> {
-    requireRole(user, [UserRole.OWNER, UserRole.ADMIN]);
-    return prisma.user.findMany({
+  getAll: (ctx: GraphQLContext) => {
+    return ctx.prisma.user.findMany({
       orderBy: { createdAt: "desc" },
+      select: selectSafeUser,
     });
   },
 
-  async getUserById(id: string, { prisma, user }: GraphQLContext): Promise<User | null> {
-    requireRole(user, [UserRole.OWNER, UserRole.ADMIN, UserRole.MANAGER]);
-    return prisma.user.findUnique({ where: { id } });
-  },
-
-  // 🚫 Prevent direct user creation here
-  async createUser(_input: CreateUserInput, _ctx: GraphQLContext): Promise<never> {
-    throw new Error(
-      "Please use the 'register' mutation from auth.service.ts to create users with a password."
-    );
-  },
-
-  async updateUser(id: string, input: UpdateUserInput, { prisma, user }: GraphQLContext): Promise<User> {
-    requireRole(user, [UserRole.OWNER, UserRole.ADMIN]);
-    return prisma.user.update({
+  getById: (id: string, ctx: GraphQLContext) => {
+    return ctx.prisma.user.findUnique({
       where: { id },
-      data: input,
+      select: selectSafeUser,
     });
   },
 
-  async deleteUser(id: string, { prisma, user }: GraphQLContext): Promise<User> {
-    requireRole(user, [UserRole.OWNER]);
-    return prisma.user.delete({ where: { id } });
-  },
-
-  async getUserTasks(userId: string, { prisma }: GraphQLContext): Promise<Task[]> {
-    return prisma.task.findMany({ where: { assignedToId: userId } });
+  getMe: (ctx: GraphQLContext) => {
+    // If the context doesn't have a user from the token, return null.
+    if (!ctx.user) {
+      return null;
+    }
+    // Otherwise, fetch that user's safe data.
+    return ctx.prisma.user.findUnique({
+      where: { id: ctx.user.id },
+      select: selectSafeUser,
+    });
   },
 };
