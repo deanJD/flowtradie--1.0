@@ -1,7 +1,8 @@
 {
   "name": "client",
   "scripts": {
-    "dev": "next dev"
+    "dev": "next dev --turbopack"
+
   },
   "dependencies": {
     "@apollo/client": "^3.14.0",

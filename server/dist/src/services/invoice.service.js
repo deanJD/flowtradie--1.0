@@ -11,7 +11,11 @@ export const invoiceService = {
     getById: async (id, ctx) => {
         return await ctx.prisma.invoice.findUnique({
             where: { id },
-            include: { items: true, payments: true },
+            include: {
+                items: true,
+                payments: true,
+                job: true
+            },
         });
     },
     // # create invoice

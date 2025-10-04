@@ -14,14 +14,19 @@ export const jobService = {
     });
   },
 
-  // Find a single job by ID, including its customer
-  getById: (id: string, ctx: GraphQLContext) => {
-    return ctx.prisma.job.findUnique({
-      where: { id },
-      include: { customer: true },
-    });
-  },
+  // Inside your job.service.ts file
 
+getById: (id: string, ctx: GraphQLContext) => {
+  return ctx.prisma.job.findUnique({
+    where: { id },
+    include: {
+      customer: true,
+      tasks: true,      // <-- This is the main fix
+      quotes: true,     // <-- Added to prevent the next error
+      invoices: true,   // <-- Added to prevent the next error
+    },
+  });
+},
   // Create a new job
   create: (input: CreateJobInput, ctx: GraphQLContext) => {
     // FIX #1: Manually build the data object to handle relations

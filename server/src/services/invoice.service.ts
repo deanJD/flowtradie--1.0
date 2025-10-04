@@ -27,12 +27,16 @@ export const invoiceService = {
   },
 
   // # fetch single invoice
-  getById: async (id: string, ctx: GraphQLContext) => {
-    return await ctx.prisma.invoice.findUnique({
-      where: { id },
-      include: { items: true, payments: true },
-    });
-  },
+getById: async (id: string, ctx: GraphQLContext) => {
+  return await ctx.prisma.invoice.findUnique({
+    where: { id },
+    include: {
+      items: true,
+      payments: true,
+      job: true 
+    },
+  });
+},
 
   // # create invoice
   create: async (input: CreateInvoiceInput, ctx: GraphQLContext) => {

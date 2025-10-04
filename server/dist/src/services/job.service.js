@@ -8,11 +8,16 @@ export const jobService = {
             include: { customer: true },
         });
     },
-    // Find a single job by ID, including its customer
+    // Inside your job.service.ts file
     getById: (id, ctx) => {
         return ctx.prisma.job.findUnique({
             where: { id },
-            include: { customer: true },
+            include: {
+                customer: true,
+                tasks: true, // <-- This is the main fix
+                quotes: true, // <-- Added to prevent the next error
+                invoices: true, // <-- Added to prevent the next error
+            },
         });
     },
     // Create a new job

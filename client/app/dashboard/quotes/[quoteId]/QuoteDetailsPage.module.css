@@ -1,0 +1,77 @@
+/* client/app/dashboard/quotes/[quoteId]/QuoteDetailsPage.module.css */
+.container {
+  padding: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+  background-color: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.header {
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1rem;
+}
+
+.backLink {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: var(--link-color);
+  text-decoration: none;
+}
+.backLink:hover {
+  text-decoration: underline;
+}
+
+.title {
+  font-size: 2.25rem;
+  font-weight: bold;
+}
+
+.metaGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.metaItem {
+  font-size: 1rem;
+}
+
+.itemsTable {
+  width: 100%;
+  margin-top: 2rem;
+  border-collapse: collapse;
+}
+
+.itemsTable th, .itemsTable td {
+  text-align: left;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.itemsTable th {
+  font-weight: bold;
+  background-color: #f9fafb; /* gray-50 */
+}
+
+.totals {
+  margin-top: 2rem;
+  margin-left: auto;
+  width: 100%;
+  max-width: 300px;
+}
+
+.totals p {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+}
+
+.totalAmount {
+  font-size: 1.25rem;
+  font-weight: bold;
+  border-top: 2px solid var(--text-color);
+}
