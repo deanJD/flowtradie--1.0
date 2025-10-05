@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
 import { useQuery } from '@apollo/client';
+// FIX: Import the new, correct query name
 import { GET_PROJECTS_QUERY } from '../lib/graphql/queries/projects';
 import styles from './Dashboard.module.css';
 
@@ -13,6 +14,7 @@ export default function DashboardPage() {
   const { user, loading: authLoading, logout } = useAuth();
   const router = useRouter();
 
+  // FIX: Use the new, correct query name
   const { data, loading: projectsLoading, error } = useQuery(GET_PROJECTS_QUERY);
 
   useEffect(() => {
@@ -53,6 +55,7 @@ export default function DashboardPage() {
 
       <div className={styles.detailsBox}>
         <h3 className={styles.detailsTitle}>Your Projects</h3>
+        {/* FIX: Update to look for 'data.projects' */}
         {data && data.projects && data.projects.length > 0 ? (
           <ul>
             {data.projects.map((project: any) => (
