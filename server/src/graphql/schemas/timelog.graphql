@@ -7,7 +7,7 @@ type TimeLog {
   notes: String
 
   # Relationships
-  job: Job!
+  project: Project!
   user: User!
 }
 
@@ -17,7 +17,7 @@ type TimeLog {
 input CreateTimeLogInput {
   date: DateTime!
   hoursWorked: Float!
-  jobId: ID!
+  projectId: ID!
   userId: ID!
   notes: String
 }
@@ -32,8 +32,8 @@ input UpdateTimeLogInput {
 # --- API Operations ---
 
 extend type Query {
-  # Get all time logs for a specific job
-  timeLogsForJob(jobId: ID!): [TimeLog!]! # <-- Changed
+  # Get all time logs for a specific project
+  timeLogsForProject(projectId: ID!): [TimeLog!]! # <-- Changed
   # Get all time logs for a specific user
   timeLogsForUser(userId: ID!): [TimeLog!]! # <-- Changed
 }

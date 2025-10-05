@@ -12,7 +12,7 @@ type Quote {
   totalAmount: Float!
   createdAt: DateTime!
   updatedAt: DateTime!
-  job: Job!
+  project: Project!
   items: [QuoteItem!]!
 }
 
@@ -34,7 +34,7 @@ input CreateQuoteItemInput {
 }
 
 input CreateQuoteInput {
-  jobId: ID!
+  projectId: ID!
   quoteNumber: String!
   expiryDate: DateTime
   status: QuoteStatus = DRAFT
@@ -52,7 +52,7 @@ input UpdateQuoteInput {
 
 # --- QUOTE QUERIES & MUTATIONS ---
 extend type Query {
-  quotesByJob(jobId: ID!): [Quote!]!
+  quotesByProject(projectId: ID!): [Quote!]!
   quote(id: ID!): Quote
 }
 

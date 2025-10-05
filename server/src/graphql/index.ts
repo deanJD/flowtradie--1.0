@@ -1,6 +1,6 @@
 // ...other imports at the top of your file...
-import { customerResolvers } from './resolvers/customer.js';
-import { jobResolvers } from './resolvers/job.js';
+import { clientResolvers } from './resolvers/client.js';
+import { projectResolvers } from './resolvers/project.js';
 import { quoteResolvers } from './resolvers/quote.js';
 import { invoiceResolvers } from './resolvers/invoice.js';
 import { taskResolvers } from './resolvers/task.js';
@@ -35,8 +35,8 @@ const dateTimeScalar = new GraphQLScalarType({
 // Merge all resolver objects together.
 const resolverModules = [
   { DateTime: dateTimeScalar },
-  customerResolvers,
-  jobResolvers,
+  clientResolvers,
+  projectResolvers,
   quoteResolvers,
   invoiceResolvers,
   taskResolvers,

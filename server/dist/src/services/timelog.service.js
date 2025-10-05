@@ -1,13 +1,13 @@
 // server/src/services/timelog.service.ts
 // Define the 'include' object once to keep our code DRY
 const timeLogInclude = {
-    job: true,
+    project: true,
     user: true,
 };
 export const timeLogService = {
-    getAllByJob: (jobId, ctx) => {
+    getAllByProject: (projectId, ctx) => {
         return ctx.prisma.timeLog.findMany({
-            where: { jobId },
+            where: { projectId },
             orderBy: { date: "desc" },
             include: timeLogInclude,
         });

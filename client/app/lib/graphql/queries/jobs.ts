@@ -1,14 +1,14 @@
-// client/app/lib/graphql/queries/jobs.ts
+// client/app/lib/graphql/queries/projects.ts
 import { gql } from '@apollo/client';
 
 // Note the plural: GET_JOBS_QUERY
 export const GET_JOBS_QUERY = gql`
-  query GetJobs {
-    jobs {
+  query GetProjects {
+    projects {
       id
       title
       status
-      customer {
+      client {
         id
         name
       }

@@ -1,11 +1,11 @@
-# Defines the Job type and its related API operations.
+# Defines the Project type and its related API operations.
 
-type Job {
+type Project {
   id: ID!
   title: String!
   description: String
   location: String
-  status: JobStatus!
+  status: ProjectStatus!
   startDate: DateTime
   endDate: DateTime
   createdAt: DateTime!
@@ -13,36 +13,36 @@ type Job {
   budgetedAmount: Float 
   
   # --- Relationships ---
-  customer: Customer!
+  client: Client!
   manager: User
   quotes: [Quote!]!        # <-- Changed
   invoices: [Invoice!]!    # <-- Changed
   tasks: [Task!]!          # <-- Changed
-  expenses: [JobExpense!]! # <-- Changed
+  expenses: [ProjectExpense!]! # <-- Changed
   timeLogs: [TimeLog!]!    # <-- Changed
 }
 
 # --- Input Types ---
-# These define the shape of data for creating and updating jobs.
+# These define the shape of data for creating and updating projects.
 # (No changes were needed here)
-input CreateJobInput {
+input CreateProjectInput {
   title: String!
-  customerId: ID!
+  clientId: ID!
   managerId: ID
   description: String
   location: String
-  status: JobStatus
+  status: ProjectStatus
   startDate: DateTime
   endDate: DateTime
   
 }
 
-input UpdateJobInput {
+input UpdateProjectInput {
   title: String
   managerId: ID
   description: String
   location: String
-  status: JobStatus
+  status: ProjectStatus
   startDate: DateTime
   endDate: DateTime
   budgetedAmount: Float
@@ -50,15 +50,15 @@ input UpdateJobInput {
 
 # --- API Operations ---
 extend type Query {
-  # Get all jobs, optionally filtered by customer
-  jobs(customerId: ID): [Job!]! # <-- Changed
-  # Get a single job by its ID
-  job(id: ID!): Job
+  # Get all projects, optionally filtered by client
+  projects(clientId: ID): [Project!]! # <-- Changed
+  # Get a single project by its ID
+  project(id: ID!): Project
 }
 
 extend type Mutation {
   # (No changes were needed here)
-  createJob(input: CreateJobInput!): Job!
-  updateJob(id: ID!, input: UpdateJobInput!): Job!
-  deleteJob(id: ID!): Job!
+  createProject(input: CreateProjectInput!): Project!
+  updateProject(id: ID!, input: UpdateProjectInput!): Project!
+  deleteProject(id: ID!): Project!
 }

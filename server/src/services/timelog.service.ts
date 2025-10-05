@@ -6,14 +6,14 @@ import { CreateTimeLogInput, UpdateTimeLogInput } from "@/__generated__/graphql.
 
 // Define the 'include' object once to keep our code DRY
 const timeLogInclude = {
-  job: true,
+  project: true,
   user: true,
 };
 
 export const timeLogService = {
-  getAllByJob: (jobId: string, ctx: GraphQLContext) => {
+  getAllByProject: (projectId: string, ctx: GraphQLContext) => {
     return ctx.prisma.timeLog.findMany({
-      where: { jobId },
+      where: { projectId },
       orderBy: { date: "desc" },
       include: timeLogInclude,
     });

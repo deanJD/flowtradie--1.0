@@ -4,7 +4,7 @@ scalar DateTime
 
 # --- SHARED ENUMS ---
 # This section defines all the strict types for statuses and roles.
-enum JobStatus {
+enum ProjectStatus {
   PENDING
   ACTIVE
   COMPLETED

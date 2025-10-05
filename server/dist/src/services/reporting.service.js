@@ -1,13 +1,13 @@
 // server/src/services/reporting.service.ts
-import { JobStatus, InvoiceStatus } from '@prisma/client';
+import { ProjectStatus, InvoiceStatus } from '@prisma/client';
 // CONVERTED FROM A CLASS TO A SIMPLE OBJECT
 export const reportingService = {
     async getDashboardSummary(ctx) {
         const { prisma } = ctx; // Use prisma from the context
-        const totalOpenJobs = await prisma.job.count({
+        const totalOpenProjects = await prisma.project.count({
             where: {
                 status: {
-                    in: [JobStatus.PENDING, JobStatus.ACTIVE],
+                    in: [ProjectStatus.PENDING, ProjectStatus.ACTIVE],
                 },
             },
         });
@@ -47,32 +47,32 @@ export const reportingService = {
             },
         });
         const totalRevenueYTD = revenueRecords._sum.amount || 0;
-        return { totalOpenJobs, invoicesDueSoon, tasksDueToday, totalRevenueYTD };
+        return { totalOpenProjects, invoicesDueSoon, tasksDueToday, totalRevenueYTD };
     },
-    async jobProfitability(jobId, ctx) {
+    async projectProfitability(projectId, ctx) {
         const { prisma } = ctx; // Use prisma from the context
-        const job = await prisma.job.findUnique({
-            where: { id: jobId },
+        const project = await prisma.project.findUnique({
+            where: { id: projectId },
             include: {
                 invoices: { include: { payments: true } },
                 expenses: true,
                 timeLogs: { include: { user: true } },
             },
         });
-        if (!job) {
-            throw new Error('Job not found');
+        if (!project) {
+            throw new Error('Project not found');
         }
-        const totalRevenue = job.invoices.reduce((sum, invoice) => {
+        const totalRevenue = project.invoices.reduce((sum, invoice) => {
             const invoiceTotal = invoice.payments.reduce((paymentSum, payment) => paymentSum + payment.amount, 0);
             return sum + invoiceTotal;
         }, 0);
-        const totalMaterialCosts = job.expenses.reduce((sum, expense) => sum + expense.amount, 0);
-        const totalLaborCosts = job.timeLogs.reduce((sum, timeLog) => {
+        const totalMaterialCosts = project.expenses.reduce((sum, expense) => sum + expense.amount, 0);
+        const totalLaborCosts = project.timeLogs.reduce((sum, timeLog) => {
             const rate = timeLog.user?.hourlyRate ?? 0;
             return sum + (timeLog.hoursWorked * rate);
         }, 0);
         const netProfit = totalRevenue - (totalMaterialCosts + totalLaborCosts);
-        return { totalRevenue, totalMaterialCosts, totalLaborCosts, netProfit, job };
+        return { totalRevenue, totalMaterialCosts, totalLaborCosts, netProfit, project };
     }
 };
 //# sourceMappingURL=reporting.service.js.map

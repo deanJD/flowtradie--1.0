@@ -2,7 +2,7 @@
 
 type Query {
   invoice(id: ID!): Invoice
-  invoices(jobId: ID): [Invoice!]!   # ✅ accepts jobId argument, never returns null
+  invoices(projectId: ID): [Invoice!]!   # ✅ accepts projectId argument, never returns null
   
 }
 
@@ -30,7 +30,7 @@ type Invoice {
   totalAmount: Float!
   createdAt: DateTime!
   updatedAt: DateTime!
-  job: Job!
+  project: Project!
   items: [InvoiceItem!]!
   payments: [Payment!]!
 }
@@ -53,7 +53,7 @@ input CreateInvoiceItemInput {
 }
 
 input CreateInvoiceInput {
-  jobId: ID!
+  projectId: ID!
   invoiceNumber: String!
   dueDate: DateTime!
   status: InvoiceStatus = DRAFT

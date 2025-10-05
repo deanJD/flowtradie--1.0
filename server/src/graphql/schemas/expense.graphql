@@ -1,6 +1,6 @@
-# Defines the JobExpense type and its related API operations for cost tracking.
+# Defines the ProjectExpense type and its related API operations for cost tracking.
 
-type JobExpense {
+type ProjectExpense {
   id: ID!
   description: String!
   amount: Float!
@@ -10,14 +10,14 @@ type JobExpense {
   updatedAt: DateTime!
 
   # Relationship
-  job: Job!
+  project: Project!
 }
 
 
 # --- Input Types ---
 
 input CreateExpenseInput {
-  jobId: ID!
+  projectId: ID!
   description: String!
   amount: Float!
   category: String! # e.g., "Materials", "Labor", "Permits"
@@ -28,11 +28,11 @@ input CreateExpenseInput {
 # --- API Operations ---
 
 extend type Query {
-  # Get all expenses for a specific job
-  expenses(jobId: ID!): [JobExpense!]! # <-- Changed
+  # Get all expenses for a specific project
+  expenses(projectId: ID!): [ProjectExpense!]! # <-- Changed
 }
 
 extend type Mutation {
-  createExpense(input: CreateExpenseInput!): JobExpense!
-  deleteExpense(id: ID!): JobExpense!
+  createExpense(input: CreateExpenseInput!): ProjectExpense!
+  deleteExpense(id: ID!): ProjectExpense!
 }

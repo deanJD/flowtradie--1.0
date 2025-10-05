@@ -1,16 +1,16 @@
-// client/app/lib/graphql/queries/job.ts
+// client/app/lib/graphql/queries/project.ts
 import { gql } from '@apollo/client';
 
 export const GET_JOB_QUERY = gql`
-  query GetJob($jobId: ID!) {
-    job(id: $jobId) {
+  query GetProject($projectId: ID!) {
+    project(id: $projectId) {
       id
       title
       description
       status
       startDate
       endDate
-      customer {
+      client {
         id
         name
       }

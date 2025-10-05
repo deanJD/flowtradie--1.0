@@ -1,4 +1,4 @@
-# Defines the Task type and its related API operations for job checklists.
+# Defines the Task type and its related API operations for project checklists.
 
 type Task {
   id: ID!
@@ -10,7 +10,7 @@ type Task {
   updatedAt: DateTime!
 
   # Relationships
-  job: Job!
+  project: Project!
   assignedTo: User
 }
 
@@ -19,7 +19,7 @@ type Task {
 
 input CreateTaskInput {
   title: String!
-  jobId: ID!
+  projectId: ID!
   description: String
   assignedToId: ID
   dueDate: DateTime
@@ -37,8 +37,8 @@ input UpdateTaskInput {
 # --- API Operations ---
 
 extend type Query {
-  # Get all tasks for a specific job
-  tasks(jobId: ID!): [Task!]! # <-- Changed
+  # Get all tasks for a specific project
+  tasks(projectId: ID!): [Task!]! # <-- Changed
   # Get a single task by its ID
   task(id: ID!): Task
 }

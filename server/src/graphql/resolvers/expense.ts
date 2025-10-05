@@ -8,9 +8,9 @@ export const expenseResolvers = {
   Query: {
     expenses: (
       _p: unknown,
-      { jobId }: { jobId: string },
+      { projectId }: { projectId: string },
       ctx: GraphQLContext
-    ) => expenseService.getAllByJob(jobId, ctx),
+    ) => expenseService.getAllByProject(projectId, ctx),
   },
   Mutation: {
     createExpense: (
@@ -26,6 +26,6 @@ export const expenseResolvers = {
     ) => expenseService.delete(id, ctx),
   },
 
-  // Note: The relational resolver for `JobExpense.job` is no longer needed
+  // Note: The relational resolver for `ProjectExpense.project` is no longer needed
   // because our new service functions automatically include that data.
 };

@@ -1,31 +1,31 @@
 // server/src/services/reporting.service.ts
 
 import { GraphQLContext } from '../context.js';
-import { JobStatus, InvoiceStatus } from '@prisma/client';
-import type { Job, Invoice, Payment, JobExpense, TimeLog, User } from '@prisma/client';
+import { ProjectStatus, InvoiceStatus } from '@prisma/client';
+import type { Project, Invoice, Payment, ProjectExpense, TimeLog, User } from '@prisma/client';
 
 // Helper Types (these are great, we keep them)
 type InvoiceWithPayments = Invoice & { payments: Payment[] };
 type TimeLogWithUser = TimeLog & { user: User };
 
 interface DashboardSummary {
-  totalOpenJobs: number;
+  totalOpenProjects: number;
   invoicesDueSoon: number;
   tasksDueToday: number;
   totalRevenueYTD: number;
 }
 
-interface JobWithRelations extends Job {
+interface ProjectWithRelations extends Project {
   invoices: InvoiceWithPayments[];
-  expenses: JobExpense[];
+  expenses: ProjectExpense[];
   timeLogs: TimeLogWithUser[];
 }
-interface JobProfitabilityResult {
+interface ProjectProfitabilityResult {
   totalRevenue: number;
   totalMaterialCosts: number;
   totalLaborCosts: number;
   netProfit: number;
-  job: JobWithRelations;
+  project: ProjectWithRelations;
 }
 
 // CONVERTED FROM A CLASS TO A SIMPLE OBJECT
@@ -34,10 +34,10 @@ export const reportingService = {
   async getDashboardSummary(ctx: GraphQLContext): Promise<DashboardSummary> {
     const { prisma } = ctx; // Use prisma from the context
 
-    const totalOpenJobs = await prisma.job.count({
+    const totalOpenProjects = await prisma.project.count({
       where: {
         status: {
-          in: [JobStatus.PENDING, JobStatus.ACTIVE],
+          in: [ProjectStatus.PENDING, ProjectStatus.ACTIVE],
         },
       },
     });
@@ -85,37 +85,37 @@ export const reportingService = {
 
     const totalRevenueYTD = revenueRecords._sum.amount || 0;
 
-    return { totalOpenJobs, invoicesDueSoon, tasksDueToday, totalRevenueYTD };
+    return { totalOpenProjects, invoicesDueSoon, tasksDueToday, totalRevenueYTD };
   },
 
-  async jobProfitability(jobId: string, ctx: GraphQLContext): Promise<JobProfitabilityResult> {
+  async projectProfitability(projectId: string, ctx: GraphQLContext): Promise<ProjectProfitabilityResult> {
     const { prisma } = ctx; // Use prisma from the context
 
-    const job = await prisma.job.findUnique({
-      where: { id: jobId },
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
       include: {
         invoices: { include: { payments: true } },
         expenses: true,
         timeLogs: { include: { user: true } },
       },
-    }) as JobWithRelations | null;
+    }) as ProjectWithRelations | null;
 
-    if (!job) { throw new Error('Job not found'); }
+    if (!project) { throw new Error('Project not found'); }
 
-    const totalRevenue = job.invoices.reduce((sum: number, invoice: InvoiceWithPayments) => {
+    const totalRevenue = project.invoices.reduce((sum: number, invoice: InvoiceWithPayments) => {
       const invoiceTotal = invoice.payments.reduce((paymentSum: number, payment: Payment) => paymentSum + payment.amount, 0);
       return sum + invoiceTotal;
     }, 0);
 
-    const totalMaterialCosts = job.expenses.reduce((sum: number, expense: JobExpense) => sum + expense.amount, 0);
+    const totalMaterialCosts = project.expenses.reduce((sum: number, expense: ProjectExpense) => sum + expense.amount, 0);
 
-    const totalLaborCosts = job.timeLogs.reduce((sum: number, timeLog: TimeLogWithUser) => {
+    const totalLaborCosts = project.timeLogs.reduce((sum: number, timeLog: TimeLogWithUser) => {
       const rate = timeLog.user?.hourlyRate ?? 0;
       return sum + (timeLog.hoursWorked * rate);
     }, 0);
 
     const netProfit = totalRevenue - (totalMaterialCosts + totalLaborCosts);
 
-    return { totalRevenue, totalMaterialCosts, totalLaborCosts, netProfit, job };
+    return { totalRevenue, totalMaterialCosts, totalLaborCosts, netProfit, project };
   }
 };

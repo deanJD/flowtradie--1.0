@@ -2,12 +2,12 @@ import { Prisma } from "@prisma/client";
 // Define the 'include' object once to keep our code DRY
 const taskInclude = {
     assignedTo: true,
-    job: true,
+    project: true,
 };
 export const taskService = {
-    getAllByJob: (jobId, ctx) => {
+    getAllByProject: (projectId, ctx) => {
         return ctx.prisma.task.findMany({
-            where: { jobId },
+            where: { projectId },
             orderBy: { createdAt: "desc" },
             include: taskInclude,
         });
@@ -28,7 +28,7 @@ export const taskService = {
         catch (error) {
             // Keep your excellent error handling for invalid foreign keys
             if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
-                throw new Error("Invalid jobId or assignedToId. The Job or User does not exist.");
+                throw new Error("Invalid projectId or assignedToId. The Project or User does not exist.");
             }
             throw error;
         }

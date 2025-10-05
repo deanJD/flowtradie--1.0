@@ -1,37 +1,37 @@
-// server/src/services/job.service.ts
+// server/src/services/project.service.ts
 
 import { GraphQLContext } from "../context.js";
 import { Prisma } from "@prisma/client";
-import { CreateJobInput, UpdateJobInput } from "@/__generated__/graphql.js";
+import { CreateProjectInput, UpdateProjectInput } from "@/__generated__/graphql.js";
 
-export const jobService = {
-  // Find all jobs, including their customer
-  getAll: (customerId: string | undefined, ctx: GraphQLContext) => {
-    return ctx.prisma.job.findMany({
-      where: customerId ? { customerId } : {},
+export const projectService = {
+  // Find all projects, including their client
+  getAll: (clientId: string | undefined, ctx: GraphQLContext) => {
+    return ctx.prisma.project.findMany({
+      where: clientId ? { clientId } : {},
       orderBy: { createdAt: "desc" },
-      include: { customer: true },
+      include: { client: true },
     });
   },
 
-  // Inside your job.service.ts file
+  // Inside your project.service.ts file
 
 getById: (id: string, ctx: GraphQLContext) => {
-  return ctx.prisma.job.findUnique({
+  return ctx.prisma.project.findUnique({
     where: { id },
     include: {
-      customer: true,
+      client: true,
       tasks: true,      // <-- This is the main fix
       quotes: true,     // <-- Added to prevent the next error
       invoices: true,   // <-- Added to prevent the next error
     },
   });
 },
-  // Create a new job
-  create: (input: CreateJobInput, ctx: GraphQLContext) => {
+  // Create a new project
+  create: (input: CreateProjectInput, ctx: GraphQLContext) => {
     // FIX #1: Manually build the data object to handle relations
     // and to convert potential nulls to undefined.
-    const data: Prisma.JobCreateInput = {
+    const data: Prisma.ProjectCreateInput = {
       title: input.title,
       description: input.description ?? undefined,
       location: input.location ?? undefined,
@@ -39,21 +39,21 @@ getById: (id: string, ctx: GraphQLContext) => {
       startDate: input.startDate ?? undefined,
       endDate: input.endDate ?? undefined,
       // Connect relations properly
-      customer: { connect: { id: input.customerId } },
+      client: { connect: { id: input.clientId } },
       manager: input.managerId ? { connect: { id: input.managerId } } : undefined,
     };
 
-    return ctx.prisma.job.create({
+    return ctx.prisma.project.create({
       data,
-      include: { customer: true },
+      include: { client: true },
     });
   },
 
-  // Update a job
-  update: (id: string, input: UpdateJobInput, ctx: GraphQLContext) => {
+  // Update a project
+  update: (id: string, input: UpdateProjectInput, ctx: GraphQLContext) => {
     // FIX #2: Handle the manager relation correctly using connect/disconnect
     // and clean all other nullable fields.
-    const data: Prisma.JobUpdateInput = {
+    const data: Prisma.ProjectUpdateInput = {
       title: input.title ?? undefined,
       description: input.description ?? undefined,
       location: input.location ?? undefined,
@@ -70,16 +70,16 @@ getById: (id: string, ctx: GraphQLContext) => {
           : undefined, // Otherwise, do nothing
     };
 
-    return ctx.prisma.job.update({
+    return ctx.prisma.project.update({
       where: { id },
       data,
-      include: { customer: true },
+      include: { client: true },
     });
   },
 
-  // Delete a job
+  // Delete a project
   delete: (id: string, ctx: GraphQLContext) => {
-    return ctx.prisma.job.delete({
+    return ctx.prisma.project.delete({
       where: { id },
     });
   },

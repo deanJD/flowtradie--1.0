@@ -1,37 +1,37 @@
-// client/app/dashboard/jobs/new/page.tsx
+// client/app/dashboard/projects/new/page.tsx
 'use client';
 
 import React, { useState } from 'react';
 import { useQuery } from '@apollo/client';
-import { GET_CUSTOMERS_QUERY } from '@/app/lib/graphql/queries/customers';
+import { GET_CUSTOMERS_QUERY } from '@/app/lib/graphql/queries/clients';
 import Link from 'next/link';
-import styles from './NewJobPage.module.css';
+import styles from './NewProjectPage.module.css';
 
-export default function NewJobPage() {
-  // Fetch customers for the dropdown
-  const { data: customersData, loading: customersLoading, error: customersError } = useQuery(GET_CUSTOMERS_QUERY);
+export default function NewProjectPage() {
+  // Fetch clients for the dropdown
+  const { data: clientsData, loading: clientsLoading, error: clientsError } = useQuery(GET_CUSTOMERS_QUERY);
 
   // State for the form fields
   const [title, setTitle] = useState('');
-  const [customerId, setCustomerId] = useState('');
+  const [clientId, setClientId] = useState('');
   const [description, setDescription] = useState('');
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    console.log('Creating job with:', { title, customerId, description });
-    // We'll add the createJob mutation logic here next
+    console.log('Creating project with:', { title, clientId, description });
+    // We'll add the createProject mutation logic here next
   };
 
-  if (customersLoading) return <p>Loading customers...</p>;
-  if (customersError) return <p>Error loading customers: {customersError.message}</p>;
+  if (clientsLoading) return <p>Loading clients...</p>;
+  if (clientsError) return <p>Error loading clients: {clientsError.message}</p>;
 
   return (
     <div className={styles.container}>
       <form className={styles.form} onSubmit={handleSubmit}>
-        <h1 className={styles.title}>Create a New Job</h1>
+        <h1 className={styles.title}>Create a New Project</h1>
 
         <div className={styles.inputGroup}>
-          <label htmlFor="title" className={styles.label}>Job Title</label>
+          <label htmlFor="title" className={styles.label}>Project Title</label>
           <input
             id="title"
             type="text"
@@ -43,18 +43,18 @@ export default function NewJobPage() {
         </div>
 
         <div className={styles.inputGroup}>
-          <label htmlFor="customer" className={styles.label}>Customer</label>
+          <label htmlFor="client" className={styles.label}>Client</label>
           <select
-            id="customer"
-            value={customerId}
-            onChange={(e) => setCustomerId(e.target.value)}
+            id="client"
+            value={clientId}
+            onChange={(e) => setClientId(e.target.value)}
             className={styles.input}
             required
           >
-            <option value="" disabled>Select a customer</option>
-            {customersData?.customers.map((customer: any) => (
-              <option key={customer.id} value={customer.id}>
-                {customer.name}
+            <option value="" disabled>Select a client</option>
+            {clientsData?.clients.map((client: any) => (
+              <option key={client.id} value={client.id}>
+                {client.name}
               </option>
             ))}
           </select>
@@ -73,7 +73,7 @@ export default function NewJobPage() {
 
         <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
           <button type="submit" className={styles.button}>
-            Create Job
+            Create Project
           </button>
           <Link href="/dashboard" className={styles.button} style={{ backgroundColor: '#ccc', textAlign: 'center' }}>
             Cancel

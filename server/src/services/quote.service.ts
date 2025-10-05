@@ -6,14 +6,14 @@ export const quoteService = {
   getById: (id: string, ctx: GraphQLContext) => {
     return ctx.prisma.quote.findUnique({
       where: { id },
-      include: { items: true, job: true },
+      include: { items: true, project: true },
     });
   },
 
-  getByJob: (jobId: string, ctx: GraphQLContext) => {
+  getByProject: (projectId: string, ctx: GraphQLContext) => {
     return ctx.prisma.quote.findMany({
-      where: { jobId },
-      include: { items: true, job: true },
+      where: { projectId },
+      include: { items: true, project: true },
     });
   },
 
@@ -28,7 +28,7 @@ export const quoteService = {
 
     return ctx.prisma.quote.create({
       data: {
-        jobId: input.jobId,
+        projectId: input.projectId,
         quoteNumber: input.quoteNumber,
         expiryDate: input.expiryDate,
         status: input.status ?? "DRAFT",
@@ -47,7 +47,7 @@ export const quoteService = {
       },
       include: {
         items: true,
-        job: true,
+        project: true,
       },
     });
   },
@@ -90,11 +90,11 @@ export const quoteService = {
       // Step 4: Final update with new totals
       await prisma.quote.update({ where: { id }, data: { subtotal, gstAmount, totalAmount } });
 
-      // Step 5: (THE FIX) Check the ORIGINAL input and update the job's budget if needed
+      // Step 5: (THE FIX) Check the ORIGINAL input and update the project's budget if needed
       if (input.status === "ACCEPTED") {
         const finalQuote = await prisma.quote.findUnique({ where: { id } });
-        await prisma.job.update({
-          where: { id: finalQuote!.jobId },
+        await prisma.project.update({
+          where: { id: finalQuote!.projectId },
           data: { budgetedAmount: finalQuote!.totalAmount },
         });
       }
@@ -102,7 +102,7 @@ export const quoteService = {
       // Step 6: Return the final, fully updated quote
       return prisma.quote.findUnique({
         where: { id },
-        include: { items: true, job: true },
+        include: { items: true, project: true },
       });
     });
   },

@@ -8,9 +8,9 @@ import styles from './Sidebar.module.css';
 // Define our navigation links here
 const navLinks = [
   { href: '/dashboard', label: 'Dashboard' },
-  { href: '/dashboard/jobs', label: 'Jobs' },
+  { href: '/dashboard/projects', label: 'Projects' },
   { href: '/dashboard/invoices', label: 'Invoices' },
-  { href: '/dashboard/customers', label: 'Customers' },
+  { href: '/dashboard/clients', label: 'Clients' },
 ];
 
 export default function Sidebar() {

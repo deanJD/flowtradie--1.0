@@ -1,17 +1,17 @@
 # Defines the types and API operations for business intelligence and reporting.
 
-# This is the shape of the data that our Job Profitability Dashboard will receive.
-type JobProfitability {
+# This is the shape of the data that our Project Profitability Dashboard will receive.
+type ProjectProfitability {
   totalRevenue: Float!
   totalMaterialCosts: Float!
   totalLaborCosts: Float!
   netProfit: Float!
-  job: Job!
+  project: Project!
 }
 
 
 type DashboardSummary {
-  totalOpenJobs: Int!
+  totalOpenProjects: Int!
   invoicesDueSoon: Int!
   tasksDueToday: Int!
   totalRevenueYTD: Float!
@@ -25,6 +25,6 @@ extend type Query {
 # --- API Operations ---
 
 extend type Query {
-  # Takes a Job ID and returns a full profitability report for that job.
-  jobProfitability(jobId: ID!): JobProfitability!
+  # Takes a Project ID and returns a full profitability report for that project.
+  projectProfitability(projectId: ID!): ProjectProfitability!
 }

@@ -22,15 +22,15 @@ export default function QuoteDetailsPage({ params }: { params: Promise<{ quoteId
 
   return (
     <div className={styles.container}>
-      <Link href={`/dashboard/jobs/${quote.job.id}`} className={styles.backLink}>
-        ← Back to Job
+      <Link href={`/dashboard/projects/${quote.project.id}`} className={styles.backLink}>
+        ← Back to Project
       </Link>
       
       <div className={styles.header}>
         <h1 className={styles.title}>Quote #{quote.quoteNumber}</h1>
         <div className={styles.metaGrid}>
           <p className={styles.metaItem}><strong>Status:</strong> {quote.status}</p>
-          <p className={styles.metaItem}><strong>Job:</strong> {quote.job.title}</p>
+          <p className={styles.metaItem}><strong>Project:</strong> {quote.project.title}</p>
           <p className={styles.metaItem}><strong>Issue Date:</strong> {new Date(quote.issueDate).toLocaleDateString()}</p>
           {quote.expiryDate && <p className={styles.metaItem}><strong>Expiry Date:</strong> {new Date(quote.expiryDate).toLocaleDateString()}</p>}
         </div>

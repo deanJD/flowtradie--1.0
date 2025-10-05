@@ -17,10 +17,10 @@ type UpdateInvoiceInput = {
 
 
 export const invoiceService = {
-  // # returns invoices for a job
-  getAllByJob: async (jobId: string | undefined, ctx: GraphQLContext) => {
+  // # returns invoices for a project
+  getAllByProject: async (projectId: string | undefined, ctx: GraphQLContext) => {
     const invoices = await ctx.prisma.invoice.findMany({
-      where: jobId ? { jobId } : {},
+      where: projectId ? { projectId } : {},
       include: { items: true, payments: true },
     });
     return invoices || [];
@@ -33,7 +33,7 @@ getById: async (id: string, ctx: GraphQLContext) => {
     include: {
       items: true,
       payments: true,
-      job: true 
+      project: true 
     },
   });
 },
@@ -50,7 +50,7 @@ getById: async (id: string, ctx: GraphQLContext) => {
 
     return ctx.prisma.invoice.create({
       data: {
-        jobId: input.jobId,
+        projectId: input.projectId,
         invoiceNumber: input.invoiceNumber,
         dueDate: input.dueDate,
         status: input.status ?? "DRAFT",
@@ -94,7 +94,7 @@ getById: async (id: string, ctx: GraphQLContext) => {
       // A) Create the new invoice with all its items
       const createdInvoice = await prisma.invoice.create({
         data: {
-          jobId: quote.jobId,
+          projectId: quote.projectId,
           invoiceNumber: newInvoiceNumber,
           dueDate: dueDate,
           status: "DRAFT", // Start the new invoice as a Draft
@@ -111,7 +111,7 @@ getById: async (id: string, ctx: GraphQLContext) => {
             })),
           },
         },
-        include: { items: true, job: true } // Return the full new invoice object
+        include: { items: true, project: true } // Return the full new invoice object
       });
   
       // B) Update the original quote's status to show it's been converted

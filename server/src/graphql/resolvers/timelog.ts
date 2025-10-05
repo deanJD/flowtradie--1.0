@@ -6,11 +6,11 @@ import { CreateTimeLogInput, UpdateTimeLogInput } from "@/__generated__/graphql.
 
 export const timeLogResolvers = {
   Query: {
-    timeLogsForJob: (
+    timeLogsForProject: (
       _p: unknown,
-      { jobId }: { jobId: string },
+      { projectId }: { projectId: string },
       ctx: GraphQLContext
-    ) => timeLogService.getAllByJob(jobId, ctx),
+    ) => timeLogService.getAllByProject(projectId, ctx),
 
     timeLogsForUser: (
       _p: unknown,
@@ -38,7 +38,7 @@ export const timeLogResolvers = {
     ) => timeLogService.delete(id, ctx),
   },
 
-  // Note: The relational resolvers for `TimeLog.job` and `TimeLog.user`
+  // Note: The relational resolvers for `TimeLog.project` and `TimeLog.user`
   // are no longer needed because our new service functions automatically
   // include that data.
 };

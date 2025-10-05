@@ -13,13 +13,13 @@ export const invoiceResolvers = {
       return await invoiceService.getById(id, ctx);
     },
 
-    // # fetch all invoices for a job
+    // # fetch all invoices for a project
     invoices: async (
       _p: unknown,
-      { jobId }: { jobId?: string },
+      { projectId }: { projectId?: string },
       ctx: GraphQLContext
     ) => {
-      const result = await invoiceService.getAllByJob(jobId, ctx);
+      const result = await invoiceService.getAllByProject(projectId, ctx);
       return result ?? [];
     },
   },

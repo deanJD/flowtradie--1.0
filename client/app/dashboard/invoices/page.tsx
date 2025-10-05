@@ -6,9 +6,9 @@ import styles from './InvoicesPage.module.css';
 
 // Placeholder data to build our UI
 const mockData = [
-  { id: '1', invoiceNumber: 'INV-2025-001', customer: { name: 'Skyline Constructions' }, status: 'PAID', totalAmount: 1250.00 },
-  { id: '2', invoiceNumber: 'INV-2025-002', customer: { name: 'John Smith Contracting' }, status: 'SENT', totalAmount: 3400.50 },
-  { id: '3', invoiceNumber: 'INV-2025-003', customer: { name: 'Beta Builders' }, status: 'DRAFT', totalAmount: 800.00 },
+  { id: '1', invoiceNumber: 'INV-2025-001', client: { name: 'Skyline Constructions' }, status: 'PAID', totalAmount: 1250.00 },
+  { id: '2', invoiceNumber: 'INV-2025-002', client: { name: 'John Smith Contracting' }, status: 'SENT', totalAmount: 3400.50 },
+  { id: '3', invoiceNumber: 'INV-2025-003', client: { name: 'Beta Builders' }, status: 'DRAFT', totalAmount: 800.00 },
 ];
 
 // A helper function to get the right style for each status
@@ -36,7 +36,7 @@ export default function InvoicesPage() {
           <thead>
             <tr>
               <th>Invoice #</th>
-              <th>Customer</th>
+              <th>Client</th>
               <th>Status</th>
               <th>Total</th>
               <th>Actions</th>
@@ -46,7 +46,7 @@ export default function InvoicesPage() {
             {mockData.map(invoice => (
               <tr key={invoice.id}>
                 <td>{invoice.invoiceNumber}</td>
-                <td>{invoice.customer.name}</td>
+                <td>{invoice.client.name}</td>
                 <td>
                   <span className={`${styles.status} ${getStatusClass(invoice.status)}`}>
                     {invoice.status}

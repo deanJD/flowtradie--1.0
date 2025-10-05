@@ -14,7 +14,7 @@ datasource db {
 // --- ENUMS ---
 // Enums provide type safety for status fields.
 // FIX: Corrected enum formatting to have one value per line.
-enum JobStatus {
+enum ProjectStatus {
   PENDING
   ACTIVE
   COMPLETED
@@ -61,11 +61,11 @@ model User {
   tasks       Task[]
   timeLogs    TimeLog[]
   // FIX: This line completes the relationship by defining its opposite side.
-  // It tells Prisma that a single User can be the manager of many Jobs.
-  managedJobs Job[]    @relation("JobManager")
+  // It tells Prisma that a single User can be the manager of many Projects.
+  managedProjects Project[]    @relation("ProjectManager")
 }
 
-model Customer {
+model Client {
   id        String   @id @default(cuid())
   name      String
   email     String   @unique
@@ -73,28 +73,28 @@ model Customer {
   address   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  jobs      Job[]
+  projects      Project[]
 }
 
-model Job {
+model Project {
   id          String    @id @default(cuid())
   title       String
   description String?
   location    String?
-  status      JobStatus @default(PENDING)
+  status      ProjectStatus @default(PENDING)
   startDate   DateTime?
   endDate     DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  customerId  String
-  customer    Customer  @relation(fields: [customerId], references: [id])
+  clientId  String
+  client    Client  @relation(fields: [clientId], references: [id])
   // This is the link we will use for project-level responsibility.
   managerId   String?
-  manager     User?     @relation("JobManager", fields: [managerId], references: [id])
+  manager     User?     @relation("ProjectManager", fields: [managerId], references: [id])
   quotes      Quote[]
   invoices    Invoice[]
   tasks       Task[]
-  expenses    JobExpense[]
+  expenses    ProjectExpense[]
   timeLogs    TimeLog[]
   // --- NEW BUDGET FIELD ---
   budgetedAmount Float?   // This will store the total from the accepted quote
@@ -119,8 +119,8 @@ model Quote {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
-  jobId       String
-  job         Job         @relation(fields: [jobId], references: [id])
+  projectId       String
+  project         Project         @relation(fields: [projectId], references: [id])
   items       QuoteItem[]
 }
 
@@ -149,8 +149,8 @@ model Invoice {
 
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
-  jobId         String
-  job           Job           @relation(fields: [jobId], references: [id])
+  projectId         String
+  project           Project           @relation(fields: [projectId], references: [id])
   items         InvoiceItem[]
   payments      Payment[]
 }
@@ -185,13 +185,13 @@ model Task {
   dueDate      DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
-  jobId        String
-  job          Job       @relation(fields: [jobId], references: [id])
+  projectId        String
+  project          Project       @relation(fields: [projectId], references: [id])
   assignedToId String?
   assignedTo   User?     @relation(fields: [assignedToId], references: [id])
 }
 
-model JobExpense {
+model ProjectExpense {
   id          String   @id @default(cuid())
   description String
   amount      Float
@@ -199,8 +199,8 @@ model JobExpense {
   category    String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  jobId       String
-  job         Job      @relation(fields: [jobId], references: [id])
+  projectId       String
+  project         Project      @relation(fields: [projectId], references: [id])
 }
 
 
@@ -213,9 +213,9 @@ model TimeLog {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  // Each time log must be for a specific job and user.
-  jobId String
-  job   Job    @relation(fields: [jobId], references: [id])
+  // Each time log must be for a specific project and user.
+  projectId String
+  project   Project    @relation(fields: [projectId], references: [id])
   userId String
   user  User   @relation(fields: [userId], references: [id])
 }

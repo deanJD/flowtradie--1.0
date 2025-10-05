@@ -6,13 +6,13 @@ export var InvoiceStatus;
     InvoiceStatus["PartiallyPaid"] = "PARTIALLY_PAID";
     InvoiceStatus["Sent"] = "SENT";
 })(InvoiceStatus || (InvoiceStatus = {}));
-export var JobStatus;
-(function (JobStatus) {
-    JobStatus["Active"] = "ACTIVE";
-    JobStatus["Cancelled"] = "CANCELLED";
-    JobStatus["Completed"] = "COMPLETED";
-    JobStatus["Pending"] = "PENDING";
-})(JobStatus || (JobStatus = {}));
+export var ProjectStatus;
+(function (ProjectStatus) {
+    ProjectStatus["Active"] = "ACTIVE";
+    ProjectStatus["Cancelled"] = "CANCELLED";
+    ProjectStatus["Completed"] = "COMPLETED";
+    ProjectStatus["Pending"] = "PENDING";
+})(ProjectStatus || (ProjectStatus = {}));
 export var QuoteStatus;
 (function (QuoteStatus) {
     QuoteStatus["Accepted"] = "ACCEPTED";

@@ -1,42 +1,42 @@
-// server/src/services/customer.service.ts
+// server/src/services/client.service.ts
 import { GraphQLContext } from "../context.js";
 import { Prisma } from "@prisma/client";
-import { CreateCustomerInput, UpdateCustomerInput } from "@/__generated__/graphql.js";
+import { CreateClientInput, UpdateClientInput } from "@/__generated__/graphql.js";
 
-export const customerService = {
+export const clientService = {
   getAll: (ctx: GraphQLContext) => {
-    return ctx.prisma.customer.findMany({
+    return ctx.prisma.client.findMany({
       orderBy: { createdAt: "desc" },
     });
   },
 
   getById: (id: string, ctx: GraphQLContext) => {
-    return ctx.prisma.customer.findUnique({
+    return ctx.prisma.client.findUnique({
       where: { id },
     });
   },
 
-  create: (input: CreateCustomerInput, ctx: GraphQLContext) => {
-    return ctx.prisma.customer.create({
+  create: (input: CreateClientInput, ctx: GraphQLContext) => {
+    return ctx.prisma.client.create({
       data: input,
     });
   },
 
-  update: (id: string, input: UpdateCustomerInput, ctx: GraphQLContext) => {
-    const data: Prisma.CustomerUpdateInput = {
+  update: (id: string, input: UpdateClientInput, ctx: GraphQLContext) => {
+    const data: Prisma.ClientUpdateInput = {
       name: input.name ?? undefined,
       email: input.email ?? undefined,
       phone: input.phone ?? undefined,
       address: input.address ?? undefined,
     };
-    return ctx.prisma.customer.update({
+    return ctx.prisma.client.update({
       where: { id },
       data,
     });
   },
 
   delete: (id: string, ctx: GraphQLContext) => {
-    return ctx.prisma.customer.delete({
+    return ctx.prisma.client.delete({
       where: { id },
     });
   },

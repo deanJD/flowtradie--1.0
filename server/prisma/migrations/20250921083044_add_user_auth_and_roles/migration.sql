@@ -9,7 +9,7 @@
 CREATE TYPE "public"."UserRole" AS ENUM ('OWNER', 'ADMIN', 'MANAGER', 'FOREMAN', 'WORKER', 'CONTRACTOR');
 
 -- AlterTable
-ALTER TABLE "public"."Job" ADD COLUMN     "managerId" TEXT;
+ALTER TABLE "public"."Project" ADD COLUMN     "managerId" TEXT;
 
 -- AlterTable
 ALTER TABLE "public"."User" ADD COLUMN     "password" TEXT NOT NULL,
@@ -17,4 +17,4 @@ DROP COLUMN "role",
 ADD COLUMN     "role" "public"."UserRole" NOT NULL DEFAULT 'WORKER';
 
 -- AddForeignKey
-ALTER TABLE "public"."Job" ADD CONSTRAINT "Job_managerId_fkey" FOREIGN KEY ("managerId") REFERENCES "public"."User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "public"."Project" ADD CONSTRAINT "Project_managerId_fkey" FOREIGN KEY ("managerId") REFERENCES "public"."User"("id") ON DELETE SET NULL ON UPDATE CASCADE;

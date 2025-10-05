@@ -1,2 +1,2 @@
 -- AlterTable
-ALTER TABLE "public"."Job" ADD COLUMN     "budgetedAmount" DOUBLE PRECISION;
+ALTER TABLE "public"."Project" ADD COLUMN     "budgetedAmount" DOUBLE PRECISION;

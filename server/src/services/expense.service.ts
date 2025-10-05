@@ -5,27 +5,27 @@ import { CreateExpenseInput } from "@/__generated__/graphql.js";
 
 // Define the 'include' object once to keep our code DRY
 const expenseInclude = {
-  job: true,
+  project: true,
 };
 
 export const expenseService = {
-  getAllByJob: (jobId: string, ctx: GraphQLContext) => {
-    return ctx.prisma.jobExpense.findMany({
-      where: { jobId },
+  getAllByProject: (projectId: string, ctx: GraphQLContext) => {
+    return ctx.prisma.projectExpense.findMany({
+      where: { projectId },
       orderBy: { date: "desc" },
       include: expenseInclude,
     });
   },
 
   create: (input: CreateExpenseInput, ctx: GraphQLContext) => {
-    return ctx.prisma.jobExpense.create({
+    return ctx.prisma.projectExpense.create({
       data: input,
       include: expenseInclude,
     });
   },
 
   delete: (id: string, ctx: GraphQLContext) => {
-    return ctx.prisma.jobExpense.delete({ where: { id } });
+    return ctx.prisma.projectExpense.delete({ where: { id } });
   },
 
   // Note: We can add an 'update' function here later

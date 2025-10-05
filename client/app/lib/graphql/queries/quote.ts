@@ -13,7 +13,7 @@ export const GET_QUOTE_QUERY = gql`
       gstRate
       gstAmount
       totalAmount
-      job {
+      project {
         id
         title
       }

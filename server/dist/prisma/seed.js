@@ -12,10 +12,10 @@ async function main() {
     await prisma.invoice.deleteMany();
     await prisma.quoteItem.deleteMany();
     await prisma.quote.deleteMany();
-    await prisma.jobExpense.deleteMany();
+    await prisma.projectExpense.deleteMany();
     await prisma.timeLog.deleteMany();
-    await prisma.job.deleteMany();
-    await prisma.customer.deleteMany();
+    await prisma.project.deleteMany();
+    await prisma.client.deleteMany();
     await prisma.user.deleteMany();
     // 2. CREATE THE OWNER USER
     console.log('Creating owner user...');
@@ -29,31 +29,31 @@ async function main() {
         },
     });
     // 3. CREATE A CUSTOMER
-    console.log('Creating a customer...');
-    const customer = await prisma.customer.create({
+    console.log('Creating a client...');
+    const client = await prisma.client.create({
         data: {
             name: 'Skyline Constructions',
             email: 'skyline@example.com',
         },
     });
     // 4. CREATE A JOB FOR THAT CUSTOMER
-    console.log('Creating a job...');
-    const job = await prisma.job.create({
+    console.log('Creating a project...');
+    const project = await prisma.project.create({
         data: {
             title: 'Downtown Office Renovation',
             status: 'ACTIVE',
-            customerId: customer.id,
+            clientId: client.id,
             managerId: owner.id, // Assign our new owner as the manager
         },
     });
     // 5. CREATE TASKS FOR THAT JOB
-    console.log('Creating tasks for the job...');
+    console.log('Creating tasks for the project...');
     await prisma.task.createMany({
         data: [
-            { title: 'Finalize blueprint', isCompleted: true, jobId: job.id, assignedToId: owner.id },
-            { title: 'Order materials', isCompleted: true, jobId: job.id },
-            { title: 'Begin demolition', isCompleted: false, jobId: job.id },
-            { title: 'Plumbing rough-in', isCompleted: false, jobId: job.id },
+            { title: 'Finalize blueprint', isCompleted: true, projectId: project.id, assignedToId: owner.id },
+            { title: 'Order materials', isCompleted: true, projectId: project.id },
+            { title: 'Begin demolition', isCompleted: false, projectId: project.id },
+            { title: 'Plumbing rough-in', isCompleted: false, projectId: project.id },
         ],
     });
     console.log(`Seeding finished.`);

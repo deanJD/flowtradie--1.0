@@ -5,9 +5,9 @@ export const invoiceResolvers = {
         invoice: async (_p, { id }, ctx) => {
             return await invoiceService.getById(id, ctx);
         },
-        // # fetch all invoices for a job
-        invoices: async (_p, { jobId }, ctx) => {
-            const result = await invoiceService.getAllByJob(jobId, ctx);
+        // # fetch all invoices for a project
+        invoices: async (_p, { projectId }, ctx) => {
+            const result = await invoiceService.getAllByProject(projectId, ctx);
             return result ?? [];
         },
     },

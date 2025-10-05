@@ -4,12 +4,12 @@ import { reportingService } from '../../services/reporting.service.js';
 
 export const reportingResolvers = {
   Query: {
-    jobProfitability: (
+    projectProfitability: (
       _parent: unknown,
-      { jobId }: { jobId: string },
+      { projectId }: { projectId: string },
       ctx: GraphQLContext
     ) => {
-      return reportingService.jobProfitability(jobId, ctx);
+      return reportingService.projectProfitability(projectId, ctx);
     },
 
     getDashboardSummary: (

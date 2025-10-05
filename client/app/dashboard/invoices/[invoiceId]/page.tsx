@@ -25,15 +25,15 @@ export default function InvoiceDetailsPage({ params }: { params: Promise<{ invoi
 
   return (
     <div className={styles.container}>
-      <Link href={`/dashboard/jobs/${invoice.job.id}`} className={styles.backLink}>
-        ← Back to Job
+      <Link href={`/dashboard/projects/${invoice.project.id}`} className={styles.backLink}>
+        ← Back to Project
       </Link>
       
       <div className={styles.header}>
         <h1 className={styles.title}>Invoice #{invoice.invoiceNumber}</h1>
         <div className={styles.metaGrid}>
           <p className={styles.metaItem}><strong>Status:</strong> {invoice.status}</p>
-          <p className={styles.metaItem}><strong>Job:</strong> {invoice.job.title}</p>
+          <p className={styles.metaItem}><strong>Project:</strong> {invoice.project.title}</p>
           <p className={styles.metaItem}><strong>Issue Date:</strong> {new Date(invoice.issueDate).toLocaleDateString()}</p>
           <p className={styles.metaItem}><strong>Due Date:</strong> {new Date(invoice.dueDate).toLocaleDateString()}</p>
         </div>

@@ -1,6 +1,6 @@
-# Defines the Customer type and its related API operations
+# Defines the Client type and its related API operations
 
-type Customer {
+type Client {
   id: ID!
   name: String!
   email: String!
@@ -8,32 +8,32 @@ type Customer {
   address: String
   createdAt: DateTime!
   updatedAt: DateTime!
-  jobs: [Job!]! # <-- Changed
+  projects: [Project!]! # <-- Changed
 }
 
-input CreateCustomerInput {
+input CreateClientInput {
   name: String!
   email: String!
   phone: String
   address: String
 }
 
-input UpdateCustomerInput {
+input UpdateClientInput {
   name: String
   email: String
   phone: String
   address: String
 }
 
-# Extend the root Query type with customer-specific queries
+# Extend the root Query type with client-specific queries
 extend type Query {
-  customers: [Customer!]! # <-- Changed
-  customer(id: ID!): Customer
+  clients: [Client!]! # <-- Changed
+  client(id: ID!): Client
 }
 
-# Extend the root Mutation type with customer-specific mutations
+# Extend the root Mutation type with client-specific mutations
 extend type Mutation {
-  createCustomer(input: CreateCustomerInput!): Customer!
-  updateCustomer(id: ID!, input: UpdateCustomerInput!): Customer!
-  deleteCustomer(id: ID!): Customer!
+  createClient(input: CreateClientInput!): Client!
+  updateClient(id: ID!, input: UpdateClientInput!): Client!
+  deleteClient(id: ID!): Client!
 }
