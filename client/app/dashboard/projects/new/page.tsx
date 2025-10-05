@@ -3,13 +3,13 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@apollo/client';
-import { GET_CUSTOMERS_QUERY } from '@/app/lib/graphql/queries/clients';
+import { GET_CLIENTS_QUERY } from '@/app/lib/graphql/queries/clients';
 import Link from 'next/link';
 import styles from './NewProjectPage.module.css';
 
 export default function NewProjectPage() {
   // Fetch clients for the dropdown
-  const { data: clientsData, loading: clientsLoading, error: clientsError } = useQuery(GET_CUSTOMERS_QUERY);
+  const { data: clientsData, loading: clientsLoading, error: clientsError } = useQuery(GET_CLIENTS_QUERY);
 
   // State for the form fields
   const [title, setTitle] = useState('');
