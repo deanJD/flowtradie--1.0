@@ -6,14 +6,14 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
 import { useQuery } from '@apollo/client';
-import { GET_JOBS_QUERY } from '../lib/graphql/queries/projects';
+import { GET_PROJECTS_QUERY } from '../lib/graphql/queries/projects';
 import styles from './Dashboard.module.css';
 
 export default function DashboardPage() {
   const { user, loading: authLoading, logout } = useAuth();
   const router = useRouter();
 
-  const { data, loading: projectsLoading, error } = useQuery(GET_JOBS_QUERY);
+  const { data, loading: projectsLoading, error } = useQuery(GET_PROJECTS_QUERY);
 
   useEffect(() => {
     if (!authLoading && !user) {

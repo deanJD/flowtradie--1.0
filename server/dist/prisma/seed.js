@@ -1,10 +1,10 @@
 // server/prisma/seed.ts
-import { PrismaClient, UserRole } from '@prisma/client';
+import { PrismaClient, UserRole, ProjectStatus } from '@prisma/client'; // <-- 1. ADD ProjectStatus HERE
 import { hashPassword } from '../src/utils/password.js';
 const prisma = new PrismaClient();
 async function main() {
     console.log(`Start seeding ...`);
-    // 1. DELETE ALL EXISTING DATA (in reverse order of creation to avoid errors)
+    // 1. DELETE ALL EXISTING DATA
     console.log('Deleting existing data...');
     await prisma.task.deleteMany();
     await prisma.invoiceItem.deleteMany();
@@ -28,7 +28,7 @@ async function main() {
             role: UserRole.OWNER,
         },
     });
-    // 3. CREATE A CUSTOMER
+    // 3. CREATE A CLIENT
     console.log('Creating a client...');
     const client = await prisma.client.create({
         data: {
@@ -36,17 +36,17 @@ async function main() {
             email: 'skyline@example.com',
         },
     });
-    // 4. CREATE A JOB FOR THAT CUSTOMER
+    // 4. CREATE A PROJECT FOR THAT CLIENT
     console.log('Creating a project...');
     const project = await prisma.project.create({
         data: {
             title: 'Downtown Office Renovation',
-            status: 'ACTIVE',
+            status: ProjectStatus.ACTIVE, // <-- 2. USE THE ENUM MEMBER HERE
             clientId: client.id,
-            managerId: owner.id, // Assign our new owner as the manager
+            managerId: owner.id,
         },
     });
-    // 5. CREATE TASKS FOR THAT JOB
+    // 5. CREATE TASKS FOR THAT PROJECT
     console.log('Creating tasks for the project...');
     await prisma.task.createMany({
         data: [
