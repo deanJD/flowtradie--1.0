@@ -2,7 +2,6 @@
   "name": "client",
   "scripts": {
     "dev": "next dev --turbopack"
-
   },
   "dependencies": {
     "@apollo/client": "^3.14.0",
@@ -13,6 +12,8 @@
     "react-icons": "^5.5.0"
   },
   "devDependencies": {
-    "@types/react": "^19.2.0"
+    "@types/node": "^24.6.2",
+    "@types/react": "^19.2.0",
+    "typescript": "^5.9.3"
   }
 }

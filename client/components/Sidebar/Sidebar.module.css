@@ -1,0 +1,43 @@
+/* client/app/components/Sidebar/Sidebar.module.css */
+.sidebar {
+  background-color: var(--card-background);
+  border-right: 1px solid var(--border-color);
+  width: 250px;
+  padding: 1.5rem 1rem;
+  height: 100vh;
+}
+
+.navList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.navItem {
+  margin-bottom: 0.5rem;
+}
+
+.link {
+  display: block;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  text-decoration: none;
+  color: #374151; /* gray-700 */
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.link:hover {
+  background-color: #f3f4f6; /* gray-100 */
+}
+
+.activeLink {
+  /* Apply this style to the link of the currently active page */
+  composes: link; /* This inherits all the styles from .link */
+  background-color: var(--primary-accent);
+  color: white;
+}
+
+.activeLink:hover {
+  background-color: var(--primary-accent-hover);
+}

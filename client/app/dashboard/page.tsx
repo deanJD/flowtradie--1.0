@@ -3,7 +3,7 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link'; // <-- 1. Import the Link component
+import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
 import { useQuery } from '@apollo/client';
 import { GET_JOBS_QUERY } from '../lib/graphql/queries/jobs';
@@ -36,7 +36,12 @@ export default function DashboardPage() {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.welcomeMessage}>Welcome, {user?.name}!</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <h1 className={styles.welcomeMessage}>Welcome, {user?.name}!</h1>
+        <Link href="/dashboard/jobs/new" className={styles.logoutButton} style={{ backgroundColor: 'var(--primary-accent)', color: 'white' }}>
+          + Create New Job
+        </Link>
+      </div>
       <p className={styles.roleInfo}>You are successfully logged in. Your role is: {user?.role}</p>
       
       <button 
@@ -50,7 +55,6 @@ export default function DashboardPage() {
         <h3 className={styles.detailsTitle}>Your Jobs</h3>
         {data && data.jobs && data.jobs.length > 0 ? (
           <ul>
-            {/* 2. Map over the jobs and wrap each one in a Link */}
             {data.jobs.map((job: any) => (
               <li key={job.id}>
                 <Link href={`/dashboard/jobs/${job.id}`}>
