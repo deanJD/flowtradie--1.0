@@ -4,7 +4,7 @@ import { GraphQLContext } from '../context.js';
 import { ProjectStatus, InvoiceStatus } from '@prisma/client';
 import type { Project, Invoice, Payment, ProjectExpense, TimeLog, User } from '@prisma/client';
 
-// Helper Types (these are great, we keep them)
+// Helper Types (no changes needed here)
 type InvoiceWithPayments = Invoice & { payments: Payment[] };
 type TimeLogWithUser = TimeLog & { user: User };
 
@@ -28,17 +28,17 @@ interface ProjectProfitabilityResult {
   project: ProjectWithRelations;
 }
 
-// CONVERTED FROM A CLASS TO A SIMPLE OBJECT
 export const reportingService = {
 
   async getDashboardSummary(ctx: GraphQLContext): Promise<DashboardSummary> {
-    const { prisma } = ctx; // Use prisma from the context
+    const { prisma } = ctx;
 
     const totalOpenProjects = await prisma.project.count({
       where: {
         status: {
           in: [ProjectStatus.PENDING, ProjectStatus.ACTIVE],
         },
+        deletedAt: null, // <-- CHANGED
       },
     });
 
@@ -53,6 +53,7 @@ export const reportingService = {
         dueDate: {
           lte: sevenDaysFromNow,
         },
+        deletedAt: null, // <-- CHANGED
       },
     });
 
@@ -67,12 +68,13 @@ export const reportingService = {
         dueDate: {
           gte: startOfToday,
           lte: endOfToday,
-        }
+        },
+        deletedAt: null, // <-- CHANGED
       }
     });
-
+    
     const startOfYear = new Date(new Date().getFullYear(), 0, 1);
-
+    
     const revenueRecords = await prisma.payment.aggregate({
       _sum: { amount: true },
       where: {
@@ -80,6 +82,7 @@ export const reportingService = {
           gte: startOfYear,
           lte: new Date(),
         },
+        deletedAt: null, // <-- CHANGED
       },
     });
 
@@ -87,21 +90,39 @@ export const reportingService = {
 
     return { totalOpenProjects, invoicesDueSoon, tasksDueToday, totalRevenueYTD };
   },
-
+  
   async projectProfitability(projectId: string, ctx: GraphQLContext): Promise<ProjectProfitabilityResult> {
-    const { prisma } = ctx; // Use prisma from the context
+    const { prisma } = ctx;
 
-    const project = await prisma.project.findUnique({
-      where: { id: projectId },
+    const project = await prisma.project.findFirst({ // CHANGED to findFirst
+      where: { 
+        id: projectId,
+        deletedAt: null, // <-- CHANGED
+      },
       include: {
-        invoices: { include: { payments: true } },
-        expenses: true,
-        timeLogs: { include: { user: true } },
+        // Only include non-deleted child records for calculations
+        invoices: { 
+          where: { deletedAt: null }, // <-- CHANGED
+          include: { 
+            payments: {
+              where: { deletedAt: null } // <-- CHANGED
+            } 
+          } 
+        },
+        expenses: { 
+          where: { deletedAt: null } // <-- CHANGED
+        },
+        timeLogs: { 
+          where: { deletedAt: null }, // <-- CHANGED
+          include: { user: true } 
+        },
       },
     }) as ProjectWithRelations | null;
-
+    
     if (!project) { throw new Error('Project not found'); }
 
+    // The rest of your calculation logic is now automatically correct because
+    // it's only receiving non-deleted records to sum up.
     const totalRevenue = project.invoices.reduce((sum: number, invoice: InvoiceWithPayments) => {
       const invoiceTotal = invoice.payments.reduce((paymentSum: number, payment: Payment) => paymentSum + payment.amount, 0);
       return sum + invoiceTotal;
@@ -113,7 +134,7 @@ export const reportingService = {
       const rate = timeLog.user?.hourlyRate ?? 0;
       return sum + (timeLog.hoursWorked * rate);
     }, 0);
-
+    
     const netProfit = totalRevenue - (totalMaterialCosts + totalLaborCosts);
 
     return { totalRevenue, totalMaterialCosts, totalLaborCosts, netProfit, project };

@@ -12,15 +12,22 @@ const taskInclude = {
 export const taskService = {
   getAllByProject: (projectId: string, ctx: GraphQLContext) => {
     return ctx.prisma.task.findMany({
-      where: { projectId },
+      where: {
+        projectId,
+        deletedAt: null, // <-- CHANGED
+      },
       orderBy: { createdAt: "desc" },
       include: taskInclude,
     });
   },
 
   getById: (id: string, ctx: GraphQLContext) => {
-    return ctx.prisma.task.findUnique({
-      where: { id },
+    // CHANGED: Use findFirst to ensure we don't fetch a deleted task
+    return ctx.prisma.task.findFirst({
+      where: {
+        id,
+        deletedAt: null,
+      },
       include: taskInclude,
     });
   },
@@ -62,6 +69,12 @@ export const taskService = {
   },
 
   delete: (id: string, ctx: GraphQLContext) => {
-    return ctx.prisma.task.delete({ where: { id } });
+    // CHANGED: This is now a soft delete
+    return ctx.prisma.task.update({
+      where: { id },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
   },
 };

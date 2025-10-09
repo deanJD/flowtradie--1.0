@@ -4,18 +4,21 @@
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '@/app/context/AuthContext'; // <-- Using path alias
 import { useQuery } from '@apollo/client';
-// FIX: Import the new, correct query name
-import { GET_PROJECTS_QUERY } from '../lib/graphql/queries/projects';
+import { GET_PROJECTS_QUERY } from '@/app/lib/graphql/queries/projects'; // <-- Using path alias
+import { GET_DASHBOARD_SUMMARY_QUERY } from '@/app/lib/graphql/queries/dashboard'; // <-- Using path alias
 import styles from './Dashboard.module.css';
+import StatCard from '@/components/StatCard/StatCard'; // <-- Using path alias
 
 export default function DashboardPage() {
   const { user, loading: authLoading, logout } = useAuth();
   const router = useRouter();
 
-  // FIX: Use the new, correct query name
-  const { data, loading: projectsLoading, error } = useQuery(GET_PROJECTS_QUERY);
+  // Fetch the list of projects
+  const { data: projectsData, loading: projectsLoading, error: projectsError } = useQuery(GET_PROJECTS_QUERY);
+  // Fetch the dashboard summary data
+  const { data: summaryData, loading: summaryLoading, error: summaryError } = useQuery(GET_DASHBOARD_SUMMARY_QUERY);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -28,13 +31,13 @@ export default function DashboardPage() {
     router.push('/');
   };
 
-  if (authLoading || projectsLoading) {
-    return <p>Loading...</p>;
-  }
+  const isLoading = authLoading || projectsLoading || summaryLoading;
+  const fetchError = projectsError || summaryError;
 
-  if (error) {
-    return <p>Error fetching projects: {error.message}</p>;
-  }
+  if (isLoading) return <p>Loading Dashboard...</p>;
+  if (fetchError) return <p>Error loading dashboard: {fetchError.message}</p>;
+
+  const summary = summaryData?.getDashboardSummary;
 
   return (
     <div className={styles.container}>
@@ -46,19 +49,18 @@ export default function DashboardPage() {
       </div>
       <p className={styles.roleInfo}>You are successfully logged in. Your role is: {user?.role}</p>
       
-      <button 
-        onClick={handleLogout} 
-        className={styles.logoutButton}
-      >
-        Logout
-      </button>
+      <div className={styles.statsGrid}>
+        <StatCard title="Active Projects" value={summary?.totalOpenProjects ?? 0} />
+        <StatCard title="Invoices Due Soon" value={summary?.invoicesDueSoon ?? 0} />
+        <StatCard title="Tasks Due Today" value={summary?.tasksDueToday ?? 0} />
+        <StatCard title="Revenue (YTD)" value={`$${(summary?.totalRevenueYTD ?? 0).toLocaleString()}`} />
+      </div>
 
       <div className={styles.detailsBox}>
         <h3 className={styles.detailsTitle}>Your Projects</h3>
-        {/* FIX: Update to look for 'data.projects' */}
-        {data && data.projects && data.projects.length > 0 ? (
+        {projectsData && projectsData.projects && projectsData.projects.length > 0 ? (
           <ul>
-            {data.projects.map((project: any) => (
+            {projectsData.projects.map((project: any) => (
               <li key={project.id}>
                 <Link href={`/dashboard/projects/${project.id}`}>
                   <strong>{project.title}</strong> ({project.status}) - for {project.client.name}

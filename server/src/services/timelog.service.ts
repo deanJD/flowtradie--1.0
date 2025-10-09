@@ -13,7 +13,10 @@ const timeLogInclude = {
 export const timeLogService = {
   getAllByProject: (projectId: string, ctx: GraphQLContext) => {
     return ctx.prisma.timeLog.findMany({
-      where: { projectId },
+      where: {
+        projectId,
+        deletedAt: null, // <-- CHANGED
+      },
       orderBy: { date: "desc" },
       include: timeLogInclude,
     });
@@ -21,7 +24,10 @@ export const timeLogService = {
 
   getAllByUser: (userId: string, ctx: GraphQLContext) => {
     return ctx.prisma.timeLog.findMany({
-      where: { userId },
+      where: {
+        userId,
+        deletedAt: null, // <-- CHANGED
+      },
       orderBy: { date: "desc" },
       include: timeLogInclude,
     });
@@ -50,6 +56,12 @@ export const timeLogService = {
   },
 
   delete: (id: string, ctx: GraphQLContext) => {
-    return ctx.prisma.timeLog.delete({ where: { id } });
+    // CHANGED: This is now a soft delete
+    return ctx.prisma.timeLog.update({
+      where: { id },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
   },
 };

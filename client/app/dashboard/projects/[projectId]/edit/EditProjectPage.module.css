@@ -57,3 +57,12 @@
 .button:hover {
   background-color: var(--primary-accent-hover); /* <-- Changed */
 }
+.deleteButton {
+  composes: button; /* This inherits all styles from your normal button */
+  background-color: #ef4444; /* A cautionary red */
+  margin-top: 1rem;
+}
+
+.deleteButton:hover {
+  background-color: #dc2626; /* A darker red for hover */
+}

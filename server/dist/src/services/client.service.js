@@ -1,12 +1,17 @@
 export const clientService = {
     getAll: (ctx) => {
         return ctx.prisma.client.findMany({
+            where: { deletedAt: null }, // <-- CHANGED: Only find non-deleted clients
             orderBy: { createdAt: "desc" },
         });
     },
     getById: (id, ctx) => {
-        return ctx.prisma.client.findUnique({
-            where: { id },
+        // CHANGED: Use findFirst to ensure we don't fetch a deleted client
+        return ctx.prisma.client.findFirst({
+            where: {
+                id,
+                deletedAt: null,
+            },
         });
     },
     create: (input, ctx) => {
@@ -27,8 +32,12 @@ export const clientService = {
         });
     },
     delete: (id, ctx) => {
-        return ctx.prisma.client.delete({
+        // CHANGED: This is now a soft delete
+        return ctx.prisma.client.update({
             where: { id },
+            data: {
+                deletedAt: new Date(),
+            },
         });
     },
 };

@@ -2,10 +2,16 @@
 const _updateInvoiceStatus = async (invoiceId, prisma) => {
     const invoice = await prisma.invoice.findUnique({
         where: { id: invoiceId },
-        include: { payments: true },
+        // CHANGED: When including payments, only get the non-deleted ones
+        include: {
+            payments: {
+                where: { deletedAt: null },
+            },
+        },
     });
     if (!invoice)
         return;
+    // This calculation is now automatically correct because it's only seeing non-deleted payments
     const paidSoFar = invoice.payments.reduce((sum, p) => sum + p.amount, 0);
     let newStatus = invoice.status;
     if (paidSoFar <= 0) {
@@ -27,7 +33,10 @@ const _updateInvoiceStatus = async (invoiceId, prisma) => {
 export const paymentService = {
     getByInvoice: (invoiceId, ctx) => {
         return ctx.prisma.payment.findMany({
-            where: { invoiceId },
+            where: {
+                invoiceId,
+                deletedAt: null, // <-- CHANGED
+            },
             orderBy: { date: "desc" },
         });
     },
@@ -36,12 +45,12 @@ export const paymentService = {
             const payment = await prisma.payment.create({
                 data: { ...input, date: input.date ?? new Date() },
             });
+            // This helper will now work correctly with soft-deleted payments
             await _updateInvoiceStatus(input.invoiceId, prisma);
             return payment;
         });
     },
     update: async (id, input, ctx) => {
-        // THIS IS THE FIX: Convert nulls to undefined before sending to Prisma
         const dataForPrisma = {
             amount: input.amount ?? undefined,
             date: input.date ?? undefined,
@@ -51,21 +60,30 @@ export const paymentService = {
         return ctx.prisma.$transaction(async (prisma) => {
             const updatedPayment = await prisma.payment.update({
                 where: { id },
-                data: dataForPrisma, // Use the cleaned data here
+                data: dataForPrisma,
             });
+            // This helper will now work correctly with soft-deleted payments
             await _updateInvoiceStatus(updatedPayment.invoiceId, prisma);
             return updatedPayment;
         });
     },
     delete: async (id, ctx) => {
         return ctx.prisma.$transaction(async (prisma) => {
-            const paymentToDelete = await prisma.payment.findUnique({ where: { id } });
-            if (!paymentToDelete)
+            // Step 1: Find the payment to get its invoiceId before "deleting"
+            const paymentToSoftDelete = await prisma.payment.findUnique({ where: { id } });
+            if (!paymentToSoftDelete)
                 throw new Error("Payment not found");
-            const { invoiceId } = paymentToDelete;
-            await prisma.payment.delete({ where: { id } });
+            const { invoiceId } = paymentToSoftDelete;
+            // Step 2: CHANGED - This is now a soft delete
+            const softDeletedPayment = await prisma.payment.update({
+                where: { id },
+                data: {
+                    deletedAt: new Date(),
+                },
+            });
+            // Step 3: Recalculate the invoice status, which will now exclude the deleted payment
             await _updateInvoiceStatus(invoiceId, prisma);
-            return paymentToDelete;
+            return softDeletedPayment;
         });
     },
 };

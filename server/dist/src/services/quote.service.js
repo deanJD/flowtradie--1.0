@@ -1,13 +1,20 @@
 export const quoteService = {
     getById: (id, ctx) => {
-        return ctx.prisma.quote.findUnique({
-            where: { id },
+        // CHANGED: Use findFirst to ensure we don't fetch a deleted quote
+        return ctx.prisma.quote.findFirst({
+            where: {
+                id,
+                deletedAt: null,
+            },
             include: { items: true, project: true },
         });
     },
     getByProject: (projectId, ctx) => {
         return ctx.prisma.quote.findMany({
-            where: { projectId },
+            where: {
+                projectId,
+                deletedAt: null, // <-- CHANGED: Only find non-deleted quotes
+            },
             include: { items: true, project: true },
         });
     },
@@ -43,7 +50,6 @@ export const quoteService = {
     },
     update: async (id, input, ctx) => {
         return ctx.prisma.$transaction(async (prisma) => {
-            // Step 1 & 2: Update scalar fields and replace items if provided
             const { items, ...quoteDataWithNulls } = input;
             const quoteData = {
                 quoteNumber: quoteDataWithNulls.quoteNumber ?? undefined,
@@ -64,16 +70,13 @@ export const quoteService = {
                     })),
                 });
             }
-            // Step 3: Recalculate totals based on the new state
             const currentItems = await prisma.quoteItem.findMany({ where: { quoteId: id } });
             const subtotal = currentItems.reduce((sum, i) => sum + i.total, 0);
             const currentQuoteState = await prisma.quote.findUnique({ where: { id } });
             const gstRate = currentQuoteState.gstRate;
             const gstAmount = subtotal * gstRate;
             const totalAmount = subtotal + gstAmount;
-            // Step 4: Final update with new totals
             await prisma.quote.update({ where: { id }, data: { subtotal, gstAmount, totalAmount } });
-            // Step 5: (THE FIX) Check the ORIGINAL input and update the project's budget if needed
             if (input.status === "ACCEPTED") {
                 const finalQuote = await prisma.quote.findUnique({ where: { id } });
                 await prisma.project.update({
@@ -81,7 +84,6 @@ export const quoteService = {
                     data: { budgetedAmount: finalQuote.totalAmount },
                 });
             }
-            // Step 6: Return the final, fully updated quote
             return prisma.quote.findUnique({
                 where: { id },
                 include: { items: true, project: true },
@@ -89,7 +91,13 @@ export const quoteService = {
         });
     },
     delete: (id, ctx) => {
-        return ctx.prisma.quote.delete({ where: { id } });
+        // CHANGED: This is now a soft delete
+        return ctx.prisma.quote.update({
+            where: { id },
+            data: {
+                deletedAt: new Date(),
+            },
+        });
     },
 };
 //# sourceMappingURL=quote.service.js.map

@@ -21,3 +21,12 @@ export const UPDATE_PROJECT_MUTATION = gql`
     }
   }
 `;
+// At the bottom of client/app/lib/graphql/mutations/project.ts
+
+export const DELETE_PROJECT_MUTATION = gql`
+  mutation DeleteProject($deleteProjectId: ID!) {
+    deleteProject(id: $deleteProjectId) {
+      id
+    }
+  }
+`;

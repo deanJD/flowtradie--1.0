@@ -12,26 +12,43 @@ const selectSafeUser = {
 export const userService = {
     getAll: (ctx) => {
         return ctx.prisma.user.findMany({
+            where: { deletedAt: null }, // <-- CHANGED
             orderBy: { createdAt: "desc" },
             select: selectSafeUser,
         });
     },
     getById: (id, ctx) => {
-        return ctx.prisma.user.findUnique({
-            where: { id },
+        // CHANGED: Use findFirst to ensure we don't fetch a deleted user
+        return ctx.prisma.user.findFirst({
+            where: {
+                id,
+                deletedAt: null,
+            },
             select: selectSafeUser,
         });
     },
     getMe: (ctx) => {
-        // If the context doesn't have a user from the token, return null.
         if (!ctx.user) {
             return null;
         }
-        // Otherwise, fetch that user's safe data.
-        return ctx.prisma.user.findUnique({
-            where: { id: ctx.user.id },
+        // CHANGED: Use findFirst to ensure the logged-in user hasn't been soft-deleted
+        return ctx.prisma.user.findFirst({
+            where: {
+                id: ctx.user.id,
+                deletedAt: null,
+            },
             select: selectSafeUser,
         });
     },
+    // vvvvvvvv NEW DELETE FUNCTION ADDED vvvvvvvv
+    delete: (id, ctx) => {
+        return ctx.prisma.user.update({
+            where: { id },
+            data: {
+                deletedAt: new Date(),
+            },
+        });
+    },
+    // ^^^^^^^^^^ NEW DELETE FUNCTION ADDED ^^^^^^^^^^
 };
 //# sourceMappingURL=user.service.js.map

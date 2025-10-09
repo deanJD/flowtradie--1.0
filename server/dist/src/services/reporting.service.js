@@ -1,14 +1,14 @@
 // server/src/services/reporting.service.ts
 import { ProjectStatus, InvoiceStatus } from '@prisma/client';
-// CONVERTED FROM A CLASS TO A SIMPLE OBJECT
 export const reportingService = {
     async getDashboardSummary(ctx) {
-        const { prisma } = ctx; // Use prisma from the context
+        const { prisma } = ctx;
         const totalOpenProjects = await prisma.project.count({
             where: {
                 status: {
                     in: [ProjectStatus.PENDING, ProjectStatus.ACTIVE],
                 },
+                deletedAt: null, // <-- CHANGED
             },
         });
         const sevenDaysFromNow = new Date();
@@ -21,6 +21,7 @@ export const reportingService = {
                 dueDate: {
                     lte: sevenDaysFromNow,
                 },
+                deletedAt: null, // <-- CHANGED
             },
         });
         const startOfToday = new Date();
@@ -33,7 +34,8 @@ export const reportingService = {
                 dueDate: {
                     gte: startOfToday,
                     lte: endOfToday,
-                }
+                },
+                deletedAt: null, // <-- CHANGED
             }
         });
         const startOfYear = new Date(new Date().getFullYear(), 0, 1);
@@ -44,24 +46,43 @@ export const reportingService = {
                     gte: startOfYear,
                     lte: new Date(),
                 },
+                deletedAt: null, // <-- CHANGED
             },
         });
         const totalRevenueYTD = revenueRecords._sum.amount || 0;
         return { totalOpenProjects, invoicesDueSoon, tasksDueToday, totalRevenueYTD };
     },
     async projectProfitability(projectId, ctx) {
-        const { prisma } = ctx; // Use prisma from the context
-        const project = await prisma.project.findUnique({
-            where: { id: projectId },
+        const { prisma } = ctx;
+        const project = await prisma.project.findFirst({
+            where: {
+                id: projectId,
+                deletedAt: null, // <-- CHANGED
+            },
             include: {
-                invoices: { include: { payments: true } },
-                expenses: true,
-                timeLogs: { include: { user: true } },
+                // Only include non-deleted child records for calculations
+                invoices: {
+                    where: { deletedAt: null }, // <-- CHANGED
+                    include: {
+                        payments: {
+                            where: { deletedAt: null } // <-- CHANGED
+                        }
+                    }
+                },
+                expenses: {
+                    where: { deletedAt: null } // <-- CHANGED
+                },
+                timeLogs: {
+                    where: { deletedAt: null }, // <-- CHANGED
+                    include: { user: true }
+                },
             },
         });
         if (!project) {
             throw new Error('Project not found');
         }
+        // The rest of your calculation logic is now automatically correct because
+        // it's only receiving non-deleted records to sum up.
         const totalRevenue = project.invoices.reduce((sum, invoice) => {
             const invoiceTotal = invoice.payments.reduce((paymentSum, payment) => paymentSum + payment.amount, 0);
             return sum + invoiceTotal;

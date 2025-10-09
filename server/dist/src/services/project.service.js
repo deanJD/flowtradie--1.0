@@ -2,28 +2,39 @@
 export const projectService = {
     // Find all projects, including their client
     getAll: (clientId, ctx) => {
+        // 1. Build the base "where" clause to only find non-deleted projects
+        const where = {
+            deletedAt: null,
+        };
+        // 2. If a clientId is provided, add it to the filter
+        if (clientId) {
+            where.clientId = clientId;
+        }
         return ctx.prisma.project.findMany({
-            where: clientId ? { clientId } : {},
+            where, // <-- CHANGED: Use our new where clause
             orderBy: { createdAt: "desc" },
             include: { client: true },
         });
     },
-    // Inside your project.service.ts file
+    // Find a single non-deleted project by its ID
     getById: (id, ctx) => {
-        return ctx.prisma.project.findUnique({
-            where: { id },
+        // CHANGED: We use 'findFirst' here instead of 'findUnique'. This allows us to
+        // add the 'deletedAt: null' check to ensure we don't accidentally fetch a deleted project.
+        return ctx.prisma.project.findFirst({
+            where: {
+                id,
+                deletedAt: null, // <-- CHANGED: Only find if not deleted
+            },
             include: {
                 client: true,
-                tasks: true, // <-- This is the main fix
-                quotes: true, // <-- Added to prevent the next error
-                invoices: true, // <-- Added to prevent the next error
+                tasks: true,
+                quotes: true,
+                invoices: true,
             },
         });
     },
-    // Create a new project
+    // Create a new project (no changes needed here)
     create: (input, ctx) => {
-        // FIX #1: Manually build the data object to handle relations
-        // and to convert potential nulls to undefined.
         const data = {
             title: input.title,
             description: input.description ?? undefined,
@@ -31,7 +42,6 @@ export const projectService = {
             status: input.status ?? undefined,
             startDate: input.startDate ?? undefined,
             endDate: input.endDate ?? undefined,
-            // Connect relations properly
             client: { connect: { id: input.clientId } },
             manager: input.managerId ? { connect: { id: input.managerId } } : undefined,
         };
@@ -40,10 +50,8 @@ export const projectService = {
             include: { client: true },
         });
     },
-    // Update a project
+    // Update a project (no changes needed here)
     update: (id, input, ctx) => {
-        // FIX #2: Handle the manager relation correctly using connect/disconnect
-        // and clean all other nullable fields.
         const data = {
             title: input.title ?? undefined,
             description: input.description ?? undefined,
@@ -52,12 +60,11 @@ export const projectService = {
             startDate: input.startDate ?? undefined,
             endDate: input.endDate ?? undefined,
             budgetedAmount: input.budgetedAmount ?? undefined,
-            // Handle the manager relation update
             manager: input.managerId === null
-                ? { disconnect: true } // If managerId is explicitly null, disconnect it
+                ? { disconnect: true }
                 : input.managerId
-                    ? { connect: { id: input.managerId } } // If an ID is provided, connect it
-                    : undefined, // Otherwise, do nothing
+                    ? { connect: { id: input.managerId } }
+                    : undefined,
         };
         return ctx.prisma.project.update({
             where: { id },
@@ -65,10 +72,14 @@ export const projectService = {
             include: { client: true },
         });
     },
-    // Delete a project
+    // "Delete" a project (now a soft delete)
     delete: (id, ctx) => {
-        return ctx.prisma.project.delete({
+        // CHANGED: Instead of deleting, we now UPDATE the record
+        return ctx.prisma.project.update({
             where: { id },
+            data: {
+                deletedAt: new Date(), // Set the 'deletedAt' timestamp to now
+            },
         });
     },
 };

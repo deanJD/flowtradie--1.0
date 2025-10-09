@@ -6,7 +6,10 @@ const expenseInclude = {
 export const expenseService = {
     getAllByProject: (projectId, ctx) => {
         return ctx.prisma.projectExpense.findMany({
-            where: { projectId },
+            where: {
+                projectId,
+                deletedAt: null, // <-- CHANGED
+            },
             orderBy: { date: "desc" },
             include: expenseInclude,
         });
@@ -18,7 +21,13 @@ export const expenseService = {
         });
     },
     delete: (id, ctx) => {
-        return ctx.prisma.projectExpense.delete({ where: { id } });
+        // CHANGED: This is now a soft delete
+        return ctx.prisma.projectExpense.update({
+            where: { id },
+            data: {
+                deletedAt: new Date(),
+            },
+        });
     },
     // Note: We can add an 'update' function here later
     // if you decide you need that feature.

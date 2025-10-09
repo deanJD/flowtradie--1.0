@@ -1,49 +1,37 @@
-// src/graphql/resolvers/auth.resolver.ts
-import { authService } from "../../services/auth.service.js";
+// server/src/graphql/resolvers/auth.ts
 import { GraphQLContext } from "../../context.js";
-import { User } from "@prisma/client";
-
-interface RegisterArgs {
-  input: {
-    name: string;
-    email: string;
-    password: string;
-  };
-}
-
-interface LoginArgs {
-  input: {
-    email: string;
-    password: string;
-  };
-}
+import { authService } from "../../services/auth.service.js";
+import { RegisterInput, LoginInput } from "@/__generated__/graphql.js";
 
 export const authResolvers = {
   Mutation: {
+    // This resolver now correctly creates a user, then logs them in,
+    // and returns the AuthPayload the schema expects.
     register: async (
       _p: unknown,
-      args: RegisterArgs,
-      _ctx: GraphQLContext
-    ): Promise<{ token: string; user: User }> => {
-      const user = await authService.register(args.input);
-      const token = await authService.login({
-        email: args.input.email,
-        password: args.input.password,
-      });
-      return { token, user };
+      { input }: { input: RegisterInput },
+      ctx: GraphQLContext
+    ) => {
+      // 1. Create the new user in the database
+      await authService.register(input, ctx);
+
+      // 2. Log the new user in to get a token and user object
+      const authPayload = await authService.login(
+        { email: input.email, password: input.password },
+        ctx
+      );
+
+      // 3. Return the complete payload
+      return authPayload;
     },
 
+    // This resolver is now a simple one-liner. The service does all the work.
     login: async (
       _p: unknown,
-      args: LoginArgs,
-      _ctx: GraphQLContext
-    ): Promise<{ token: string; user: User }> => {
-      const user = await authService.login(args.input);
-      const foundUser = await _ctx.prisma.user.findUnique({
-        where: { email: args.input.email },
-      });
-      if (!foundUser) throw new Error("User not found");
-      return { token: user, user: foundUser };
+      { input }: { input: LoginInput },
+      ctx: GraphQLContext
+    ) => {
+      return authService.login(input, ctx);
     },
   },
 };

@@ -6,13 +6,18 @@ import { CreateClientInput, UpdateClientInput } from "@/__generated__/graphql.js
 export const clientService = {
   getAll: (ctx: GraphQLContext) => {
     return ctx.prisma.client.findMany({
+      where: { deletedAt: null }, // <-- CHANGED: Only find non-deleted clients
       orderBy: { createdAt: "desc" },
     });
   },
 
   getById: (id: string, ctx: GraphQLContext) => {
-    return ctx.prisma.client.findUnique({
-      where: { id },
+    // CHANGED: Use findFirst to ensure we don't fetch a deleted client
+    return ctx.prisma.client.findFirst({
+      where: {
+        id,
+        deletedAt: null,
+      },
     });
   },
 
@@ -36,8 +41,12 @@ export const clientService = {
   },
 
   delete: (id: string, ctx: GraphQLContext) => {
-    return ctx.prisma.client.delete({
+    // CHANGED: This is now a soft delete
+    return ctx.prisma.client.update({
       where: { id },
+      data: {
+        deletedAt: new Date(),
+      },
     });
   },
 };
