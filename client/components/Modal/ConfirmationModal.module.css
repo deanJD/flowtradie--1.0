@@ -1,0 +1,52 @@
+/* client/components/Modal/ConfirmationModal.module.css */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: var(--card-background);
+  padding: 2rem;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.message {
+  color: #4a5568;
+  margin-bottom: 2rem;
+}
+
+.buttonGroup {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.confirmButton {
+  composes: button from '../Button/Button.module.css';
+  background-color: #ef4444; /* red-500 */
+}
+.confirmButton:hover {
+  background-color: #dc2626; /* red-600 */
+}
+
+.cancelButton {
+  composes: button from '../Button/Button.module.css';
+  composes: secondary from '../Button/Button.module.css';
+}

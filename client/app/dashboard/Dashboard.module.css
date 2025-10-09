@@ -52,3 +52,27 @@
   gap: 1.5rem;
   margin: 2rem 0;
 }
+/* Add these to Dashboard.module.css */
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.buttonLink {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background-color: var(--primary-accent);
+  color: white !important; /* Use important to override link default color if needed */
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.buttonLink:hover {
+  background-color: var(--primary-accent-hover);
+  text-decoration: none;
+}

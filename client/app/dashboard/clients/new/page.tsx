@@ -5,26 +5,24 @@ import React, { useState } from 'react';
 import { useMutation } from '@apollo/client';
 import { useRouter } from 'next/navigation';
 import { CREATE_CLIENT_MUTATION } from '@/app/lib/graphql/mutations/client';
+import { GET_CLIENTS_QUERY } from '@/app/lib/graphql/queries/clients'; // <-- 1. Import the query
 import Link from 'next/link';
 import styles from './NewClientPage.module.css';
 
 export default function NewClientPage() {
   const router = useRouter();
 
-  // State for the form fields
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
 
-  // Set up the mutation
   const [createClient, { loading, error }] = useMutation(CREATE_CLIENT_MUTATION, {
     onCompleted: () => {
-      // On success, redirect to the clients list page
       router.push('/dashboard/clients');
     },
-    // This is important: refetch the main clients list so it's updated
-    refetchQueries: ['GetClients'],
+    // 2. This is the fix: tells Apollo to refetch the list of clients
+    refetchQueries: [{ query: GET_CLIENTS_QUERY }],
   });
 
   const handleSubmit = (event: React.FormEvent) => {

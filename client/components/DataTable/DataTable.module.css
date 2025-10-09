@@ -1,0 +1,51 @@
+/* client/components/DataTable/DataTable.module.css */
+
+.tableContainer {
+  background-color: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th, .table td {
+  padding: 1rem 1.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.table thead {
+  background-color: #f9fafb; /* gray-50 */
+}
+
+.table th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280; /* gray-500 */
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background-color: #f9fafb; /* gray-50 */
+}
+/* Add this to the bottom of DataTable.module.css */
+
+.tableLink {
+  color: var(--link-color);
+  font-weight: 600; /* A nice semi-bold */
+  text-decoration: none;
+}
+
+.tableLink:hover {
+  text-decoration: underline;
+}

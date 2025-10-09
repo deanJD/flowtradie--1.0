@@ -6,9 +6,10 @@ import { useQuery, useMutation } from '@apollo/client';
 import { useRouter } from 'next/navigation';
 import { GET_CLIENTS_QUERY } from '@/app/lib/graphql/queries/clients';
 import { CREATE_PROJECT_MUTATION } from '@/app/lib/graphql/mutations/project';
-import { GET_PROJECTS_QUERY } from '@/app/lib/graphql/queries/projects'; // <-- 1. Import the query
+import { GET_PROJECTS_QUERY } from '@/app/lib/graphql/queries/projects';
 import Link from 'next/link';
 import styles from './NewProjectPage.module.css';
+import Button from '@/components/Button/Button'; // <-- 1. Import our new Button
 
 export default function NewProjectPage() {
   const router = useRouter();
@@ -20,12 +21,20 @@ export default function NewProjectPage() {
   const [description, setDescription] = useState('');
 
   const [createProject, { loading: creatingProject, error: createError }] = useMutation(CREATE_PROJECT_MUTATION, {
+    update(cache, { data: { createProject } }) {
+      type QueryData = { projects: any[] };
+      const data = cache.readQuery<QueryData>({ query: GET_PROJECTS_QUERY });
+      if (data) {
+        cache.writeQuery<QueryData>({
+          query: GET_PROJECTS_QUERY,
+          data: { projects: [createProject, ...data.projects] },
+        });
+      }
+    },
     onCompleted: (data) => {
       const newProjectId = data.createProject.id;
       router.push(`/dashboard/projects/${newProjectId}`);
     },
-    // 2. This is the more reliable way to refetch
-    refetchQueries: [{ query: GET_PROJECTS_QUERY }],
   });
 
   const handleSubmit = (event: React.FormEvent) => {
@@ -44,12 +53,12 @@ export default function NewProjectPage() {
   if (clientsLoading) return <p>Loading clients...</p>;
   if (clientsError) return <p>Error loading clients: {clientsError.message}</p>;
 
-  // ... (The rest of your form JSX is the same)
   return (
     <div className={styles.container}>
       <form className={styles.form} onSubmit={handleSubmit}>
         <h1 className={styles.title}>Create a New Project</h1>
 
+        {/* ... (form inputs for title, client, description are the same) ... */}
         <div className={styles.inputGroup}>
           <label htmlFor="title" className={styles.label}>Project Title</label>
           <input id="title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} className={styles.input} required />
@@ -74,14 +83,16 @@ export default function NewProjectPage() {
 
         {createError && <p style={{ color: 'red' }}>Error: {createError.message}</p>}
 
+        {/* vvvvvvvvvv 2. USE OUR NEW BUTTON COMPONENT vvvvvvvvvv */}
         <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-          <button type="submit" className={styles.button} disabled={creatingProject}>
+          <Button type="submit" disabled={creatingProject}>
             {creatingProject ? 'Creating...' : 'Create Project'}
-          </button>
-          <Link href="/dashboard/projects" className={styles.button} style={{ backgroundColor: '#ccc', textAlign: 'center' }}>
+          </Button>
+          <Button href="/dashboard/projects" variant="secondary">
             Cancel
-          </Link>
+          </Button>
         </div>
+        {/* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ */}
       </form>
     </div>
   );

@@ -6,10 +6,15 @@ export const CREATE_PROJECT_MUTATION = gql`
     createProject(input: $input) {
       id
       title
+      # ADD THESE FIELDS TO MATCH THE LIST QUERY
+      status
+      client {
+        id
+        name
+      }
     }
   }
 `;
-// At the bottom of client/app/lib/graphql/mutations/project.ts
 
 export const UPDATE_PROJECT_MUTATION = gql`
   mutation UpdateProject($updateProjectId: ID!, $input: UpdateProjectInput!) {
@@ -21,7 +26,6 @@ export const UPDATE_PROJECT_MUTATION = gql`
     }
   }
 `;
-// At the bottom of client/app/lib/graphql/mutations/project.ts
 
 export const DELETE_PROJECT_MUTATION = gql`
   mutation DeleteProject($deleteProjectId: ID!) {

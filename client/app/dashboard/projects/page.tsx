@@ -6,20 +6,53 @@ import { useQuery } from '@apollo/client';
 import { GET_PROJECTS_QUERY } from '@/app/lib/graphql/queries/projects';
 import styles from './ProjectsPage.module.css';
 import Link from 'next/link';
+import DataTable from '@/components/DataTable/DataTable'; // <-- Import our new component
 
-// A helper function to get the right style for each status
+// Helper function to get the right style for each status
 const getStatusClass = (status: string) => {
-  // You can customize these colors later
   switch (status) {
-    case 'COMPLETED': return styles.statusPaid; // Using green from invoice styles
-    case 'ACTIVE': return styles.statusSent; // Using blue from invoice styles
-    case 'PENDING': return styles.statusDraft; // Using gray from invoice styles
+    case 'COMPLETED': return styles.statusPaid;
+    case 'ACTIVE': return styles.statusSent;
+    case 'PENDING': return styles.statusDraft;
     default: return styles.statusDraft;
   }
 };
 
 export default function ProjectsPage() {
   const { data, loading, error } = useQuery(GET_PROJECTS_QUERY);
+
+  // Define the columns for our Projects table
+  const projectColumns = [
+    {
+      header: 'Project Title',
+      accessor: 'title',
+      render: (row: any) => (
+        <Link href={`/dashboard/projects/${row.id}`} style={{ color: 'var(--link-color)', fontWeight: 'bold' }}>
+          {row.title}
+        </Link>
+      )
+    },
+    {
+      header: 'Client',
+      accessor: 'client.name'
+    },
+    {
+      header: 'Status',
+      accessor: 'status',
+      render: (row: any) => (
+        <span className={`${styles.status} ${getStatusClass(row.status)}`}>
+          {row.status}
+        </span>
+      )
+    },
+    {
+      header: 'Actions',
+      accessor: 'id',
+      render: (row: any) => (
+        <Link href={`/dashboard/projects/${row.id}/edit`}>Edit</Link>
+      )
+    }
+  ];
 
   if (loading) return <p>Loading projects...</p>;
   if (error) return <p>Error: {error.message}</p>;
@@ -35,37 +68,9 @@ export default function ProjectsPage() {
           </Link>
         </div>
       </div>
-
-      <div className={styles.tableContainer}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Project Title</th>
-              <th>Client</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data?.projects.map((project: any) => (
-              <tr key={project.id}>
-                <td>
-                  <Link href={`/dashboard/projects/${project.id}`} style={{ color: 'var(--link-color)', fontWeight: 'bold' }}>
-                    {project.title}
-                  </Link>
-                </td>
-                <td>{project.client.name}</td>
-                <td>
-                  <span className={`${styles.status} ${getStatusClass(project.status)}`}>
-                    {project.status}
-                  </span>
-                </td>
-                <td>...</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      
+      {/* All the old table code is replaced by this one simple component! */}
+      <DataTable columns={projectColumns} data={data?.projects} />
     </div>
   );
 }
