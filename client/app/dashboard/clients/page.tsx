@@ -20,7 +20,7 @@ export default function ClientsPage() {
         <div className={styles.actions}>
           <input type="search" placeholder="Search clients..." className={styles.searchBar} />
           {/* We can wire this up to a 'Create New Client' page later */}
-          <Link href="#" style={{padding: '0.5rem 1rem', backgroundColor: 'var(--primary-accent)', color: 'white', borderRadius: '6px', textDecoration: 'none'}}>
+          <Link href="/dashboard/clients/new" style={{padding: '0.5rem 1rem', backgroundColor: 'var(--primary-accent)', color: 'white', borderRadius: '6px', textDecoration: 'none'}}>
             + New Client
           </Link>
         </div>

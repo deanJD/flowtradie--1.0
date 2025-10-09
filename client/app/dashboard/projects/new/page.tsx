@@ -2,24 +2,44 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useQuery } from '@apollo/client';
-import { GET_CLIENTS_QUERY } from '@/app/lib/graphql/queries/clients';
+import { useQuery, useMutation } from '@apollo/client';
+import { useRouter } from 'next/navigation';
+import { GET_CLIENTS_QUERY } from '@/app/lib/graphql/queries/clients'; // <-- THE FIX
+import { CREATE_PROJECT_MUTATION } from '@/app/lib/graphql/mutations/project';
 import Link from 'next/link';
 import styles from './NewProjectPage.module.css';
 
 export default function NewProjectPage() {
+  const router = useRouter();
+  
   // Fetch clients for the dropdown
-  const { data: clientsData, loading: clientsLoading, error: clientsError } = useQuery(GET_CLIENTS_QUERY);
+  const { data: clientsData, loading: clientsLoading, error: clientsError } = useQuery(GET_CLIENTS_QUERY); // <-- THE FIX
 
   // State for the form fields
   const [title, setTitle] = useState('');
   const [clientId, setClientId] = useState('');
   const [description, setDescription] = useState('');
 
+  // Set up the mutation
+  const [createProject, { loading: creatingProject, error: createError }] = useMutation(CREATE_PROJECT_MUTATION, {
+    onCompleted: (data) => {
+      const newProjectId = data.createProject.id;
+      router.push(`/dashboard/projects/${newProjectId}`);
+    },
+    refetchQueries: ['GetProjects'],
+  });
+
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    console.log('Creating project with:', { title, clientId, description });
-    // We'll add the createProject mutation logic here next
+    createProject({
+      variables: {
+        input: {
+          title,
+          clientId,
+          description,
+        },
+      },
+    });
   };
 
   if (clientsLoading) return <p>Loading clients...</p>;
@@ -52,6 +72,7 @@ export default function NewProjectPage() {
             required
           >
             <option value="" disabled>Select a client</option>
+            {/* FIX: Updated to look for 'clients' */}
             {clientsData?.clients.map((client: any) => (
               <option key={client.id} value={client.id}>
                 {client.name}
@@ -71,9 +92,11 @@ export default function NewProjectPage() {
           />
         </div>
 
+        {createError && <p style={{ color: 'red' }}>Error: {createError.message}</p>}
+
         <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-          <button type="submit" className={styles.button}>
-            Create Project
+          <button type="submit" className={styles.button} disabled={creatingProject}>
+            {creatingProject ? 'Creating...' : 'Create Project'}
           </button>
           <Link href="/dashboard" className={styles.button} style={{ backgroundColor: '#ccc', textAlign: 'center' }}>
             Cancel

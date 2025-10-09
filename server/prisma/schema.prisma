@@ -1,5 +1,4 @@
-// This is the single source of truth for your database schema.
-// It defines all data models, fields, and relationships for the application.
+// server/prisma/schema.prisma
 
 generator client {
   provider = "prisma-client-js"
@@ -10,10 +9,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 // --- ENUMS ---
-// Enums provide type safety for status fields.
-// FIX: Corrected enum formatting to have one value per line.
 enum ProjectStatus {
   PENDING
   ACTIVE
@@ -33,8 +29,6 @@ enum InvoiceStatus {
   OVERDUE
   PARTIALLY_PAID
 }
-// We will use these roles to define a user's permissions.
-
 enum UserRole {
   OWNER
   ADMIN
@@ -44,25 +38,23 @@ enum UserRole {
   CONTRACTOR
 }
 
-
 // --- MODELS ---
 
 model User {
-  id         String   @id @default(cuid())
-  email      String   @unique
+  id         String    @id @default(cuid())
+  email      String    @unique
   password   String
   name       String
-  role       UserRole @default(WORKER)
+  role       UserRole  @default(WORKER)
   phone      String?
   hourlyRate Float?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime? // <-- Added soft delete flag
 
-  tasks       Task[]
-  timeLogs    TimeLog[]
-  // FIX: This line completes the relationship by defining its opposite side.
-  // It tells Prisma that a single User can be the manager of many Projects.
-  managedProjects Project[]    @relation("ProjectManager")
+  tasks         Task[]
+  timeLogs      TimeLog[]
+  managedProjects Project[] @relation("ProjectManager")
 }
 
 model Client {
@@ -73,35 +65,34 @@ model Client {
   address   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  projects      Project[]
+  deletedAt DateTime? // <-- Added soft delete flag
+
+  projects  Project[]
 }
 
 model Project {
-  id          String    @id @default(cuid())
-  title       String
-  description String?
-  location    String?
-  status      ProjectStatus @default(PENDING)
-  startDate   DateTime?
-  endDate     DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  clientId  String
-  client    Client  @relation(fields: [clientId], references: [id])
-  // This is the link we will use for project-level responsibility.
-  managerId   String?
-  manager     User?     @relation("ProjectManager", fields: [managerId], references: [id])
-  quotes      Quote[]
-  invoices    Invoice[]
-  tasks       Task[]
-  expenses    ProjectExpense[]
-  timeLogs    TimeLog[]
-  // --- NEW BUDGET FIELD ---
-  budgetedAmount Float?   // This will store the total from the accepted quote
+  id             String        @id @default(cuid())
+  title          String
+  description    String?
+  location       String?
+  status         ProjectStatus @default(PENDING)
+  startDate      DateTime?
+  endDate        DateTime?
+  budgetedAmount Float?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  deletedAt      DateTime? // <-- Added soft delete flag
+
+  clientId String
+  client   Client   @relation(fields: [clientId], references: [id])
+  managerId String?
+  manager   User?    @relation("ProjectManager", fields: [managerId], references: [id])
+  quotes   Quote[]
+  invoices Invoice[]
+  tasks    Task[]
+  expenses ProjectExpense[]
+  timeLogs TimeLog[]
 }
-
-
-
 
 model Quote {
   id          String      @id @default(cuid())
@@ -109,19 +100,17 @@ model Quote {
   status      QuoteStatus @default(DRAFT)
   issueDate   DateTime    @default(now())
   expiryDate  DateTime?
-
-  // 🆕 GST + totals
   subtotal    Float
-  gstRate     Float       @default(0.1) // default 10%
+  gstRate     Float       @default(0.1)
   gstAmount   Float
   totalAmount Float
-
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+  deletedAt   DateTime? // <-- Added soft delete flag
 
-  projectId       String
-  project         Project         @relation(fields: [projectId], references: [id])
-  items       QuoteItem[]
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
+  items     QuoteItem[]
 }
 
 model QuoteItem {
@@ -140,19 +129,18 @@ model Invoice {
   status        InvoiceStatus @default(DRAFT)
   issueDate     DateTime      @default(now())
   dueDate       DateTime
-
-  // NEW: GST-related fields
   subtotal      Float
   gstRate       Float         @default(0.1)
   gstAmount     Float         @default(0.0)
   totalAmount   Float
-
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
-  projectId         String
-  project           Project           @relation(fields: [projectId], references: [id])
-  items         InvoiceItem[]
-  payments      Payment[]
+  deletedAt     DateTime? // <-- Added soft delete flag
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
+  items     InvoiceItem[]
+  payments  Payment[]
 }
 
 model InvoiceItem {
@@ -167,12 +155,14 @@ model InvoiceItem {
 
 model Payment {
   id        String   @id @default(cuid())
-  amount    Float    // still valid: this is the paid amount (incl. GST if invoice has it)
+  amount    Float
   date      DateTime @default(now())
   method    String
   notes     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime? // <-- Added soft delete flag
+
   invoiceId String
   invoice   Invoice  @relation(fields: [invoiceId], references: [id])
 }
@@ -185,8 +175,10 @@ model Task {
   dueDate      DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
-  projectId        String
-  project          Project       @relation(fields: [projectId], references: [id])
+  deletedAt    DateTime? // <-- Added soft delete flag
+
+  projectId    String
+  project      Project   @relation(fields: [projectId], references: [id])
   assignedToId String?
   assignedTo   User?     @relation(fields: [assignedToId], references: [id])
 }
@@ -199,24 +191,23 @@ model ProjectExpense {
   category    String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  projectId       String
-  project         Project      @relation(fields: [projectId], references: [id])
-}
+  deletedAt   DateTime? // <-- Added soft delete flag
 
-
-// --- NEW MODEL FOR TIME TRACKING ---
-model TimeLog {
-  id           String   @id @default(cuid())
-  date         DateTime // The day the work was done
-  hoursWorked  Float    // e.g., 8.0, 4.5
-  notes        String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  // Each time log must be for a specific project and user.
   projectId String
-  project   Project    @relation(fields: [projectId], references: [id])
-  userId String
-  user  User   @relation(fields: [userId], references: [id])
+  project   Project @relation(fields: [projectId], references: [id])
 }
-// --- END NEW MODEL ---
+
+model TimeLog {
+  id          String   @id @default(cuid())
+  date        DateTime
+  hoursWorked Float
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime? // <-- Added soft delete flag
+
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id])
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+}

@@ -82,3 +82,20 @@
 .listItem:hover {
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
+
+.editButton {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background-color: #f3f4f6; /* gray-100 */
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  text-decoration: none;
+  color: var(--text-color);
+  transition: background-color 0.2s;
+}
+
+.editButton:hover {
+  background-color: #e5e7eb; /* gray-200 */
+}
