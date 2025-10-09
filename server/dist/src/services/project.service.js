@@ -2,28 +2,25 @@
 export const projectService = {
     // Find all projects, including their client
     getAll: (clientId, ctx) => {
-        // 1. Build the base "where" clause to only find non-deleted projects
+        // Build the "where" clause to only find non-deleted projects
         const where = {
-            deletedAt: null,
+            deletedAt: null, // <-- THIS IS THE FIX
         };
-        // 2. If a clientId is provided, add it to the filter
         if (clientId) {
             where.clientId = clientId;
         }
         return ctx.prisma.project.findMany({
-            where, // <-- CHANGED: Use our new where clause
+            where,
             orderBy: { createdAt: "desc" },
             include: { client: true },
         });
     },
     // Find a single non-deleted project by its ID
     getById: (id, ctx) => {
-        // CHANGED: We use 'findFirst' here instead of 'findUnique'. This allows us to
-        // add the 'deletedAt: null' check to ensure we don't accidentally fetch a deleted project.
         return ctx.prisma.project.findFirst({
             where: {
                 id,
-                deletedAt: null, // <-- CHANGED: Only find if not deleted
+                deletedAt: null,
             },
             include: {
                 client: true,
@@ -33,7 +30,7 @@ export const projectService = {
             },
         });
     },
-    // Create a new project (no changes needed here)
+    // Create a new project
     create: (input, ctx) => {
         const data = {
             title: input.title,
@@ -50,7 +47,7 @@ export const projectService = {
             include: { client: true },
         });
     },
-    // Update a project (no changes needed here)
+    // Update a project
     update: (id, input, ctx) => {
         const data = {
             title: input.title ?? undefined,
@@ -74,11 +71,10 @@ export const projectService = {
     },
     // "Delete" a project (now a soft delete)
     delete: (id, ctx) => {
-        // CHANGED: Instead of deleting, we now UPDATE the record
         return ctx.prisma.project.update({
             where: { id },
             data: {
-                deletedAt: new Date(), // Set the 'deletedAt' timestamp to now
+                deletedAt: new Date(),
             },
         });
     },
