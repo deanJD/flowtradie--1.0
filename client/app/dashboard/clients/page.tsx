@@ -6,6 +6,7 @@ import { useQuery } from '@apollo/client';
 import { GET_CLIENTS_QUERY } from '@/app/lib/graphql/queries/clients';
 import styles from './ClientsPage.module.css';
 import Link from 'next/link';
+import Button from '@/components/Button/Button'; // <-- 1. Import the Button component
 
 export default function ClientsPage() {
   const { data, loading, error } = useQuery(GET_CLIENTS_QUERY);
@@ -19,10 +20,10 @@ export default function ClientsPage() {
         <h1 className={styles.title}>Clients</h1>
         <div className={styles.actions}>
           <input type="search" placeholder="Search clients..." className={styles.searchBar} />
-          {/* We can wire this up to a 'Create New Client' page later */}
-          <Link href="/dashboard/clients/new" style={{padding: '0.5rem 1rem', backgroundColor: 'var(--primary-accent)', color: 'white', borderRadius: '6px', textDecoration: 'none'}}>
+          {/* 2. Use our clean, reusable Button component */}
+          <Button href="/dashboard/clients/new">
             + New Client
-          </Link>
+          </Button>
         </div>
       </div>
 
@@ -40,8 +41,8 @@ export default function ClientsPage() {
             {data?.clients.map((client: any) => (
               <tr key={client.id}>
                 <td>
-                  {/* This will eventually link to a client details page */}
-                  <Link href={`#`} style={{ color: 'var(--link-color)', fontWeight: 'bold' }}>
+                  {/* 3. This is the main fix: Update the href to the correct path */}
+                  <Link href={`/dashboard/clients/${client.id}`} style={{ color: 'var(--link-color)', fontWeight: 'bold' }}>
                     {client.name}
                   </Link>
                 </td>

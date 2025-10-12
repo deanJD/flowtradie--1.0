@@ -1,0 +1,94 @@
+/* client/app/dashboard/invoices/new/NewInvoicePage.module.css */
+
+.container {
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.form {
+  width: 100%;
+  max-width: 900px;
+  background-color: var(--card-background);
+  padding: 2rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: bold;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.inputGroup {
+  margin-bottom: 1rem;
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+}
+
+.itemsTable {
+  width: 100%;
+  margin-top: 2rem;
+  border-collapse: collapse;
+}
+
+.itemsTable th, .itemsTable td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.itemsTable th {
+  background-color: #f9fafb;
+}
+
+.tableInput {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+
+.addItemButtonContainer {
+  margin-top: 1rem;
+}
+
+.totals {
+  margin-top: 2rem;
+  margin-left: auto;
+  width: 100%;
+  max-width: 300px;
+}
+
+.totals p {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+}
+
+.totalAmount {
+  font-size: 1.25rem;
+  font-weight: bold;
+  border-top: 2px solid var(--text-color);
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  border-top: 1px solid var(--border-color);
+  padding-top: 2rem;
+}

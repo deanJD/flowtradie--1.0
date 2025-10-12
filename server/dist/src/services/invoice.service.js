@@ -1,35 +1,29 @@
 export const invoiceService = {
-    // # returns invoices for a project
-    getAllByProject: async (projectId, ctx) => {
-        // 1. Build the base "where" clause to only find non-deleted invoices
-        const where = {
-            deletedAt: null,
-        };
-        // 2. If a projectId is provided, add it to the filter
+    getAll: async (projectId, ctx) => {
+        const where = { deletedAt: null };
         if (projectId) {
             where.projectId = projectId;
         }
         return await ctx.prisma.invoice.findMany({
-            where, // <-- CHANGED
-            include: { items: true, payments: true, project: { include: { client: true } } },
-        });
-    },
-    // # fetch single invoice
-    getById: async (id, ctx) => {
-        // CHANGED: use findFirst to filter by deletedAt
-        return await ctx.prisma.invoice.findFirst({
-            where: {
-                id,
-                deletedAt: null,
-            },
+            where,
+            orderBy: { issueDate: 'desc' },
             include: {
                 items: true,
-                payments: true,
+                payments: { where: { deletedAt: null } },
+                project: { include: { client: true } }
+            },
+        });
+    },
+    getById: async (id, ctx) => {
+        return await ctx.prisma.invoice.findFirst({
+            where: { id, deletedAt: null },
+            include: {
+                items: true,
+                payments: { where: { deletedAt: null } },
                 project: true,
             },
         });
     },
-    // # create invoice
     create: async (input, ctx) => {
         const subtotal = input.items.reduce((sum, i) => sum + (i.quantity ?? 1) * i.unitPrice, 0);
         const gstRate = input.gstRate ?? 0.1;
@@ -41,10 +35,7 @@ export const invoiceService = {
                 invoiceNumber: input.invoiceNumber,
                 dueDate: input.dueDate,
                 status: input.status ?? "DRAFT",
-                subtotal,
-                gstRate,
-                gstAmount,
-                totalAmount,
+                subtotal, gstRate, gstAmount, totalAmount,
                 items: {
                     create: input.items.map((i) => ({
                         description: i.description,
@@ -54,18 +45,16 @@ export const invoiceService = {
                     })),
                 },
             },
-            include: { items: true, payments: true },
+            include: { items: true, project: { include: { client: true } } },
         });
     },
-    // # create invoice from a quote
     createFromQuote: async (quoteId, ctx) => {
         const quote = await ctx.prisma.quote.findFirst({
             where: { id: quoteId, deletedAt: null },
             include: { items: true },
         });
-        if (!quote) {
-            throw new Error("Quote not found to create an invoice from.");
-        }
+        if (!quote)
+            throw new Error("Quote not found.");
         const newInvoiceNumber = `${quote.quoteNumber}-INV`;
         const dueDate = new Date();
         dueDate.setDate(dueDate.getDate() + 30);
@@ -76,10 +65,7 @@ export const invoiceService = {
                     invoiceNumber: newInvoiceNumber,
                     dueDate: dueDate,
                     status: "DRAFT",
-                    subtotal: quote.subtotal,
-                    gstRate: quote.gstRate,
-                    gstAmount: quote.gstAmount,
-                    totalAmount: quote.totalAmount,
+                    subtotal: quote.subtotal, gstRate: quote.gstRate, gstAmount: quote.gstAmount, totalAmount: quote.totalAmount,
                     items: {
                         create: quote.items.map(item => ({
                             description: item.description,
@@ -89,25 +75,23 @@ export const invoiceService = {
                         })),
                     },
                 },
-                include: { items: true, project: true }
+                include: { items: true, project: { include: { client: true } } }
             });
-            await prisma.quote.update({
-                where: { id: quoteId },
-                data: { status: "ACCEPTED" },
-            });
+            await prisma.quote.update({ where: { id: quoteId }, data: { status: "ACCEPTED" } });
             return createdInvoice;
         });
     },
-    // # update invoice details
+    // vvvvvvvvvvvv THIS IS THE FULLY CORRECTED UPDATE FUNCTION vvvvvvvvvvvv
     update: async (id, input, ctx) => {
-        const { items, ...invoiceDataWithNulls } = input;
-        const invoiceData = {
-            invoiceNumber: invoiceDataWithNulls.invoiceNumber ?? undefined,
-            dueDate: invoiceDataWithNulls.dueDate ?? undefined,
-            status: invoiceDataWithNulls.status ?? undefined,
-            gstRate: invoiceDataWithNulls.gstRate ?? undefined,
-        };
         return await ctx.prisma.$transaction(async (prisma) => {
+            const { items, ...invoiceDataWithNulls } = input;
+            // Correctly handle nulls from GraphQL
+            const invoiceData = {
+                invoiceNumber: invoiceDataWithNulls.invoiceNumber ?? undefined,
+                dueDate: invoiceDataWithNulls.dueDate ?? undefined,
+                status: invoiceDataWithNulls.status ?? undefined,
+                gstRate: invoiceDataWithNulls.gstRate ?? undefined,
+            };
             const updatedInvoice = await prisma.invoice.update({
                 where: { id },
                 data: invoiceData,
@@ -132,13 +116,13 @@ export const invoiceService = {
             return await prisma.invoice.update({
                 where: { id },
                 data: { subtotal, gstAmount, totalAmount },
-                include: { items: true, payments: true },
+                include: { items: true, payments: true, project: true },
             });
         });
     },
-    // # delete invoice by ID (now a soft delete)
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    // Soft delete an invoice
     delete: async (id, ctx) => {
-        // CHANGED: This is now a soft delete
         return await ctx.prisma.invoice.update({
             where: { id },
             data: {

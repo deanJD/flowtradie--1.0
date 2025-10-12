@@ -5,9 +5,10 @@ import React, { useState } from 'react';
 import { useMutation } from '@apollo/client';
 import { useRouter } from 'next/navigation';
 import { CREATE_CLIENT_MUTATION } from '@/app/lib/graphql/mutations/client';
-import { GET_CLIENTS_QUERY } from '@/app/lib/graphql/queries/clients'; // <-- 1. Import the query
-import Link from 'next/link';
+import { GET_CLIENTS_QUERY } from '@/app/lib/graphql/queries/clients';
 import styles from './NewClientPage.module.css';
+import Button from '@/components/Button/Button';
+import Input from '@/components/Input/Input'; // <-- 1. Import our new Input component
 
 export default function NewClientPage() {
   const router = useRouter();
@@ -18,23 +19,23 @@ export default function NewClientPage() {
   const [address, setAddress] = useState('');
 
   const [createClient, { loading, error }] = useMutation(CREATE_CLIENT_MUTATION, {
-    onCompleted: () => {
-      router.push('/dashboard/clients');
+    update(cache, { data: { createClient: newClient } }) {
+      const data = cache.readQuery<{ clients: any[] }>({ query: GET_CLIENTS_QUERY });
+      if (data && newClient) {
+        cache.writeQuery({
+          query: GET_CLIENTS_QUERY,
+          data: { clients: [newClient, ...data.clients] },
+        });
+      }
     },
-    // 2. This is the fix: tells Apollo to refetch the list of clients
-    refetchQueries: [{ query: GET_CLIENTS_QUERY }],
+    onCompleted: () => router.push('/dashboard/clients'),
   });
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     createClient({
       variables: {
-        input: {
-          name,
-          email,
-          phone,
-          address,
-        },
+        input: { name, email, phone, address },
       },
     });
   };
@@ -44,21 +45,34 @@ export default function NewClientPage() {
       <form className={styles.form} onSubmit={handleSubmit}>
         <h1 className={styles.title}>Create a New Client</h1>
 
-        <div className={styles.inputGroup}>
-          <label htmlFor="name" className={styles.label}>Client Name</label>
-          <input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} className={styles.input} required />
-        </div>
+        {/* 2. Replace the old input blocks with our new component */}
+        <Input
+          label="Client Name"
+          id="name"
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
 
-        <div className={styles.inputGroup}>
-          <label htmlFor="email" className={styles.label}>Email</label>
-          <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={styles.input} required />
-        </div>
+        <Input
+          label="Email"
+          id="email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
 
-        <div className={styles.inputGroup}>
-          <label htmlFor="phone" className={styles.label}>Phone (Optional)</label>
-          <input id="phone" type="text" value={phone} onChange={(e) => setPhone(e.target.value)} className={styles.input} />
-        </div>
+        <Input
+          label="Phone (Optional)"
+          id="phone"
+          type="text"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+        />
 
+        {/* Note: The textarea is still custom for now. We can build a reusable <Textarea> component next! */}
         <div className={styles.inputGroup}>
           <label htmlFor="address" className={styles.label}>Address (Optional)</label>
           <textarea id="address" value={address} onChange={(e) => setAddress(e.target.value)} className={styles.input} rows={4} />
@@ -66,13 +80,13 @@ export default function NewClientPage() {
 
         {error && <p style={{ color: 'red' }}>Error: {error.message}</p>}
 
-        <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-          <button type="submit" className={styles.button} disabled={loading}>
+        <div className={styles.buttonGroup}>
+          <Button type="submit" disabled={loading}>
             {loading ? 'Creating...' : 'Create Client'}
-          </button>
-          <Link href="/dashboard/clients" className={styles.button} style={{ backgroundColor: '#ccc', textAlign: 'center' }}>
+          </Button>
+          <Button href="/dashboard/clients" variant="secondary">
             Cancel
-          </Link>
+          </Button>
         </div>
       </form>
     </div>

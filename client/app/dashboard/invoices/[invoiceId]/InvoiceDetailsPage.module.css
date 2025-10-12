@@ -82,3 +82,69 @@
   margin-bottom: 1rem;
   margin-top: 2rem;
 }
+/* Add this to InvoiceDetailsPage.module.css */
+.headerMain {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* ADD THESE STYLES to the bottom of InvoiceDetailsPage.module.css */
+
+.tableInput {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+
+.itemActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.footerActions {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: space-between;
+}
+/* ADD THESE to the bottom of InvoiceDetailsPage.module.css */
+
+.headerMain {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.titleInput {
+  composes: tableInput; /* Inherit the base input style */
+  font-size: 2rem;
+  font-weight: bold;
+  border: 1px solid var(--primary-accent); /* Highlight when editing */
+}
+
+.tableInput {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.tableInput:focus {
+  outline: 2px solid var(--primary-accent);
+  border-color: transparent;
+}
+
+.addItemButtonContainer {
+  margin-top: 1rem;
+}
+
+.footerActions {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end; /* Aligns buttons to the right */
+  gap: 1rem;
+}

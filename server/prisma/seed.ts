@@ -1,5 +1,5 @@
 // server/prisma/seed.ts
-import { PrismaClient, UserRole, ProjectStatus } from '@prisma/client'; // <-- 1. ADD ProjectStatus HERE
+import { PrismaClient, UserRole, ProjectStatus, InvoiceStatus } from '@prisma/client';
 import { hashPassword } from '../src/utils/password.js';
 
 const prisma = new PrismaClient();
@@ -47,7 +47,7 @@ async function main() {
   const project = await prisma.project.create({
     data: {
       title: 'Downtown Office Renovation',
-      status: ProjectStatus.ACTIVE, // <-- 2. USE THE ENUM MEMBER HERE
+      status: ProjectStatus.ACTIVE,
       clientId: client.id,
       managerId: owner.id,
     },
@@ -62,6 +62,52 @@ async function main() {
       { title: 'Begin demolition', isCompleted: false, projectId: project.id },
       { title: 'Plumbing rough-in', isCompleted: false, projectId: project.id },
     ],
+  });
+
+  // 6. CREATE INVOICES FOR THE PROJECT
+  console.log('Creating invoices for the project...');
+
+  await prisma.invoice.create({
+    data: {
+      projectId: project.id,
+      invoiceNumber: 'INV-2025-001',
+      status: InvoiceStatus.PAID,
+      issueDate: new Date('2025-08-01'),
+      dueDate: new Date('2025-08-31'),
+      subtotal: 5000,
+      gstRate: 0.1,
+      gstAmount: 500,
+      totalAmount: 5500,
+      items: {
+        create: [
+          { description: 'Phase 1: Demolition', quantity: 1, unitPrice: 5000, total: 5000 },
+        ]
+      },
+      payments: {
+        create: [
+          { amount: 5500, date: new Date('2025-08-15'), method: 'Bank Transfer' }
+        ]
+      }
+    }
+  });
+
+  await prisma.invoice.create({
+    data: {
+      projectId: project.id,
+      invoiceNumber: 'INV-2025-002',
+      status: InvoiceStatus.SENT,
+      issueDate: new Date('2025-09-01'),
+      dueDate: new Date('2025-09-30'),
+      subtotal: 12000,
+      gstRate: 0.1,
+      gstAmount: 1200,
+      totalAmount: 13200,
+      items: {
+        create: [
+          { description: 'Phase 2: Framing & Electrical', quantity: 1, unitPrice: 12000, total: 12000 },
+        ]
+      }
+    }
   });
 
   console.log(`Seeding finished.`);

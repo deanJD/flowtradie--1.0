@@ -1,21 +1,3 @@
-# --- Invoice Queries and Mutations ---
-
-type Query {
-  invoice(id: ID!): Invoice
-  invoices(projectId: ID): [Invoice!]!   # ✅ accepts projectId argument, never returns null
-  
-}
-
-
-type Mutation {
-  createInvoice(input: CreateInvoiceInput!): Invoice!   # create a new invoice
-  updateInvoice(id: ID!, input: UpdateInvoiceInput!): Invoice! # update an invoice
-  deleteInvoice(id: ID!): Invoice!                      # delete an invoice
-}
-extend type Mutation {
-  createInvoiceFromQuote(quoteId: ID!): Invoice!
-}
-
 # --- Invoice Type Definitions ---
 
 type Invoice {
@@ -67,4 +49,19 @@ input UpdateInvoiceInput {
   status: InvoiceStatus
   items: [CreateInvoiceItemInput!]
   gstRate: Float
+}
+
+
+# --- API Operations ---
+
+extend type Query {
+  invoice(id: ID!): Invoice
+  invoices(projectId: ID): [Invoice!]!
+}
+
+extend type Mutation {
+  createInvoice(input: CreateInvoiceInput!): Invoice!
+  updateInvoice(id: ID!, input: UpdateInvoiceInput!): Invoice!
+  deleteInvoice(id: ID!): Invoice!
+  createInvoiceFromQuote(quoteId: ID!): Invoice!
 }

@@ -1,4 +1,4 @@
-/* client/app/dashboard/clients/ClientsPage.module.css */
+/* client/app/dashboard/invoices/ProjectsPage.module.css */
 
 .pageContainer {
   padding: 2rem;
@@ -56,4 +56,27 @@
 
 .table tr:last-child td {
   border-bottom: none;
+}
+
+.status {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.statusPaid {
+  background-color: #dcfce7; /* green-100 */
+  color: #166534; /* green-800 */
+}
+
+.statusSent {
+  background-color: #dbeafe; /* blue-100 */
+  color: #1e40af; /* blue-800 */
+}
+
+.statusDraft {
+  background-color: #e5e7eb; /* gray-200 */
+  color: #374151; /* gray-700 */
 }

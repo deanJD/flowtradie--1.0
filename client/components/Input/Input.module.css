@@ -1,0 +1,26 @@
+/* client/components/Input/Input.module.css */
+.inputGroup {
+  margin-bottom: 1rem;
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+/* We can add styles for error messages here later */
+.error {
+  color: #b91c1c; /* A dark red */
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}

@@ -8,8 +8,8 @@ export const GET_INVOICES_QUERY = gql`
       invoiceNumber
       status
       totalAmount
-      Project {         # <-- This is the change
-        Client {
+      project {
+        client {
           name
         }
       }

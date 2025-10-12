@@ -2,63 +2,76 @@
 'use client';
 
 import React from 'react';
-import styles from './InvoicesPage.module.css';
+import { useQuery } from '@apollo/client';
+import { GET_INVOICES_QUERY } from '@/app/lib/graphql/queries/invoices';
+import Link from 'next/link';
+import DataTable from '@/components/DataTable/DataTable';
+import ListPageLayout from '@/components/ListPageLayout/ListPageLayout';
+import tableStyles from '@/components/DataTable/DataTable.module.css';
 
-// Placeholder data to build our UI
-const mockData = [
-  { id: '1', invoiceNumber: 'INV-2025-001', client: { name: 'Skyline Constructions' }, status: 'PAID', totalAmount: 1250.00 },
-  { id: '2', invoiceNumber: 'INV-2025-002', client: { name: 'John Smith Contracting' }, status: 'SENT', totalAmount: 3400.50 },
-  { id: '3', invoiceNumber: 'INV-2025-003', client: { name: 'Beta Builders' }, status: 'DRAFT', totalAmount: 800.00 },
-];
-
-// A helper function to get the right style for each status
 const getStatusClass = (status: string) => {
   switch (status) {
-    case 'PAID': return styles.statusPaid;
-    case 'SENT': return styles.statusSent;
-    case 'DRAFT': return styles.statusDraft;
-    default: return styles.statusDraft;
+    case 'PAID': return tableStyles.statusPaid;
+    case 'SENT': return tableStyles.statusSent;
+    case 'DRAFT': return tableStyles.statusDraft;
+    default: return tableStyles.statusDraft;
   }
 };
 
 export default function InvoicesPage() {
-  return (
-    <div className={styles.pageContainer}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>Invoices</h1>
-        <div className={styles.actions}>
-          <input type="search" placeholder="Search invoices..." className={styles.searchBar} />
-        </div>
-      </div>
+  const { data, loading, error } = useQuery(GET_INVOICES_QUERY);
 
-      <div className={styles.tableContainer}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Invoice #</th>
-              <th>Client</th>
-              <th>Status</th>
-              <th>Total</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {mockData.map(invoice => (
-              <tr key={invoice.id}>
-                <td>{invoice.invoiceNumber}</td>
-                <td>{invoice.client.name}</td>
-                <td>
-                  <span className={`${styles.status} ${getStatusClass(invoice.status)}`}>
-                    {invoice.status}
-                  </span>
-                </td>
-                <td>${invoice.totalAmount.toFixed(2)}</td>
-                <td>...</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+  const invoiceColumns = [
+    {
+      header: 'Invoice #',
+      accessor: 'invoiceNumber',
+      render: (row: any) => (
+        <Link href={`/dashboard/invoices/${row.id}`} className={tableStyles.tableLink}>
+          {row.invoiceNumber}
+        </Link>
+      )
+    },
+    {
+      header: 'Client',
+      accessor: 'project.client.name'
+    },
+    {
+      header: 'Status',
+      accessor: 'status',
+      render: (row: any) => (
+        <span className={`${tableStyles.status} ${getStatusClass(row.status)}`}>
+          {row.status}
+        </span>
+      )
+    },
+    {
+      header: 'Total',
+      accessor: 'totalAmount',
+      render: (row: any) => `$${row.totalAmount.toFixed(2)}`
+    },
+    {
+      header: 'Actions',
+      accessor: 'id',
+      // vvvvvvvvvvvv THIS IS THE FIX vvvvvvvvvvvv
+      render: (row: any) => (
+        <Link href={`/dashboard/invoices/${row.id}`} className={tableStyles.tableLink}>
+          View/Edit
+        </Link>
+      )
+      // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    }
+  ];
+
+  if (loading) return <p>Loading invoices...</p>;
+  if (error) return <p>Error: {error.message}</p>;
+
+  return (
+    <ListPageLayout
+      title="Invoices"
+      newButtonText="+ New Invoice"
+      newButtonLink="/dashboard/invoices/new"
+    >
+      <DataTable columns={invoiceColumns} data={data?.invoices} />
+    </ListPageLayout>
   );
 }

@@ -1,62 +1,46 @@
 // server/src/services/invoice.service.ts
 import { GraphQLContext } from "../context.js";
 import { Prisma, InvoiceStatus } from "@prisma/client";
-import { CreateInvoiceInput, UpdateInvoiceInput } from "@/__generated__/graphql.js"; // Updated to use UpdateInvoiceInput
+import { CreateInvoiceInput, UpdateInvoiceInput } from "@/__generated__/graphql.js";
 
 export const invoiceService = {
-  // # returns invoices for a project
-  getAllByProject: async (projectId: string | undefined, ctx: GraphQLContext) => {
-    // 1. Build the base "where" clause to only find non-deleted invoices
-    const where: Prisma.InvoiceWhereInput = {
-      deletedAt: null,
-    };
-    // 2. If a projectId is provided, add it to the filter
-    if (projectId) {
-      where.projectId = projectId;
-    }
-
+  getAll: async (projectId: string | undefined, ctx: GraphQLContext) => {
+    const where: Prisma.InvoiceWhereInput = { deletedAt: null };
+    if (projectId) { where.projectId = projectId; }
     return await ctx.prisma.invoice.findMany({
-      where, // <-- CHANGED
-      include: { items: true, payments: true, project: { include: { client: true } } },
+      where,
+      orderBy: { issueDate: 'desc' },
+      include: {
+        items: true,
+        payments: { where: { deletedAt: null } },
+        project: { include: { client: true } }
+      },
     });
   },
 
-  // # fetch single invoice
   getById: async (id: string, ctx: GraphQLContext) => {
-    // CHANGED: use findFirst to filter by deletedAt
     return await ctx.prisma.invoice.findFirst({
-      where: {
-        id,
-        deletedAt: null,
-      },
+      where: { id, deletedAt: null },
       include: {
         items: true,
-        payments: true,
+        payments: { where: { deletedAt: null } },
         project: true,
       },
     });
   },
 
-  // # create invoice
   create: async (input: CreateInvoiceInput, ctx: GraphQLContext) => {
-    const subtotal = input.items.reduce(
-      (sum, i) => sum + (i.quantity ?? 1) * i.unitPrice,
-      0
-    );
+    const subtotal = input.items.reduce((sum, i) => sum + (i.quantity ?? 1) * i.unitPrice, 0);
     const gstRate = input.gstRate ?? 0.1;
     const gstAmount = subtotal * gstRate;
     const totalAmount = subtotal + gstAmount;
-
     return ctx.prisma.invoice.create({
       data: {
         projectId: input.projectId,
         invoiceNumber: input.invoiceNumber,
         dueDate: input.dueDate,
         status: input.status ?? "DRAFT",
-        subtotal,
-        gstRate,
-        gstAmount,
-        totalAmount,
+        subtotal, gstRate, gstAmount, totalAmount,
         items: {
           create: input.items.map((i) => ({
             description: i.description,
@@ -66,25 +50,19 @@ export const invoiceService = {
           })),
         },
       },
-      include: { items: true, payments: true },
+      include: { items: true, project: { include: { client: true } } },
     });
   },
 
-  // # create invoice from a quote
   createFromQuote: async (quoteId: string, ctx: GraphQLContext) => {
-    const quote = await ctx.prisma.quote.findFirst({ // CHANGED: check if quote is deleted
+    const quote = await ctx.prisma.quote.findFirst({
       where: { id: quoteId, deletedAt: null },
       include: { items: true },
     });
-
-    if (!quote) {
-      throw new Error("Quote not found to create an invoice from.");
-    }
-
+    if (!quote) throw new Error("Quote not found.");
     const newInvoiceNumber = `${quote.quoteNumber}-INV`;
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + 30);
-
     return await ctx.prisma.$transaction(async (prisma) => {
       const createdInvoice = await prisma.invoice.create({
         data: {
@@ -92,10 +70,7 @@ export const invoiceService = {
           invoiceNumber: newInvoiceNumber,
           dueDate: dueDate,
           status: "DRAFT",
-          subtotal: quote.subtotal,
-          gstRate: quote.gstRate,
-          gstAmount: quote.gstAmount,
-          totalAmount: quote.totalAmount,
+          subtotal: quote.subtotal, gstRate: quote.gstRate, gstAmount: quote.gstAmount, totalAmount: quote.totalAmount,
           items: {
             create: quote.items.map(item => ({
               description: item.description,
@@ -105,30 +80,26 @@ export const invoiceService = {
             })),
           },
         },
-        include: { items: true, project: true }
+        include: { items: true, project: { include: { client: true } } }
       });
-
-      await prisma.quote.update({
-        where: { id: quoteId },
-        data: { status: "ACCEPTED" },
-      });
-
+      await prisma.quote.update({ where: { id: quoteId }, data: { status: "ACCEPTED" } });
       return createdInvoice;
     });
   },
 
-  // # update invoice details
+  // vvvvvvvvvvvv THIS IS THE FULLY CORRECTED UPDATE FUNCTION vvvvvvvvvvvv
   update: async (id: string, input: UpdateInvoiceInput, ctx: GraphQLContext) => {
-    const { items, ...invoiceDataWithNulls } = input;
-    
-    const invoiceData: Prisma.InvoiceUpdateInput = {
-      invoiceNumber: invoiceDataWithNulls.invoiceNumber ?? undefined,
-      dueDate: invoiceDataWithNulls.dueDate ?? undefined,
-      status: invoiceDataWithNulls.status ?? undefined,
-      gstRate: invoiceDataWithNulls.gstRate ?? undefined,
-    };
-
     return await ctx.prisma.$transaction(async (prisma) => {
+      const { items, ...invoiceDataWithNulls } = input;
+      
+      // Correctly handle nulls from GraphQL
+      const invoiceData: Prisma.InvoiceUpdateInput = {
+        invoiceNumber: invoiceDataWithNulls.invoiceNumber ?? undefined,
+        dueDate: invoiceDataWithNulls.dueDate ?? undefined,
+        status: invoiceDataWithNulls.status ?? undefined,
+        gstRate: invoiceDataWithNulls.gstRate ?? undefined,
+      };
+
       const updatedInvoice = await prisma.invoice.update({
         where: { id },
         data: invoiceData,
@@ -156,14 +127,14 @@ export const invoiceService = {
       return await prisma.invoice.update({
         where: { id },
         data: { subtotal, gstAmount, totalAmount },
-        include: { items: true, payments: true },
+        include: { items: true, payments: true, project: true },
       });
     });
   },
+  // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  // # delete invoice by ID (now a soft delete)
+  // Soft delete an invoice
   delete: async (id: string, ctx: GraphQLContext) => {
-    // CHANGED: This is now a soft delete
     return await ctx.prisma.invoice.update({
       where: { id },
       data: {

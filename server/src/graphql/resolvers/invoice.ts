@@ -1,57 +1,61 @@
+// server/src/graphql/resolvers/invoice.ts
 import { GraphQLContext } from "../../context.js";
 import { invoiceService } from "../../services/invoice.service.js";
-
-// FINAL STEP: Import the newly generated types.
-// You may need to adjust the relative path ('../') to be correct.
 import { CreateInvoiceInput, UpdateInvoiceInput } from "@/__generated__/graphql.js";
-
 
 export const invoiceResolvers = {
   Query: {
-    // # fetch single invoice by ID
-    invoice: async (_p: unknown, { id }: { id: string }, ctx: GraphQLContext) => {
-      return await invoiceService.getById(id, ctx);
+    invoice: (
+      _p: unknown,
+      { id }: { id: string },
+      ctx: GraphQLContext
+    ) => {
+      return invoiceService.getById(id, ctx);
     },
 
-    // # fetch all invoices for a project
+    // vvvvvvvvvvvv THIS IS THE FIX vvvvvvvvvvvv
     invoices: async (
       _p: unknown,
       { projectId }: { projectId?: string },
       ctx: GraphQLContext
     ) => {
-      const result = await invoiceService.getAllByProject(projectId, ctx);
+      // First, we await the result from the service
+      const result = await invoiceService.getAll(projectId, ctx);
+      // Then, we use the 'nullish coalescing operator' (??) as a safety net.
+      // If 'result' is null or undefined, it will return an empty array instead.
       return result ?? [];
     },
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   },
 
   Mutation: {
-    // # create invoice
-    createInvoice: async (
+    createInvoice: (
       _p: unknown,
-      { input }: { input: CreateInvoiceInput }, // No longer 'any'
+      { input }: { input: CreateInvoiceInput },
       ctx: GraphQLContext
     ) => {
-      return await invoiceService.create(input, ctx);
+      return invoiceService.create(input, ctx);
     },
-
-    // # update invoice
-    updateInvoice: async (
+    updateInvoice: (
       _p: unknown,
-      { id, input }: { id: string; input: UpdateInvoiceInput }, // No longer 'any'
+      { id, input }: { id: string; input: UpdateInvoiceInput },
       ctx: GraphQLContext
     ) => {
-      return await invoiceService.update(id, input, ctx);
+      return invoiceService.update(id, input, ctx);
     },
-
-    // # delete invoice
-    deleteInvoice: async (_p: unknown, { id }: { id: string }, ctx: GraphQLContext) => {
-      return await invoiceService.delete(id, ctx);
+    deleteInvoice: (
+      _p: unknown,
+      { id }: { id: string },
+      ctx: GraphQLContext
+    ) => {
+      return invoiceService.delete(id, ctx);
     },
-   // vvvv THIS IS THE NEW LINE YOU ARE ADDING vvvv
-    createInvoiceFromQuote: (_p: unknown, { quoteId }: { quoteId: string }, ctx: GraphQLContext) =>
-      invoiceService.createFromQuote(quoteId, ctx),
-    // ^^^^ THIS IS THE NEW LINE YOU ARE ADDING ^^^^
+    createInvoiceFromQuote: (
+      _p: unknown,
+      { quoteId }: { quoteId: string },
+      ctx: GraphQLContext
+    ) => {
+      return invoiceService.createFromQuote(quoteId, ctx);
+    },
   },
-  
-  
 };

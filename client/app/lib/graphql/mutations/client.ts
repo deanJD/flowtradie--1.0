@@ -9,3 +9,25 @@ export const CREATE_CLIENT_MUTATION = gql`
     }
   }
 `;
+// At the bottom of client/app/lib/graphql/mutations/client.ts
+
+export const UPDATE_CLIENT_MUTATION = gql`
+  mutation UpdateClient($updateClientId: ID!, $input: UpdateClientInput!) {
+    updateClient(id: $updateClientId, input: $input) {
+      id
+      name
+      email
+      phone
+      address
+    }
+  }
+`;
+// At the bottom of client/app/lib/graphql/mutations/client.ts
+
+export const DELETE_CLIENT_MUTATION = gql`
+  mutation DeleteClient($deleteClientId: ID!) {
+    deleteClient(id: $deleteClientId) {
+      id
+    }
+  }
+`;

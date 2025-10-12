@@ -1,6 +1,7 @@
 // client/app/lib/graphql/queries/invoice.ts
 import { gql } from '@apollo/client';
 
+// THE FIX: Renamed from GET_INVOICES_QUERY to GET_INVOICE_QUERY (singular)
 export const GET_INVOICE_QUERY = gql`
   query GetInvoice($invoiceId: ID!) {
     invoice(id: $invoiceId) {
