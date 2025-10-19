@@ -1,0 +1,36 @@
+# --- BillableItem Type Definition ---
+
+type BillableItem {
+  id: ID!
+  name: String!
+  description: String
+  unitPrice: Float!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+# --- Input Types ---
+
+input CreateBillableItemInput {
+  name: String!
+  description: String
+  unitPrice: Float!
+}
+
+input UpdateBillableItemInput {
+  name: String
+  description: String
+  unitPrice: Float
+}
+
+# --- API Operations ---
+
+extend type Query {
+  billableItems: [BillableItem!]!
+}
+
+extend type Mutation {
+  createBillableItem(input: CreateBillableItemInput!): BillableItem!
+  updateBillableItem(id: ID!, input: UpdateBillableItemInput!): BillableItem!
+  deleteBillableItem(id: ID!): BillableItem!
+}

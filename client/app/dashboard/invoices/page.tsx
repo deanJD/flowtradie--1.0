@@ -9,11 +9,14 @@ import DataTable from '@/components/DataTable/DataTable';
 import ListPageLayout from '@/components/ListPageLayout/ListPageLayout';
 import tableStyles from '@/components/DataTable/DataTable.module.css';
 
+// This helper function maps a status string to a CSS class
 const getStatusClass = (status: string) => {
   switch (status) {
     case 'PAID': return tableStyles.statusPaid;
     case 'SENT': return tableStyles.statusSent;
+    case 'ACTIVE': return tableStyles.statusActive;
     case 'DRAFT': return tableStyles.statusDraft;
+    case 'PENDING': return tableStyles.statusPending;
     default: return tableStyles.statusDraft;
   }
 };
@@ -21,6 +24,7 @@ const getStatusClass = (status: string) => {
 export default function InvoicesPage() {
   const { data, loading, error } = useQuery(GET_INVOICES_QUERY);
 
+  // Define the "blueprint" for our Invoices table
   const invoiceColumns = [
     {
       header: 'Invoice #',
@@ -52,13 +56,15 @@ export default function InvoicesPage() {
     {
       header: 'Actions',
       accessor: 'id',
-      // vvvvvvvvvvvv THIS IS THE FIX vvvvvvvvvvvv
+      // vvvv THIS IS THE DEFINITIVE FIX vvvv
+      // We apply our new, correct alignment class to this column
+      className: tableStyles.actionsCell,
+      // ^^^^ END OF DEFINITIVE FIX ^^^^
       render: (row: any) => (
         <Link href={`/dashboard/invoices/${row.id}`} className={tableStyles.tableLink}>
-          View/Edit
+          View / Edit
         </Link>
       )
-      // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     }
   ];
 

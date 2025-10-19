@@ -26,4 +26,13 @@ export const UPDATE_INVOICE_MUTATION = gql`
   }
 `;
 
+// vvvv THIS IS THE NEW MUTATION YOU ARE ADDING vvvv
+export const DELETE_INVOICE_MUTATION = gql`
+  mutation DeleteInvoice($deleteInvoiceId: ID!) {
+    deleteInvoice(id: $deleteInvoiceId) {
+      id # We just need the ID back to confirm the deletion for our cache update
+    }
+  }
+`;
+
 

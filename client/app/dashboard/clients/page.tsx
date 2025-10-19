@@ -4,56 +4,56 @@
 import React from 'react';
 import { useQuery } from '@apollo/client';
 import { GET_CLIENTS_QUERY } from '@/app/lib/graphql/queries/clients';
-import styles from './ClientsPage.module.css';
 import Link from 'next/link';
-import Button from '@/components/Button/Button'; // <-- 1. Import the Button component
+import DataTable from '@/components/DataTable/DataTable';
+import ListPageLayout from '@/components/ListPageLayout/ListPageLayout';
+import tableStyles from '@/components/DataTable/DataTable.module.css';
 
 export default function ClientsPage() {
   const { data, loading, error } = useQuery(GET_CLIENTS_QUERY);
+
+  // Define the "blueprint" for our Clients table
+  const clientColumns = [
+    {
+      header: 'Name',
+      accessor: 'name',
+      render: (row: any) => (
+        <Link href={`/dashboard/clients/${row.id}`} className={tableStyles.tableLink}>
+          {row.name}
+        </Link>
+      )
+    },
+    {
+      header: 'Email',
+      accessor: 'email'
+    },
+    {
+      header: 'Phone',
+      accessor: 'phone',
+      render: (row: any) => row.phone || 'N/A' // Handle cases where phone is null
+    },
+    {
+      header: 'Actions',
+      accessor: 'id',
+      className: tableStyles.actionsCell, // Apply our right-alignment class
+      render: (row: any) => (
+        <Link href={`/dashboard/clients/${row.id}/edit`} className={tableStyles.tableLink}>
+          Edit
+        </Link>
+      )
+    }
+  ];
 
   if (loading) return <p>Loading clients...</p>;
   if (error) return <p>Error: {error.message}</p>;
 
   return (
-    <div className={styles.pageContainer}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>Clients</h1>
-        <div className={styles.actions}>
-          <input type="search" placeholder="Search clients..." className={styles.searchBar} />
-          {/* 2. Use our clean, reusable Button component */}
-          <Button href="/dashboard/clients/new">
-            + New Client
-          </Button>
-        </div>
-      </div>
-
-      <div className={styles.tableContainer}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data?.clients.map((client: any) => (
-              <tr key={client.id}>
-                <td>
-                  {/* 3. This is the main fix: Update the href to the correct path */}
-                  <Link href={`/dashboard/clients/${client.id}`} style={{ color: 'var(--link-color)', fontWeight: 'bold' }}>
-                    {client.name}
-                  </Link>
-                </td>
-                <td>{client.email}</td>
-                <td>{client.phone || 'N/A'}</td>
-                <td>...</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <ListPageLayout
+      title="Clients"
+      newButtonText="+ New Client"
+      newButtonLink="/dashboard/clients/new"
+    >
+      <DataTable columns={clientColumns} data={data?.clients} />
+    </ListPageLayout>
   );
 }

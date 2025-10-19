@@ -1,4 +1,4 @@
-// client/app/dashboard/invoices/[invoiceId]/page.tsx
+// client/app/dashboard/invoices/[invoiceId]/page.tsx (Golden Copy)
 'use client';
 
 import React, { useState, useEffect, use } from 'react';
@@ -82,6 +82,14 @@ export default function InvoiceDetailsPage({ params }: { params: Promise<{ invoi
     setIsEditing(false);
   }
 
+  // vvvv THIS IS THE MISSING FUNCTION vvvv
+  const handleRecordPayment = () => {
+    // For now, this is a placeholder. In the future, this will open a "Record Payment" modal.
+    console.log('TODO: Implement Record Payment Modal');
+    alert('Feature coming soon: Record Payment!');
+  };
+  // ^^^^ END OF MISSING FUNCTION ^^^^
+
   // --- 5. DERIVED STATE (REAL-TIME CALCULATIONS) ---
   const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
   const gstAmount = subtotal * (data?.invoice.gstRate || 0.1);
@@ -93,10 +101,12 @@ export default function InvoiceDetailsPage({ params }: { params: Promise<{ invoi
   if (error) return <p>Error: {error.message}</p>;
   if (!data || !data.invoice) return <p>Invoice not found.</p>;
 
+  const { invoice } = data; // Get the original invoice data for status checks
+
   // --- 6. THE UI (JSX) ---
   return (
     <div className={styles.container}>
-      <Link href={`/dashboard/projects/${data.invoice.project.id}`} className={styles.backLink}>
+      <Link href={`/dashboard/projects/${invoice.project.id}`} className={styles.backLink}>
         ← Back to Project
       </Link>
       
@@ -105,20 +115,20 @@ export default function InvoiceDetailsPage({ params }: { params: Promise<{ invoi
           {isEditing ? (
             <input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} className={styles.titleInput} />
           ) : (
-            <h1 className={styles.title}>Invoice #{data.invoice.invoiceNumber}</h1>
+            <h1 className={styles.title}>Invoice #{invoice.invoiceNumber}</h1>
           )}
         </div>
         <div className={styles.metaGrid}>
-          <p className={styles.metaItem}><strong>Status:</strong> {data.invoice.status}</p>
-          <p className={styles.metaItem}><strong>Project:</strong> {data.invoice.project.title}</p>
-          <p className={styles.metaItem}><strong>Issue Date:</strong> {new Date(data.invoice.issueDate).toLocaleDateString()}</p>
+          <p className={styles.metaItem}><strong>Status:</strong> {invoice.status}</p>
+          <p className={styles.metaItem}><strong>Project:</strong> {invoice.project.title}</p>
+          <p className={styles.metaItem}><strong>Issue Date:</strong> {new Date(invoice.issueDate).toLocaleDateString()}</p>
           {isEditing ? (
              <div className={styles.metaItem}>
                 <strong>Due Date: </strong>
                 <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className={styles.tableInput} />
             </div>
           ) : (
-            <p className={styles.metaItem}><strong>Due Date:</strong> {new Date(data.invoice.dueDate).toLocaleDateString()}</p>
+            <p className={styles.metaItem}><strong>Due Date:</strong> {new Date(invoice.dueDate).toLocaleDateString()}</p>
           )}
         </div>
       </div>
@@ -151,7 +161,7 @@ export default function InvoiceDetailsPage({ params }: { params: Promise<{ invoi
 
       <div className={styles.totals}>
           <p><span>Subtotal:</span> <span>${subtotal.toFixed(2)}</span></p>
-          <p><span>GST ({data.invoice.gstRate * 100}%):</span> <span>${gstAmount.toFixed(2)}</span></p>
+          <p><span>GST ({invoice.gstRate * 100}%):</span> <span>${gstAmount.toFixed(2)}</span></p>
           <p className={styles.totalAmount}><span>Total:</span> <span>${totalAmount.toFixed(2)}</span></p>
           <p><span>Amount Paid:</span> <span>-${amountPaid.toFixed(2)}</span></p>
           <p className={styles.totalAmount}><strong><span>Amount Due:</span> <span>${amountDue.toFixed(2)}</span></strong></p>
@@ -164,16 +174,21 @@ export default function InvoiceDetailsPage({ params }: { params: Promise<{ invoi
             <Button onClick={handleSave} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Changes'}</Button>
           </>
         ) : (
-          <Button onClick={() => setIsEditing(true)}>Edit Invoice</Button>
+          <>
+            {invoice.status === 'DRAFT' && (
+              <Button onClick={() => setIsEditing(true)} variant="secondary">Edit Invoice</Button>
+            )}
+            <Button onClick={handleRecordPayment}>Record Payment</Button>
+          </>
         )}
       </div>
 
       <h2 className={styles.sectionTitle}>Payments</h2>
-      {data.invoice.payments.length > 0 ? (
+      {invoice.payments.length > 0 ? (
         <table className={styles.itemsTable}>
           <thead><tr><th>Date</th><th>Amount</th><th>Method</th></tr></thead>
           <tbody>
-            {data.invoice.payments.map((p: any) => (
+            {invoice.payments.map((p: any) => (
               <tr key={p.id}>
                 <td>{new Date(p.date).toLocaleDateString()}</td>
                 <td>${p.amount.toFixed(2)}</td>
