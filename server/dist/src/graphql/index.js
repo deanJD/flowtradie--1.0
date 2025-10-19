@@ -1,41 +1,34 @@
-// ...other imports at the top of your file...
-import { clientResolvers } from './resolvers/client.js';
-import { projectResolvers } from './resolvers/project.js';
-import { quoteResolvers } from './resolvers/quote.js';
-import { invoiceResolvers } from './resolvers/invoice.js';
-import { taskResolvers } from './resolvers/task.js';
-import { expenseResolvers } from './resolvers/expense.js';
-import { timeLogResolvers } from './resolvers/timelog.js';
-import { reportingResolvers } from './resolvers/reporting.js'; // <-- THIS IS THE FIX
-import merge from 'lodash.merge';
-import { GraphQLScalarType, Kind } from 'graphql';
-import { paymentResolvers } from './resolvers/payment.js';
-import { authResolvers } from './resolvers/auth.js';
-import { userResolvers } from './resolvers/user.js';
-// ... any other code ...
-// Define a custom scalar for handling DateTime objects.
-const dateTimeScalar = new GraphQLScalarType({
-    name: 'DateTime',
-    description: 'DateTime custom scalar type',
-    serialize(value) {
-        if (value instanceof Date)
-            return value.toISOString();
-        throw new Error('GraphQL DateTime Scalar serializer expected a `Date` object');
-    },
-    parseValue(value) {
-        if (typeof value === 'string')
-            return new Date(value);
-        throw new Error('GraphQL DateTime Scalar parser expected a `string`');
-    },
-    parseLiteral(ast) {
-        if (ast.kind === Kind.STRING)
-            return new Date(ast.value);
-        return null;
-    },
+// server/src/graphql/index.ts
+import { loadFilesSync } from "@graphql-tools/load-files";
+import { mergeTypeDefs, mergeResolvers } from "@graphql-tools/merge";
+import path from "path";
+import { fileURLToPath } from "url";
+// vvvv IMPORT OUR NEW RESOLVER vvvv
+import { billableItemResolvers } from "./resolvers/billable_item.js";
+// ^^^^ END OF IMPORT ^^^^
+import { clientResolvers } from "./resolvers/client.js";
+import { projectResolvers } from "./resolvers/project.js";
+import { quoteResolvers } from "./resolvers/quote.js";
+import { invoiceResolvers } from "./resolvers/invoice.js";
+import { taskResolvers } from "./resolvers/task.js";
+import { expenseResolvers } from "./resolvers/expense.js";
+import { timeLogResolvers } from "./resolvers/timelog.js";
+import { reportingResolvers } from "./resolvers/reporting.js";
+import { paymentResolvers } from "./resolvers/payment.js";
+import { authResolvers } from "./resolvers/auth.js";
+import { userResolvers } from "./resolvers/user.js";
+import { dateTimeScalar } from "./scalars/dateTime.js";
+// ... (file path logic is the same) ...
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const typesArray = loadFilesSync(path.join(__dirname, "./schemas"), {
+    extensions: ["graphql"],
 });
-// Merge all resolver objects together.
+export const typeDefs = mergeTypeDefs(typesArray);
 const resolverModules = [
     { DateTime: dateTimeScalar },
+    authResolvers,
+    userResolvers,
     clientResolvers,
     projectResolvers,
     quoteResolvers,
@@ -45,8 +38,7 @@ const resolverModules = [
     timeLogResolvers,
     paymentResolvers,
     reportingResolvers,
-    authResolvers,
-    userResolvers,
+    billableItemResolvers, // <-- ADD THE NEW RESOLVER TO THE ARRAY
 ];
-export const resolvers = merge({}, ...resolverModules.filter(Boolean));
+export const resolvers = mergeResolvers(resolverModules.filter(Boolean));
 //# sourceMappingURL=index.js.map
