@@ -1,4 +1,4 @@
-/* client/app/globals.css */
+/* client/app/globals.css (Golden Copy with New Brand Theme) */
 
 /* 1. A simple, modern CSS Reset */
 *, *::before, *::after {
@@ -7,17 +7,23 @@
   padding: 0;
 }
 
-/* 2. CSS Custom Properties (Variables) for our "eBay" theme */
+/* 2. CSS Custom Properties (Variables) - OUR NEW BRAND THEME */
 :root {
-  --background-color: #f7f7f7;         /* eBay's light gray page background */
-  --text-color: #333333;               /* A standard dark gray for text */
-  --primary-accent: #3665f3;            /* The iconic eBay blue for primary buttons */
-  --primary-accent-hover: #2f58d0;    /* A slightly darker blue for hover effects */
-  --link-color: #3665f3;               /* Use the same blue for links */
-  --card-background: #ffffff;           /* White for cards and forms */
-  --border-color: #cccccc;               /* A neutral gray for borders */
+  /* vvvv YOUR NEW BRAND COLORS vvvv */
+  --primary-accent: #2a27f5; /* Your new, strong blue */
+  --primary-accent-hover: #2220c4; /* A slightly darker, correct hover color */
+  --accent-purple: #9127F5; /* The purple accent color */
+  /* ^^^^ YOUR NEW BRAND COLORS ^^^^ */
 
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* --- Our Base Theme --- */
+  --background-color: #f3f4f6;
+  --card-background: #ffffff;
+  --text-color: #1f2937;
+  --subtext-color: #6b7280;
+  --border-color: #e5e7eb;
+  --link-color: var(--primary-accent);
+  
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 /* 3. Base Body Styles */
@@ -29,7 +35,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Optional: Global style for links */
+/* 4. Global style for links */
 a {
   color: var(--link-color);
   text-decoration: none;

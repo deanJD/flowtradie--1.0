@@ -4,8 +4,17 @@ import { gql } from '@apollo/client';
 export const CREATE_CLIENT_MUTATION = gql`
   mutation CreateClient($input: CreateClientInput!) {
     createClient(input: $input) {
+      
+  # --- Explicitly list all fields needed by GET_CLIENTS_QUERY ---
       id
       name
+      email
+      phone
+      address
+      createdAt # Include if your list query uses it
+      updatedAt # Include if your list query uses it
+      # Add other fields like 'projects' if your list query needs them
+      
     }
   }
 `;

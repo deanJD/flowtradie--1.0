@@ -123,25 +123,30 @@ model QuoteItem {
   quote       Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 }
 
+// server/prisma/schema.prisma
+
 model Invoice {
   id            String        @id @default(cuid())
   invoiceNumber String        @unique
   status        InvoiceStatus @default(DRAFT)
   issueDate     DateTime      @default(now())
   dueDate       DateTime
+  notes         String?       // <--- ADDED THIS LINE
   subtotal      Float
   gstRate       Float         @default(0.1)
   gstAmount     Float         @default(0.0)
   totalAmount   Float
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
-  deletedAt     DateTime? // <-- Added soft delete flag
+  deletedAt     DateTime?
 
   projectId String
   project   Project @relation(fields: [projectId], references: [id])
   items     InvoiceItem[]
   payments  Payment[]
 }
+
+// ... rest of schema ...
 
 model InvoiceItem {
   id          String  @id @default(cuid())

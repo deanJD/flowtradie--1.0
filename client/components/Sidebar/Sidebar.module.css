@@ -2,7 +2,7 @@
 .sidebar {
   background-color: var(--card-background);
   border-right: 1px solid var(--border-color);
-  width: 250px;
+  width: 195px;
   padding: 1.5rem 1rem;
   height: 100vh;
 }

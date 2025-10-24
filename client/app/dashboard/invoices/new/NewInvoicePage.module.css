@@ -1,94 +1,301 @@
-/* client/app/dashboard/invoices/new/NewInvoicePage.module.css */
 
+/* client/app/dashboard/invoices/new/NewInvoicePage.module.css (Final Version) */
 .container {
   padding: 2rem;
-  display: flex;
-  justify-content: center;
+  max-width: 1350px;
+  margin: 2rem auto;
 }
 
-.form {
-  width: 100%;
-  max-width: 900px;
+.invoiceForm {
   background-color: var(--card-background);
-  padding: 2rem;
-  border-radius: 8px;
   border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+@media (min-width: 768px) {
+  .invoiceForm { padding: 3rem; }
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .title {
   font-size: 1.75rem;
-  font-weight: bold;
+  font-weight: 600;
+}
+@media (min-width: 768px) {
+  .title { font-size: 2rem; }
+}
+
+.metaGrid {
+  display: grid;
+  grid-template-columns: 1fr; /* Stack on mobile */
+  gap: 1.5rem; /* Reduced gap */
   margin-bottom: 2rem;
-  text-align: center;
+}
+@media (min-width: 768px) {
+  .metaGrid {
+    grid-template-columns: 1fr 1fr; /* Two columns on desktop */
+    gap: 3rem;
+    margin-bottom: 2rem; /* Reduced margin */
+  }
 }
 
 .inputGroup {
-  margin-bottom: 1rem;
+  margin-bottom: 1.2rem
+}
+.inputGroup:last-child {
+  margin-bottom: 0;
 }
 
 .label {
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.8rem;
+  font-size: 0.95rem;
   font-weight: 500;
+  color: var(--text-color);
+
 }
 
-.input {
+.input,
+.select,
+.textarea {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.65rem 0.75rem;
   border: 1px solid var(--border-color);
   border-radius: 6px;
+  font-size: 0.95rem;
+  background-color: #f9fafb;
+  box-sizing: border-box;
+  font-family: inherit;
+  color: var(--text-color);
+}
+.input:focus,
+.select:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--primary-accent);
+  box-shadow: 0 0 0 1px var(--primary-accent);
+  background-color: white;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 70px;
+}
+
+/* Styles for the 'From' section */
+.fromDetails {
+  margin-top: 0.5rem;
+  padding: 0.75rem; /* Add padding */
+  border: 1px dashed var(--border-color); /* Add a subtle border */
+  border-radius: 6px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--subtext-color);
+  background-color: #f9fafb; /* Match input background */
+}
+
+.fromName {
+  font-weight: 600;
+  color: var(--text-color);
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+/* Style for the 'Client Details' title */
+.subSectionTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--subtext-color);
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Add some space above the Project dropdown */
+.projectInputGroup {
+  margin-top: 1.5rem;
+}
+
+/* Styles for selected client details under dropdown */
+.clientDetails {
+  margin-top: 0.75rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--primary-accent);
+  font-size: 0.9rem;
+  color: var(--subtext-color);
+}
+
+.clientName {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 3rem;
+}
+
+/* client/app/dashboard/invoices/new/NewInvoicePage.module.css */
+
+/* ... (other styles) ... */
+
+/* Styles for the Invoice # / Dates grid */
+.detailsGrid {
+    display: grid;
+    grid-template-columns: 1fr; /* Stack on mobile by default */
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+@media (min-width: 992px) {
+  .detailsGrid {
+    grid-template-columns: repeat(4, 1fr); /* Four equal columns */
+    gap: 1.5rem;
+    align-items: flex-end;
+    padding-bottom: 2rem;
+  }
+   .detailsGrid  {
+       margin-bottom: 0;
+   }
+}
+
+/* Style for the read-only due date input */
+.calculatedDueDateInput {
+  background-color: var(--background-color); /* Use main background to look disabled */
+  color: var(--subtext-color);
+  font-size: 0.9rem; /* Match other inputs */
+  cursor: default; /* Indicate not editable */
+  border-color: transparent; /* Remove border */
+  box-shadow: none; /* Remove default focus shadow */
+  
+}
+/* Prevent focus styles */
+.calculatedDueDateInput:focus {
+    outline: none;
+    box-shadow: none;
+    border-color: transparent; /* Keep border transparent on focus */
+}
+
+
+/* ... (rest of styles) ... */
+
+.sectionTitle {
+  margin-top: 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--primary-accent);
+}
+@media (min-width: 768px) {
+  .sectionTitle { margin-top: 2.5rem; font-size: 1.25rem; margin-bottom: 1.5rem;}
 }
 
 .itemsTable {
   width: 100%;
-  margin-top: 2rem;
   border-collapse: collapse;
+  margin-bottom: 1rem;
 }
 
-.itemsTable th, .itemsTable td {
+.itemsTable th,
+.itemsTable td {
   padding: 0.75rem;
   text-align: left;
   border-bottom: 1px solid var(--border-color);
+  vertical-align: top;
 }
 
 .itemsTable th {
   background-color: #f9fafb;
+  color: var(--subtext-color);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-weight: 600;
 }
+
+@media (max-width: 768px) {
+  .itemsTable thead { display: none; }
+  .itemsTable tr { display: block; margin-bottom: 1rem; border: 1px solid var(--border-color); border-radius: 6px; padding: 0.5rem; }
+  .itemsTable td { display: block; text-align: right; border-bottom: none; padding: 0.5rem 0; }
+  .itemsTable td::before { content: attr(data-label); float: left; font-weight: 600; color: var(--text-color); }
+  .itemsTable td[data-label="Remove"]::before { display: none; }
+  .itemsTable td:last-child { text-align: center; padding-top: 0.5rem; }
+}
+
+.colDescription { width: 45%; }
+.colQty { width: 10%; }
+.colPrice { width: 15%; }
+.colTotal { width: 15%; text-align: right; font-weight: 500; }
+.colActions { width: 5%; text-align: right; }
 
 .tableInput {
   width: 100%;
   padding: 0.5rem;
   border: 1px solid var(--border-color);
   border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 0.9rem;
+  background-color: white;
 }
+.tableInput:focus {
+  outline: none;
+  border-color: var(--primary-accent);
+  box-shadow: 0 0 0 1px var(--primary-accent);
+}
+
+.removeButton {
+  background: none; border: none; color: var(--subtext-color); cursor: pointer; font-size: 1.2rem; padding: 0; line-height: 1;
+}
+.removeButton:hover { color: var(--red-500); }
 
 .addItemButtonContainer {
   margin-top: 1rem;
+  text-align: left;
 }
 
 .totals {
   margin-top: 2rem;
   margin-left: auto;
   width: 100%;
-  max-width: 300px;
+  max-width: 20rem;
+  font-size: 0.9rem;
+}
+@media (min-width: 768px) {
+  .totals { max-width: 22rem; }
 }
 
 .totals p {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.5rem 0;
+  display: flex; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px dashed var(--border-color); color: var(--subtext-color);
 }
+.totals p span:last-child { font-weight: 500; color: var(--text-color); }
+.totals p:last-child { border-bottom: none; }
 
 .totalAmount {
-  font-size: 1.25rem;
-  font-weight: bold;
-  border-top: 2px solid var(--text-color);
+  font-size: 1rem; font-weight: 600; color: var(--text-color); border-top: 2px solid var(--text-color); padding-top: 0.75rem !important; margin-top: 0.5rem;
 }
+.totalAmount span:last-child { font-size: 1.3rem; font-weight: 700; }
 
 .buttonGroup {
-  display: flex;
-  gap: 1rem;
-  margin-top: 2rem;
-  border-top: 1px solid var(--border-color);
-  padding-top: 2rem;
+  display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;
+}
+@media (min-width: 768px) {
+  .buttonGroup { margin-top: 2.5rem; padding-top: 2rem; }
+}
+
+.errorMessage {
+  color: #ef4444; /* red-500 */
+  margin: 1rem 0;
+  font-size: 0.9rem;
 }

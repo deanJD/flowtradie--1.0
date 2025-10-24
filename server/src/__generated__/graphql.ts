@@ -70,7 +70,9 @@ export type CreateInvoiceInput = {
   dueDate: Scalars['DateTime']['input'];
   gstRate?: InputMaybe<Scalars['Float']['input']>;
   invoiceNumber: Scalars['String']['input'];
+  issueDate: Scalars['DateTime']['input'];
   items: Array<CreateInvoiceItemInput>;
+  notes?: InputMaybe<Scalars['String']['input']>;
   projectId: Scalars['ID']['input'];
   status?: InputMaybe<InvoiceStatus>;
 };

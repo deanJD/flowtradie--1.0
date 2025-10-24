@@ -1,40 +1,114 @@
-/* client/app/components/Header/Header.module.css */
-.header {
-  background-color: var(--card-background);
-  border-bottom: 1px solid var(--border-color);
-  padding: 1rem 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+/* client/components/Header/Header.module.css */
+
+/* ... other styles (.header, .logo, .userActions, .logoutButton) ... */
+
+.navigation {
+  display: flex; /* Makes links go side-by-side */
+  gap: 1.5rem; /* Space between links */
+  flex-grow: 1; /* Allows nav to take up available space */
+  justify-content: center; /* Center the links */
 }
 
-.brand {
-  font-weight: bold;
-  font-size: 1.5rem;
-  color: var(--text-color);
-}
-
-.brand a {
+.navLink {
+  color: var(--subtext-color);
   text-decoration: none;
-  color: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem; /* For active state underline */
+  transition: color 0.2s ease, border-color 0.2s ease;
+  white-space: nowrap;
 }
 
-.userInfo {
+.navLink:hover {
+  color: var(--text-color);
+  text-decoration: none;
+}
+
+.navLinkActive {
+  color: var(--primary-accent); /* Use your primary brand color */
+  border-bottom-color: var(--primary-accent);
+  font-weight: 600;
+}
+
+/* --- Responsive adjustments --- */
+@media (max-width: 768px) {
+  .navigation {
+    display: none; /* Hide text links on small mobile */
+  }
+}
+@media (max-width: 1024px) and (min-width: 769px) {
+    .navigation {
+        gap: 1rem; /* Reduce gap on medium screens */
+    }
+    .navLink {
+        font-size: 0.85rem; /* Slightly smaller text */
+    }
+}
+/* client/components/Header/Header.module.css */
+
+/* ... other styles ... */
+
+.logo a {
+  font-weight: 700; /* Bolder */
+  font-size: 1.35rem; /* Slightly larger */
+  color: var(--text-color); /* Use main text color */
+  text-decoration: none;
+}
+
+/* Optional: Add hover effect if desired */
+.logo a:hover {
+  color: var(--primary-accent); /* Change color on hover */
+  text-decoration: none;
+}
+
+/* ... rest of the styles (.navigation, .userActions, etc.) ... */
+/* client/components/Header/Header.module.css */
+
+/* client/components/Header/Header.module.css */
+
+.header {
+  background-color: var(--card-background); /* Ensure this is white */
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.5rem 2rem; /* Reduced top/bottom, increased left/right padding */
+  min-height: 60px; /* Use min-height instead of fixed height */
   display: flex;
   align-items: center;
-  gap: 1rem;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+/* ... rest of your Header styles (.logo, .navigation, .userActions, etc.) ... */
+
+/* ... .logo styles ... */
+/* ... .navigation styles ... */
+
+.userActions {
+  display: flex;
+  align-items: center;
+  gap: 1rem; /* Space between username and logout button */
+  color: var(--subtext-color);
+  font-size: 0.9rem;
 }
 
 .logoutButton {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  color: var(--text-color);
-  background-color: transparent;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
+  background: none;
+  border: none;
+  color: var(--subtext-color);
   cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+.logoutButton:hover {
+  color: var(--text-color);
+  background-color: var(--background-color);
 }
 
-.logoutButton:hover {
-  background-color: #f9fafb; /* gray-50 */
+/* Optional: Hide username text on small screens */
+@media (max-width: 480px) {
+  .userActions span {
+      display: none;
+  }
 }

@@ -38,6 +38,8 @@ input CreateInvoiceInput {
   projectId: ID!
   invoiceNumber: String!
   dueDate: DateTime!
+  issueDate: DateTime! # <-- ADDED
+  notes: String         # <-- ADDED (Optional - use String! if required)
   status: InvoiceStatus = DRAFT
   items: [CreateInvoiceItemInput!]!
   gstRate: Float = 0.1

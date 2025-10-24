@@ -10,6 +10,7 @@ export const GET_INVOICE_QUERY = gql`
       status
       issueDate
       dueDate
+      notes # Include notes field
       subtotal
       gstRate
       gstAmount
@@ -17,6 +18,13 @@ export const GET_INVOICE_QUERY = gql`
       project {
         id
         title
+        client { # <-- Re-added client details
+          id
+          name
+          address
+          email
+          phone
+        }
       }
       items {
         id

@@ -8,6 +8,7 @@ export const GET_CLIENTS_QUERY = gql`
       name
       email
       phone
+      address
     }
   }
 `;

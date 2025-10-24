@@ -1,8 +1,9 @@
 // client/app/dashboard/layout.tsx
+'use client'; // Still needed if Header uses client-side hooks
+
 import React from 'react';
-import Header from "../../components/Header/Header";
-import Sidebar from "../../components/Sidebar/Sidebar"; // <-- 1. Import the Sidebar
-import styles from './DashboardLayout.module.css';     // <-- 2. Import the new styles
+import styles from './DashboardLayout.module.css';
+import Header from '@/components/Header/Header'; // Adjust path if needed
 
 export default function DashboardLayout({
   children,
@@ -10,14 +11,12 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div>
+    <div className={styles.dashboardLayout}>
       <Header />
-      <div className={styles.layoutContainer}>
-        <Sidebar /> {/* <-- 3. Render the Sidebar */}
-        <main className={styles.mainContent}>
-          {children}
-        </main>
-      </div>
+      {/* Removed the contentArea div and the Sidebar */}
+      <main className={styles.mainContent}>
+        {children}
+      </main>
     </div>
   );
 }

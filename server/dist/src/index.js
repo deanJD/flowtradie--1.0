@@ -15,7 +15,7 @@ async function startServer() {
     const typeDefs = mergeTypeDefs(typesArray);
     const server = new ApolloServer({
         typeDefs,
-        resolvers,
+        resolvers: resolvers,
     });
     await server.start();
     app.use("/", cors(), express.json(), // This line is essential and must be here
