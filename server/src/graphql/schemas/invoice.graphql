@@ -15,6 +15,7 @@ type Invoice {
   project: Project!
   items: [InvoiceItem!]!
   payments: [Payment!]!
+  notes: String
 }
 
 type InvoiceItem {
@@ -51,7 +52,9 @@ input UpdateInvoiceInput {
   status: InvoiceStatus
   items: [CreateInvoiceItemInput!]
   gstRate: Float
+  notes: String
 }
+
 
 
 # --- API Operations ---

@@ -97,6 +97,7 @@ CREATE TABLE "Invoice" (
     "status" "InvoiceStatus" NOT NULL DEFAULT 'DRAFT',
     "issueDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "dueDate" TIMESTAMP(3) NOT NULL,
+    "notes" TEXT,
     "subtotal" DOUBLE PRECISION NOT NULL,
     "gstRate" DOUBLE PRECISION NOT NULL DEFAULT 0.1,
     "gstAmount" DOUBLE PRECISION NOT NULL DEFAULT 0.0,
@@ -182,6 +183,19 @@ CREATE TABLE "TimeLog" (
     CONSTRAINT "TimeLog_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "BillableItem" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "unitPrice" DOUBLE PRECISION NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
+
+    CONSTRAINT "BillableItem_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
@@ -193,6 +207,9 @@ CREATE UNIQUE INDEX "Quote_quoteNumber_key" ON "Quote"("quoteNumber");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Invoice_invoiceNumber_key" ON "Invoice"("invoiceNumber");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "BillableItem_name_key" ON "BillableItem"("name");
 
 -- AddForeignKey
 ALTER TABLE "Project" ADD CONSTRAINT "Project_clientId_fkey" FOREIGN KEY ("clientId") REFERENCES "Client"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

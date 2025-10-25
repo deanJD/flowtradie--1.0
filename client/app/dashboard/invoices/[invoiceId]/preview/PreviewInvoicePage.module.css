@@ -1,232 +1,195 @@
 /* client/app/dashboard/invoices/[invoiceId]/preview/PreviewInvoicePage.module.css */
-
 .container {
-  padding: 1rem 0; /* Only vertical padding for centering */
-  background-color: var(--background-color); /* Light gray background */
+  padding: 2rem;
+  background-color: var(--background-color);
 }
-/* vvvv NEW ACTION BAR STYLES vvvv */
+
 .actionBar {
-    display: flex;
-    justify-content: flex-end; /* Align buttons to the right */
-    gap: 0.75rem; /* Space between buttons */
-    max-width: 800px; /* Match invoice page width */
-    margin: 0 auto 1rem auto; /* Center it and add bottom margin */
-    padding: 0 1rem; /* Add some horizontal padding */
+  max-width: 1100px;
+  margin: 0 auto 1.5rem auto;
+  display: flex;
+  justify-content: flex-end; /* Aligns buttons to the right */
+  gap: 1rem;
 }
 
-/* Simulate an A4 page look */
 .invoicePage {
-  background-color: var(--card-background); /* White page */
-  padding: 2.5rem; /* Generous padding */
-  max-width: 800px; /* Standard page width */
-  min-height: 1000px; /* Approximate page height */
-  margin: 1rem auto; /* Center the page */
+  max-width: 1100px;
+  margin: 0 auto;
+  background-color: var(--card-background);
   border: 1px solid var(--border-color);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Soft shadow */
-  font-size: 0.9rem; /* Slightly smaller base font */
-  line-height: 1.6;
+  border-radius: 8px;
+  padding: 3rem 4rem;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
 }
 
-/* Header section */
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start; /* Align top */
-  margin-bottom: 2.5rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 2px solid var(--primary-accent); /* Accent border */
+  align-items: flex-start;
+  padding-bottom: 2rem;
+  border-bottom: 2px solid var(--primary-accent);
 }
 
 .companyDetails h3 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
+  font-size: 1.5rem;
+  font-weight: 700;
   color: var(--text-color);
 }
-
 .companyDetails p {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: var(--subtext-color);
-  margin: 0;
 }
 
 .invoiceTitle h1 {
-  font-size: 2rem;
+  font-size: 2.5rem;
   font-weight: 700;
-  color: var(--primary-accent); /* Use primary color */
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin: 0;
+  color: var(--text-color);
   text-align: right;
+  margin: 0;
 }
 .invoiceTitle p {
-    text-align: right;
-    color: var(--subtext-color);
-    font-size: 0.9rem;
-    margin-top: 0.25rem;
+  font-size: 1rem;
+  color: var(--subtext-color);
+  text-align: right;
 }
 
-
-/* Bill To / From Section */
 .metaGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  margin-bottom: 2rem;
+  gap: 3rem;
+  margin: 2rem 0;
 }
 
 .metaSection h4 {
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--subtext-color);
-  margin-bottom: 0.5rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
 }
-
 .metaSection p {
-  margin-bottom: 0.15rem; /* Tighter spacing */
-  font-size: 0.85rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.metaSection p strong {
+  font-weight: 600;
+  color: var(--text-color);
+  font-size: 1rem;
 }
 
-.metaSection strong { /* Client/Company Name */
-    font-weight: 600;
-    color: var(--text-color);
-    font-size: 0.95rem;
-}
-
-/* Invoice Details (Number, Dates) */
 .detailsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); /* Responsive columns */
-  gap: 1rem 1.5rem; /* Row and column gap */
-  margin-bottom: 2.5rem;
-  padding: 1rem;
-  background-color: #f9fafb; /* Light background */
-  border-radius: 6px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  background-color: #f9fafb; /* gray-50 */
+  padding: 1.5rem;
+  border-radius: 8px;
   border: 1px solid var(--border-color);
 }
 
-.detailItem label {
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--subtext-color);
-  text-transform: uppercase;
-  margin-bottom: 0.2rem;
-}
-
-.detailItem span {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--text-color);
-}
-
-/* Items Table */
-.itemsTable {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 1.5rem;
-}
-
-.itemsTable th,
-.itemsTable td {
-  padding: 0.7rem 0.5rem; /* Adjusted padding */
-  text-align: left;
-  border-bottom: 1px solid var(--border-color);
-  vertical-align: top;
-}
-
-.itemsTable th {
-  background-color: #f1f5f9; /* Slightly different header bg */
-  color: var(--subtext-color);
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  border-bottom-width: 2px;
-  border-color: var(--border-color);
-}
-
-.itemsTable td {
-    font-size: 0.85rem;
-}
-
-/* Column alignments & widths */
-.colDescription { width: 50%; }
-.colQty { width: 10%; text-align: center; }
-.colPrice { width: 15%; text-align: right; }
-.colTotal { width: 15%; text-align: right; font-weight: 500; }
-
-/* Totals Section */
-.totalsSection {
-  margin-top: 1.5rem;
-  margin-left: auto;
-  width: 100%;
-  max-width: 280px; /* Adjust width */
-  font-size: 0.85rem;
-}
-
-.totalsSection p {
+.detailItem {
   display: flex;
-  justify-content: space-between;
-  padding: 0.4rem 0; /* Tighter padding */
-  color: var(--subtext-color);
+  flex-direction: column;
 }
-.totalsSection p span:last-child {
-  font-weight: 500;
-  color: var(--text-color);
-}
-
-.totalAmount {
-  font-size: 0.95rem; /* Adjusted size */
-  font-weight: 600;
-  color: var(--text-color);
-  border-top: 2px solid var(--text-color);
-  padding-top: 0.6rem !important;
-  margin-top: 0.4rem;
-}
-.totalAmount span:last-child {
-  font-size: 1.1rem; /* Slightly larger total */
-  font-weight: 700;
-}
-
-/* Notes Section */
-.notesSection {
-  margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px dashed var(--border-color); /* Dashed separator */
-}
-.notesSection h4 {
+.detailItem label {
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--subtext-color);
-  margin-bottom: 0.5rem;
   text-transform: uppercase;
+  margin-bottom: 0.25rem;
 }
-.notesSection p {
-  font-size: 0.85rem;
-  color: var(--subtext-color);
-  white-space: pre-wrap; /* Preserve line breaks from textarea */
+.detailItem span {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-color);
 }
 
-/* Print Styles */
-@media print {
-  body {
-    background-color: white; /* Ensure white background for printing */
-  }
-  .container {
-    padding: 0;
-    background-color: white;
-  }
-  .invoicePage {
-    margin: 0;
-    border: none;
-    box-shadow: none;
-    max-width: 100%;
-    min-height: auto;
-    padding: 0; /* Remove padding for edge-to-edge printing */
-  }
-  /* Hide elements not needed for print (like action buttons if they were here) */
-  /* .noPrint { display: none; } */
+.itemsTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 2.5rem;
+}
+.itemsTable thead {
+  border-bottom: 2px solid var(--text-color);
+}
+.itemsTable th, .itemsTable td {
+  text-align: left;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.itemsTable th {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: var(--subtext-color);
+}
+
+.colDescription { width: 45%; }
+.colQty { text-align: center; }
+.colPrice { text-align: right; }
+.colTotal { text-align: right; font-weight: 500; }
+
+.totalsSection {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: flex-end;
+}
+.totalsSection div {
+  width: 100%;
+  max-width: 350px;
+}
+.totalsSection p {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  font-size: 0.9rem;
+  color: var(--subtext-color);
+}
+.totalsSection p span:last-child {
+  font-weight: 600;
+  color: var(--text-color);
+}
+.totalAmount {
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  color: var(--text-color) !important;
+  border-top: 2px solid var(--text-color);
+  padding-top: 1rem !important;
+  margin-top: 0.5rem;
+}
+.totalAmount span:last-child {
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+}
+
+.notesSection {
+  margin-top: 3rem;
+  border-top: 1px dashed var(--border-color);
+  padding-top: 1.5rem;
+}
+.notesSection h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text-color);
+}
+.notesSection p {
+  font-size: 0.9rem;
+  color: var(--subtext-color);
+  white-space: pre-wrap; /* This respects line breaks in the notes */
+}
+
+.paymentHistoryTable {
+  composes: itemsTable; /* Inherit the main table styles */
+  font-size: 0.9rem; /* Make this table text slightly smaller */
+  margin-top: 1rem;
+}
+.paymentHistoryTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  margin-top: 2.5rem;
+}
+.paymentHistoryTable th:last-child,
+.paymentHistoryTable td:last-child {
+  text-align: right;
 }

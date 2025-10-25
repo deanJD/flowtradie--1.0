@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 // vvvv IMPORT OUR NEW RESOLVER vvvv
 import { billableItemResolvers } from "./resolvers/billable_item.js";
 // ^^^^ END OF IMPORT ^^^^
+import { settingsResolvers } from "./resolvers/settings.js";
 import { clientResolvers } from "./resolvers/client.js";
 import { projectResolvers } from "./resolvers/project.js";
 import { quoteResolvers } from "./resolvers/quote.js";
@@ -38,7 +39,8 @@ const resolverModules = [
     timeLogResolvers,
     paymentResolvers,
     reportingResolvers,
-    billableItemResolvers, // <-- ADD THE NEW RESOLVER TO THE ARRAY
+    billableItemResolvers,
+    settingsResolvers, // <-- ADD THE NEW RESOLVER TO THE ARRAY
 ];
 export const resolvers = mergeResolvers(resolverModules.filter(Boolean));
 //# sourceMappingURL=index.js.map

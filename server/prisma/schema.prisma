@@ -123,7 +123,31 @@ model QuoteItem {
   quote       Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 }
 
-// server/prisma/schema.prisma
+// vvvv THIS IS THE NEW MODEL YOU ARE ADDING vvvv
+model BillableItem {
+  id          String   @id @default(cuid())
+  name        String   @unique // The short name for the lookup (e.g., "Hourly Labor")
+  description String?  // The full description that will appear on the invoice
+  unitPrice   Float    // The default price to auto-fill
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+}
+
+model CompanySettings {
+  id           String   @id @default(cuid())
+  businessName String
+  abn          String?
+  address      String?
+  phone        String?
+  email        String?
+  website      String?
+  logoUrl      String?
+  bankDetails  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
 
 model Invoice {
   id            String        @id @default(cuid())
@@ -139,6 +163,17 @@ model Invoice {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   deletedAt     DateTime?
+
+// SNAPSHOT fields (temporarily optional for backfill)
+  businessName    String
+  abn             String?
+  address         String?
+  phone           String?
+  email           String?
+  website         String?
+  logoUrl         String?
+  bankDetails     String?
+
 
   projectId String
   project   Project @relation(fields: [projectId], references: [id])
@@ -216,14 +251,3 @@ model TimeLog {
   userId String
   user   User   @relation(fields: [userId], references: [id])
 }
-// vvvv THIS IS THE NEW MODEL YOU ARE ADDING vvvv
-model BillableItem {
-  id          String   @id @default(cuid())
-  name        String   @unique // The short name for the lookup (e.g., "Hourly Labor")
-  description String?  // The full description that will appear on the invoice
-  unitPrice   Float    // The default price to auto-fill
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  deletedAt   DateTime?
-}
-// ^^^^ END OF NEW MODEL ^^^^

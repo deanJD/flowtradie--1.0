@@ -21,7 +21,7 @@ async function main() {
   await prisma.client.deleteMany();
   await prisma.user.deleteMany();
 
-  // 2. CREATE THE OWNER USER
+  // 2. CREATE OWNER USER
   console.log('Creating owner user...');
   const password = await hashPassword('password123');
   const owner = await prisma.user.create({
@@ -33,7 +33,7 @@ async function main() {
     },
   });
 
-  // 3. CREATE A CLIENT
+  // 3. CREATE CLIENT
   console.log('Creating a client...');
   const client = await prisma.client.create({
     data: {
@@ -42,7 +42,7 @@ async function main() {
     },
   });
 
-  // 4. CREATE A PROJECT FOR THAT CLIENT
+  // 4. CREATE PROJECT
   console.log('Creating a project...');
   const project = await prisma.project.create({
     data: {
@@ -53,7 +53,7 @@ async function main() {
     },
   });
 
-  // 5. CREATE TASKS FOR THAT PROJECT
+  // 5. CREATE TASKS
   console.log('Creating tasks for the project...');
   await prisma.task.createMany({
     data: [
@@ -64,8 +64,19 @@ async function main() {
     ],
   });
 
-  // 6. CREATE INVOICES FOR THE PROJECT
+  // ✅ 6. CREATE INVOICES with SNAPSHOT FIELDS
   console.log('Creating invoices for the project...');
+
+  const snapshot = {
+    businessName: "Seeded Company Pty Ltd", // ✅ REQUIRED
+    abn: "00 000 000 000",
+    address: "123 Seed St",
+    phone: "0400 000 000",
+    email: "accounts@seedco.com",
+    website: "https://seedco.com",
+    logoUrl: null,
+    bankDetails: "BSB 000-000 ACC 00000000",
+  };
 
   await prisma.invoice.create({
     data: {
@@ -78,6 +89,7 @@ async function main() {
       gstRate: 0.1,
       gstAmount: 500,
       totalAmount: 5500,
+      ...snapshot, // ✅ APPLY SNAPSHOT
       items: {
         create: [
           { description: 'Phase 1: Demolition', quantity: 1, unitPrice: 5000, total: 5000 },
@@ -102,6 +114,7 @@ async function main() {
       gstRate: 0.1,
       gstAmount: 1200,
       totalAmount: 13200,
+      ...snapshot, // ✅ APPLY SNAPSHOT
       items: {
         create: [
           { description: 'Phase 2: Framing & Electrical', quantity: 1, unitPrice: 12000, total: 12000 },
@@ -114,11 +127,5 @@ async function main() {
 }
 
 main()
-  .then(async () => {
-    await prisma.$disconnect();
-  })
-  .catch(async (e) => {
-    console.error(e);
-    await prisma.$disconnect();
-    process.exit(1);
-  });
+  .then(async () => { await prisma.$disconnect(); })
+  .catch(async (e) => { console.error(e); await prisma.$disconnect(); process.exit(1); });
