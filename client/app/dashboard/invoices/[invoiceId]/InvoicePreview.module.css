@@ -1,0 +1,185 @@
+.wrapper {
+  padding: 2rem;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 auto 1rem;
+  max-width: 980px;
+}
+
+.spacer { flex: 1; }
+
+.paper {
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
+  margin: 0 auto;
+  max-width: 980px;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  padding: 1.5rem;
+}
+
+.header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1.25rem;
+  align-items: start;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1rem;
+}
+
+.brandRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logo {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+
+.companyBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.companyName {
+  font-weight: 800;
+  font-size: 1.25rem;
+}
+
+.subtle {
+  color: var(--subtext-color);
+  font-size: 0.93rem;
+}
+
+.meta {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 240px;
+}
+
+.metaRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+}
+
+.metaLabel { color: var(--subtext-color); }
+.metaValue { font-weight: 700; }
+
+.parties {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+.toRight { justify-self: end; text-align: right; }
+
+.sectionTitle {
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+}
+
+.bold { font-weight: 700; }
+
+.items { margin-top: 1rem; }
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--border-color);
+}
+
+.table th, .table td {
+  padding: 0.7rem 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.table thead th {
+  background: #f9fafb;
+  text-align: left;
+  color: var(--subtext-color);
+  font-weight: 700;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.colDesc { width: 100%; }
+.colQty  { width: 80px; text-align: center; }
+.colMoney{ width: 140px; text-align: right; }
+
+.emptyRow { text-align: center; color: var(--subtext-color); }
+
+.totals {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.35rem;
+  max-width: 360px;
+  margin-left: auto;
+}
+
+.totalRow, .totalRowBig {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+}
+
+.totalLabel { color: var(--subtext-color); }
+.totalValue { font-weight: 700; }
+
+.totalRowBig {
+  border-top: 2px solid var(--border-color);
+  margin-top: 0.25rem;
+  padding-top: 0.5rem;
+}
+
+.totalLabelBig { font-weight: 800; }
+.totalValueBig { font-weight: 800; font-size: 1.25rem; }
+
+.notes { margin-top: 1rem; }
+.noteBody { white-space: pre-wrap; }
+
+.footer {
+  margin-top: 1.25rem;
+  border-top: 1px solid var(--border-color);
+  padding-top: 0.75rem;
+}
+
+/* Print styles (minimal) */
+@media print {
+  .wrapper { padding: 0; }
+  .toolbar { display: none; }
+  .paper {
+    border: none;
+    box-shadow: none;
+    margin: 0;
+    max-width: 100%;
+    padding: 0;
+  }
+}
+/* PDF mode removes paddings and shadows */
+.pdfWrapper {
+  padding: 0 !important;
+  background: white !important;
+}
+
+.pdfPaper {
+  box-shadow: none !important;
+  border: none !important;
+  width: 100% !important;
+  padding: 0 !important;
+}
+
+/* Ensure toolbar never prints */
+@media print {
+  .toolbar {
+    display: none !important;
+  }
+}

@@ -16,6 +16,18 @@ type Invoice {
   items: [InvoiceItem!]!
   payments: [Payment!]!
   notes: String
+
+# Snapshot Fields (NEW)
+  businessName: String
+  abn: String
+  address: String
+  phone: String
+  email: String
+  website: String
+  logoUrl: String
+  bankDetails: String
+
+
 }
 
 type InvoiceItem {

@@ -1,203 +1,220 @@
-// client/app/dashboard/invoices/[invoiceId]/page.tsx (Golden Copy)
-'use client';
+"use client";
 
-import React, { useState, useEffect, use } from 'react';
-import { useQuery, useMutation } from '@apollo/client';
-import { GET_INVOICE_QUERY } from '@/app/lib/graphql/queries/invoice';
-import { UPDATE_INVOICE_MUTATION } from '@/app/lib/graphql/mutations/invoice';
-import Link from 'next/link';
-import styles from './InvoiceDetailsPage.module.css';
-import Button from '@/components/Button/Button';
+import { useMemo } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useQuery, gql } from "@apollo/client";
+import styles from "./InvoicePreview.module.css";
+import Button from "@/components/Button/Button";
 
-// Define the shape of a line item for our "working copy" state
-interface LineItem {
-  id?: string;
-  description: string;
-  quantity: number;
-  unitPrice: number;
-}
+const GET_INVOICE_FOR_PREVIEW = gql`
+  query GetInvoiceForPreview($invoiceId: ID!) {
+    invoice(id: $invoiceId) {
+      id
+      invoiceNumber
+      status
+      issueDate
+      dueDate
+      subtotal
+      gstRate
+      gstAmount
+      totalAmount
+      notes
 
-export default function InvoiceDetailsPage({ params }: { params: Promise<{ invoiceId: string }> }) {
-  const { invoiceId } = use(params);
+      businessName
+      abn
+      address
+      phone
+      email
+      website
+      logoUrl
+      bankDetails
 
-  // --- 1. STATE MANAGEMENT ---
-  const [isEditing, setIsEditing] = useState(false);
-  const [items, setItems] = useState<LineItem[]>([]);
-  const [invoiceNumber, setInvoiceNumber] = useState('');
-  const [dueDate, setDueDate] = useState('');
+      items {
+        id
+        description
+        quantity
+        unitPrice
+        total
+      }
 
-  // --- 2. DATA FETCHING ---
-  const { data, loading, error, refetch } = useQuery(GET_INVOICE_QUERY, {
-    variables: { invoiceId },
-  });
-
-  // This effect syncs the server data into our local "working copy" state
-  useEffect(() => {
-    if (data && data.invoice) {
-      setItems(data.invoice.items.map((item: any) => ({
-        id: item.id,
-        description: item.description,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-      })));
-      setInvoiceNumber(data.invoice.invoiceNumber);
-      setDueDate(new Date(data.invoice.dueDate).toISOString().split('T')[0]);
+      project {
+        id
+        title
+        client {
+          id
+          name
+        }
+      }
     }
-  }, [data]);
-  
-  // --- 3. DATA MUTATION (SAVING) ---
-  const [updateInvoice, { loading: isSaving }] = useMutation(UPDATE_INVOICE_MUTATION, {
-    onCompleted: () => {
-      setIsEditing(false); // Turn off edit mode on success
-      refetch(); // Refetch the data to show the final saved state
-    },
-  });
-
-  // --- 4. HANDLER FUNCTIONS (USER ACTIONS) ---
-  const handleItemChange = (index: number, field: keyof LineItem, value: string | number) => {
-    const newItems = [...items];
-    (newItems[index] as any)[field] = value;
-    setItems(newItems);
-  };
-  const addItem = () => setItems([...items, { description: '', quantity: 1, unitPrice: 0 }]);
-  const removeItem = (index: number) => setItems(items.filter((_, i) => i !== index));
-  
-  const handleSave = () => {
-    const itemsForMutation = items.map(({ id, ...rest }) => rest);
-    updateInvoice({
-      variables: {
-        updateInvoiceId: invoiceId,
-        input: { invoiceNumber, dueDate: new Date(dueDate), items: itemsForMutation },
-      },
-    });
-  };
-
-  const handleCancel = () => {
-    // Reset all state to the original data from the server and exit edit mode
-    if (data && data.invoice) {
-        setItems(data.invoice.items);
-        setInvoiceNumber(data.invoice.invoiceNumber);
-        setDueDate(new Date(data.invoice.dueDate).toISOString().split('T')[0]);
-    }
-    setIsEditing(false);
   }
+`;
 
-  // vvvv THIS IS THE MISSING FUNCTION vvvv
-  const handleRecordPayment = () => {
-    // For now, this is a placeholder. In the future, this will open a "Record Payment" modal.
-    console.log('TODO: Implement Record Payment Modal');
-    alert('Feature coming soon: Record Payment!');
+type MoneyLike = number | null | undefined;
+const fmtMoney = (v: MoneyLike) =>
+  (typeof v === "number" ? v : 0).toLocaleString("en-AU", {
+    style: "currency",
+    currency: "AUD",
+  });
+
+const fmtDate = (d?: string | null) => {
+  if (!d) return "";
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return "";
+  return dt.toLocaleDateString("en-AU", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
+
+export default function InvoicePreviewPage() {
+  const router = useRouter();
+  const params = useParams<{ invoiceId: string }>();
+  const search = useSearchParams();
+  const isPdfMode = search.get("pdf") === "1";
+  const invoiceId = params?.invoiceId;
+
+  const { data, loading, error } = useQuery(GET_INVOICE_FOR_PREVIEW, {
+    variables: { invoiceId },
+    skip: !invoiceId,
+  });
+
+  const inv = data?.invoice;
+
+  const company = useMemo(
+    () => ({
+      businessName: inv?.businessName?.trim() || "",
+      abn: inv?.abn?.trim() || "",
+      address: inv?.address?.trim() || "",
+      phone: inv?.phone?.trim() || "",
+      email: inv?.email?.trim() || "",
+      website: inv?.website?.trim() || "",
+      logoUrl: inv?.logoUrl?.trim() || "",
+      bankDetails: inv?.bankDetails?.trim() || "",
+    }),
+    [inv]
+  );
+
+  const contactLine = useMemo(() => {
+    const bits = [company.phone, company.email, company.website].filter(Boolean);
+    return bits.join(" · ");
+  }, [company.phone, company.email, company.website]);
+
+  const onBack = () => router.push("/dashboard/invoices");
+  const onPrint = () => window.print();
+  const onDownloadPdf = () => {
+    if (!invoiceId) return;
+    window.open(`/api/invoices/${invoiceId}/pdf`, "_blank", "noopener,noreferrer");
   };
-  // ^^^^ END OF MISSING FUNCTION ^^^^
+  const onSendInvoice = () => {
+    alert("Send Invoice: coming soon.");
+  };
 
-  // --- 5. DERIVED STATE (REAL-TIME CALCULATIONS) ---
-  const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
-  const gstAmount = subtotal * (data?.invoice.gstRate || 0.1);
-  const totalAmount = subtotal + gstAmount;
-  const amountPaid = data?.invoice.payments.reduce((sum: number, p: any) => sum + p.amount, 0) || 0;
-  const amountDue = totalAmount - amountPaid;
+  if (loading) return <div className={styles.overlay}>Loading invoice…</div>;
+  if (error) return <div className={styles.overlayError}>Failed to load invoice: {error.message}</div>;
+  if (!inv) return <div className={styles.overlayError}>Invoice not found.</div>;
 
-  if (loading) return <p>Loading invoice details...</p>;
-  if (error) return <p>Error: {error.message}</p>;
-  if (!data || !data.invoice) return <p>Invoice not found.</p>;
-
-  const { invoice } = data; // Get the original invoice data for status checks
-
-  // --- 6. THE UI (JSX) ---
   return (
-    <div className={styles.container}>
-      <Link href={`/dashboard/projects/${invoice.project.id}`} className={styles.backLink}>
-        ← Back to Project
-      </Link>
+    <div className={`${styles.wrapper} ${isPdfMode ? styles.pdfWrapper : ""}`}>
       
-      <div className={styles.header}>
-        <div className={styles.headerMain}>
-          {isEditing ? (
-            <input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} className={styles.titleInput} />
-          ) : (
-            <h1 className={styles.title}>Invoice #{invoice.invoiceNumber}</h1>
-          )}
-        </div>
-        <div className={styles.metaGrid}>
-          <p className={styles.metaItem}><strong>Status:</strong> {invoice.status}</p>
-          <p className={styles.metaItem}><strong>Project:</strong> {invoice.project.title}</p>
-          <p className={styles.metaItem}><strong>Issue Date:</strong> {new Date(invoice.issueDate).toLocaleDateString()}</p>
-          {isEditing ? (
-             <div className={styles.metaItem}>
-                <strong>Due Date: </strong>
-                <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className={styles.tableInput} />
-            </div>
-          ) : (
-            <p className={styles.metaItem}><strong>Due Date:</strong> {new Date(invoice.dueDate).toLocaleDateString()}</p>
-          )}
-        </div>
-      </div>
-      
-      <h2 className={styles.sectionTitle}>Items</h2>
-      <table className={styles.itemsTable}>
-        <thead>
-          <tr>
-            <th>Description</th><th>Quantity</th><th>Unit Price</th><th>Total</th>
-            {isEditing && <th>Actions</th>}
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item, index) => (
-            <tr key={item.id || index}>
-              <td>{isEditing ? <input value={item.description} onChange={(e) => handleItemChange(index, 'description', e.target.value)} className={styles.tableInput} /> : item.description}</td>
-              <td>{isEditing ? <input type="number" value={item.quantity} onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value) || 0)} className={styles.tableInput} /> : item.quantity}</td>
-              <td>{isEditing ? <input type="number" value={item.unitPrice} onChange={(e) => handleItemChange(index, 'unitPrice', parseFloat(e.target.value) || 0)} className={styles.tableInput} /> : `$${item.unitPrice.toFixed(2)}`}</td>
-              <td>${(item.quantity * item.unitPrice).toFixed(2)}</td>
-              {isEditing && <td><Button onClick={() => removeItem(index)} variant="secondary">X</Button></td>}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {isEditing && (
-        <div className={styles.addItemButtonContainer}>
-          <Button onClick={addItem}>+ Add Item</Button>
+      {/* ✅ Toolbar only when NOT in PDF mode */}
+      {!isPdfMode && (
+        <div className={styles.toolbar}>
+          <Button variant="secondary" onClick={onBack}>Back to Invoices</Button>
+          <div className={styles.spacer} />
+          <Button variant="secondary" onClick={onSendInvoice}>Send Invoice</Button>
+          <Button variant="secondary" onClick={onDownloadPdf}>Download PDF</Button>
+          <Button onClick={onPrint}>Print</Button>
         </div>
       )}
 
-      <div className={styles.totals}>
-          <p><span>Subtotal:</span> <span>${subtotal.toFixed(2)}</span></p>
-          <p><span>GST ({invoice.gstRate * 100}%):</span> <span>${gstAmount.toFixed(2)}</span></p>
-          <p className={styles.totalAmount}><span>Total:</span> <span>${totalAmount.toFixed(2)}</span></p>
-          <p><span>Amount Paid:</span> <span>-${amountPaid.toFixed(2)}</span></p>
-          <p className={styles.totalAmount}><strong><span>Amount Due:</span> <span>${amountDue.toFixed(2)}</span></strong></p>
-      </div>
-      
-      <div className={styles.footerActions}>
-        {isEditing ? (
-          <>
-            <Button onClick={handleCancel} variant="secondary">Cancel</Button>
-            <Button onClick={handleSave} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Changes'}</Button>
-          </>
-        ) : (
-          <>
-            {invoice.status === 'DRAFT' && (
-              <Button onClick={() => setIsEditing(true)} variant="secondary">Edit Invoice</Button>
-            )}
-            <Button onClick={handleRecordPayment}>Record Payment</Button>
-          </>
-        )}
-      </div>
+      <div className={`${styles.paper} ${isPdfMode ? styles.pdfPaper : ""}`}>
 
-      <h2 className={styles.sectionTitle}>Payments</h2>
-      {invoice.payments.length > 0 ? (
-        <table className={styles.itemsTable}>
-          <thead><tr><th>Date</th><th>Amount</th><th>Method</th></tr></thead>
-          <tbody>
-            {invoice.payments.map((p: any) => (
-              <tr key={p.id}>
-                <td>{new Date(p.date).toLocaleDateString()}</td>
-                <td>${p.amount.toFixed(2)}</td>
-                <td>{p.method}</td>
+        {/* HEADER */}
+        <header className={styles.header}>
+          <div className={styles.brandRow}>
+            {company.logoUrl && (
+              <img src={company.logoUrl} alt={company.businessName} className={styles.logo} />
+            )}
+            <div className={styles.companyBlock}>
+              <div className={styles.companyName}>{company.businessName || "Company Name"}</div>
+              {company.abn && <div className={styles.subtle}>ABN {company.abn}</div>}
+              {contactLine && <div className={styles.subtle}>{contactLine}</div>}
+              {company.address && <div className={styles.subtle}>{company.address}</div>}
+            </div>
+          </div>
+
+          <div className={styles.meta}>
+            <div className={styles.metaRow}><div className={styles.metaLabel}>Invoice #</div><div className={styles.metaValue}>{inv.invoiceNumber}</div></div>
+            <div className={styles.metaRow}><div className={styles.metaLabel}>Issue Date</div><div className={styles.metaValue}>{fmtDate(inv.issueDate)}</div></div>
+            <div className={styles.metaRow}><div className={styles.metaLabel}>Due Date</div><div className={styles.metaValue}>{fmtDate(inv.dueDate)}</div></div>
+            <div className={styles.metaRow}><div className={styles.metaLabel}>Status</div><div className={styles.metaValue}>{inv.status}</div></div>
+          </div>
+        </header>
+
+        {/* BILL TO / PROJECT */}
+        <section className={styles.parties}>
+          <div>
+            <div className={styles.sectionTitle}>Bill To</div>
+            <div className={styles.bold}>{inv.project?.client?.name || "Client"}</div>
+          </div>
+          <div className={styles.toRight}>
+            <div className={styles.sectionTitle}>Project</div>
+            <div className={styles.bold}>{inv.project?.title || "—"}</div>
+          </div>
+        </section>
+
+        {/* ITEMS */}
+        <section className={styles.items}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th className={styles.colDesc}>Description</th>
+                <th className={styles.colQty}>Qty</th>
+                <th className={styles.colMoney}>Unit</th>
+                <th className={styles.colMoney}>Total</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : <p>No payments have been recorded for this invoice yet.</p>}
+            </thead>
+            <tbody>
+              {inv.items?.map((it: any) => (
+                <tr key={it.id}>
+                  <td className={styles.colDesc}>{it.description}</td>
+                  <td className={styles.colQty}>{it.quantity}</td>
+                  <td className={styles.colMoney}>{fmtMoney(it.unitPrice)}</td>
+                  <td className={styles.colMoney}>{fmtMoney(it.total)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+
+        {/* TOTALS */}
+        <section className={styles.totals}>
+          <div className={styles.totalRow}><div className={styles.totalLabel}>Subtotal</div><div className={styles.totalValue}>{fmtMoney(inv.subtotal)}</div></div>
+          <div className={styles.totalRow}><div className={styles.totalLabel}>GST {(inv.gstRate ?? 0.1) * 100}%</div><div className={styles.totalValue}>{fmtMoney(inv.gstAmount)}</div></div>
+          <div className={styles.totalRowBig}><div className={styles.totalLabelBig}>Total</div><div className={styles.totalValueBig}>{fmtMoney(inv.totalAmount)}</div></div>
+        </section>
+
+        {/* NOTES */}
+        {inv.notes && (
+          <section className={styles.notes}>
+            <div className={styles.sectionTitle}>Notes</div>
+            <div className={styles.noteBody}>{inv.notes}</div>
+          </section>
+        )}
+
+        {/* FOOTER */}
+        <footer className={styles.footer}>
+          {company.bankDetails ? (
+            <>
+              <div className={styles.sectionTitle}>Bank Details</div>
+              <div className={styles.subtle}>{company.bankDetails}</div>
+            </>
+          ) : (
+            <div className={styles.subtle}>Thank you for your business.</div>
+          )}
+        </footer>
+      </div>
     </div>
   );
 }
