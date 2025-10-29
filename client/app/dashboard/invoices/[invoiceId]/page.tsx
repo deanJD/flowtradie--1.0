@@ -103,9 +103,9 @@ export default function InvoicePreviewPage() {
   const onBack = () => router.push("/dashboard/invoices");
   const onPrint = () => window.print();
   const onDownloadPdf = () => {
-    if (!invoiceId) return;
-    window.open(`/api/invoices/${invoiceId}/pdf`, "_blank", "noopener,noreferrer");
-  };
+  window.open(`/api/invoices/${invoiceId}/pdf`, "_blank");
+};
+
   const onSendInvoice = () => {
     alert("Send Invoice: coming soon.");
   };

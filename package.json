@@ -8,9 +8,9 @@
     "hash": "ts-node hash-password.ts",
     "studio": "prisma studio",
     "migrate": "prisma migrate dev",
-     "start": "node dist/src/index.js",
-     "build": "tsc",
-   "generate:types": "graphql-codegen --config codegen.yml"
+    "start": "node dist/src/index.js",
+    "build": "tsc",
+    "generate:types": "graphql-codegen --config codegen.yml"
   },
   "dependencies": {
     "@apollo/server": "^4.12.2",
@@ -19,6 +19,7 @@
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.3.1",
     "graphql": "^16.11.0",
+    "nodemailer": "^7.0.10",
     "pg": "^8.11.3",
     "prisma": "^6.15.0"
   },
@@ -28,6 +29,7 @@
     "@graphql-codegen/typescript-resolvers": "^5.0.1",
     "@types/bcryptjs": "^2.4.2",
     "@types/node": "^24.3.1",
+    "@types/nodemailer": "^7.0.3",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",

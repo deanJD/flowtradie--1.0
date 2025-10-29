@@ -1,0 +1,264 @@
+/* ==============================
+   FLOWTRADIE INVOICE – BASE CSS (S2 POLISHED)
+   Shared between PDF + Preview
+=================================*/
+
+:root {
+  --brand-color: #1a73e8; /* Brand Blue */
+  --text-color: #222;
+  --subtle-text: #666;
+  --border-color: #ddd;
+  --bg-light: #f9fafb;
+  --font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+
+  --space-xxs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 20px;
+  --space-lg: 32px;
+  --space-xl: 48px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-color);
+  background: #fff;
+  margin: 0;
+  padding: 0;
+}
+
+.inv-page {
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  padding: var(--space-lg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+@media print {
+  .inv-page {
+    box-shadow: none;
+    border: none;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* =========================
+   HEADER & META
+========================= */
+
+.inv-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-lg);
+}
+
+.inv-brandRow {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.inv-logo {
+  width: 90px;
+  height: auto;
+  object-fit: contain;
+}
+
+.inv-companyBlock {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-xxs);
+}
+
+.inv-companyName {
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.inv-subtle {
+  color: var(--subtle-text);
+  font-size: 0.9rem;
+}
+
+.inv-meta {
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: var(--space-sm);
+  row-gap: var(--space-xs);
+  font-size: 0.9rem;
+  text-align: right;
+}
+
+.inv-metaLabel {
+  color: var(--subtle-text);
+}
+
+.inv-metaValue {
+  font-weight: 500;
+}
+
+/* =========================
+   PARTIES & SECTIONS
+========================= */
+
+.inv-parties {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.inv-sectionTitle {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--brand-color);
+  margin-bottom: var(--space-xs);
+}
+
+.inv-bold {
+  font-weight: 600;
+}
+
+/* =========================
+   TABLE & ITEMS
+========================= */
+
+.inv-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: var(--space-lg);
+}
+
+.inv-table th {
+  text-align: left;
+  background: var(--bg-light);
+  color: var(--text-color);
+  padding: var(--space-sm);
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.9rem;
+}
+
+.inv-table td {
+  padding: var(--space-sm);
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: top;
+}
+
+.inv-colDesc {
+  width: 50%;
+}
+.inv-colQty {
+  width: 10%;
+  text-align: right;
+}
+.inv-colMoney {
+  width: 20%;
+  text-align: right;
+}
+
+.inv-emptyRow {
+  text-align: center;
+  color: var(--subtle-text);
+}
+
+/* =========================
+   TOTALS
+========================= */
+
+.inv-totals {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-md);
+}
+
+.inv-totalsBox {
+  min-width: 300px;
+  background: var(--bg-light);
+  border-radius: 6px;
+  padding: var(--space-md);
+}
+
+.inv-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-xs);
+}
+
+.inv-totalRow {
+  font-weight: 700;
+  font-size: 1.05rem;
+  border-top: 2px solid var(--border-color);
+  padding-top: var(--space-xs);
+}
+
+/* =========================
+   NOTES & FOOTER
+========================= */
+
+.inv-notes {
+  margin-top: var(--space-lg);
+}
+
+.inv-noteBody {
+  color: var(--subtle-text);
+  white-space: pre-wrap;
+}
+
+.inv-footer {
+  margin-top: var(--space-xl);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border-color);
+  text-align: center;
+  color: var(--subtle-text);
+  font-size: 0.9rem;
+}
+
+.inv-thanks {
+  font-style: italic;
+}
+:root {
+  --brand-color: #0077cc;
+  --brand-color-dark: #005fa3;
+  --brand-bg: #f8f9fb;
+}
+
+/* Optional Themes */
+[data-theme="dark"] {
+  --brand-color: #4da3ff;
+  --brand-bg: #1c1c1e;
+  color: #e5e5e5;
+  background: var(--brand-bg);
+}
+
+[data-theme="minimal"] {
+  --brand-color: #222;
+  --brand-bg: #fff;
+}
+.inv-signature {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px dashed #ccc;
+}
+.inv-sign-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 8px 0;
+  color: #444;
+}
+.inv-sign-line label {
+  font-size: 12px;
+  color: #666;
+}

@@ -7,6 +7,7 @@
     "@apollo/client": "^3.14.0",
     "graphql": "^16.11.0",
     "next": "^15.5.4",
+    "nodemailer": "^7.0.10",
     "puppeteer": "^24.26.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -14,6 +15,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.6.2",
+    "@types/nodemailer": "^7.0.3",
     "@types/react": "^19.2.0",
     "typescript": "^5.9.3"
   }

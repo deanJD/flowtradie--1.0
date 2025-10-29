@@ -1,0 +1,46 @@
+/* ==============================
+   TEMPLATE H1 – POLISHED STYLE
+=================================*/
+
+.inv-h1 {
+  --accent-color: var(--brand-color);
+}
+
+/* subtle accent line under header */
+.inv-header {
+  border-bottom: 3px solid var(--accent-color);
+  padding-bottom: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+/* Totals emphasis */
+.inv-totalRow div:last-child {
+  color: var(--accent-color);
+}
+
+/* "Thank you" color */
+.inv-thanks {
+  color: var(--accent-color);
+}
+
+/* section title underline for polish */
+.inv-sectionTitle {
+  position: relative;
+  display: inline-block;
+}
+
+.inv-sectionTitle::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 40%;
+  height: 2px;
+  background-color: var(--accent-color);
+  border-radius: 2px;
+}
+
+/* improved page spacing for PDF */
+.inv-page {
+  padding: 32px 40px;
+}
