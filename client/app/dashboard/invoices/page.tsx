@@ -1,4 +1,3 @@
-// client/app/dashboard/invoices/page.tsx
 'use client';
 
 import React from 'react';
@@ -9,7 +8,7 @@ import DataTable from '@/components/DataTable/DataTable';
 import ListPageLayout from '@/components/ListPageLayout/ListPageLayout';
 import tableStyles from '@/components/DataTable/DataTable.module.css';
 
-// This helper function maps a status string to a CSS class
+// Helper: map status → style
 const getStatusClass = (status: string) => {
   switch (status) {
     case 'PAID': return tableStyles.statusPaid;
@@ -24,20 +23,22 @@ const getStatusClass = (status: string) => {
 export default function InvoicesPage() {
   const { data, loading, error } = useQuery(GET_INVOICES_QUERY);
 
-  // Define the "blueprint" for our Invoices table
   const invoiceColumns = [
     {
       header: 'Invoice #',
       accessor: 'invoiceNumber',
       render: (row: any) => (
-        <Link href={`/dashboard/invoices/${row.id}`} className={tableStyles.tableLink}>
+        <Link
+          href={`/dashboard/invoices/${row.id}/preview`}
+          className={tableStyles.tableLink}
+        >
           {row.invoiceNumber}
         </Link>
-      )
+      ),
     },
     {
       header: 'Client',
-      accessor: 'project.client.name'
+      accessor: 'project.client.name',
     },
     {
       header: 'Status',
@@ -46,26 +47,34 @@ export default function InvoicesPage() {
         <span className={`${tableStyles.status} ${getStatusClass(row.status)}`}>
           {row.status}
         </span>
-      )
+      ),
     },
     {
       header: 'Total',
       accessor: 'totalAmount',
-      render: (row: any) => `$${row.totalAmount.toFixed(2)}`
+      render: (row: any) => `$${row.totalAmount.toFixed(2)}`,
     },
     {
       header: 'Actions',
       accessor: 'id',
-      // vvvv THIS IS THE DEFINITIVE FIX vvvv
-      // We apply our new, correct alignment class to this column
       className: tableStyles.actionsCell,
-      // ^^^^ END OF DEFINITIVE FIX ^^^^
       render: (row: any) => (
-        <Link href={`/dashboard/invoices/${row.id}`} className={tableStyles.tableLink}>
-          View / Edit
-        </Link>
-      )
-    }
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <Link
+            href={`/dashboard/invoices/${row.id}/preview`}
+            className={tableStyles.tableLink}
+          >
+            Preview
+          </Link>
+          <Link
+            href={`/dashboard/invoices/${row.id}/edit`}
+            className={tableStyles.tableLink}
+          >
+            Edit
+          </Link>
+        </div>
+      ),
+    },
   ];
 
   if (loading) return <p>Loading invoices...</p>;
@@ -77,7 +86,21 @@ export default function InvoicesPage() {
       newButtonText="+ New Invoice"
       newButtonLink="/dashboard/invoices/new"
     >
-      <DataTable columns={invoiceColumns} data={data?.invoices} />
+      {/* Toolbar Row */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '1rem',
+      }}>
+        <h2 style={{ fontWeight: 600, margin: 0 }}>All Invoices</h2>
+
+       <Link href="/dashboard/settings" className="settingsButton"> 
+  ⚙️ Settings
+</Link>
+      </div>
+
+      <DataTable columns={invoiceColumns} data={data?.invoices ?? []} />
     </ListPageLayout>
   );
 }

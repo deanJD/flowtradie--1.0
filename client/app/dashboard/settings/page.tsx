@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation } from "@apollo/client";
 import { GET_COMPANY_SETTINGS } from "@/app/lib/graphql/queries/companySettings";
 import { UPDATE_COMPANY_SETTINGS } from "@/app/lib/graphql/mutations/updateCompanySettings";
-import styles from "./CompanySettings.module.css";
+import styles from "./Settings.module.css";
 
 type FormShape = {
   businessName: string;

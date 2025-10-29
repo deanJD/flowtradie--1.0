@@ -28,3 +28,15 @@
   border-radius: 6px;
   min-width: 250px;
 }
+.settingsButton {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  color: white;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+.settingsButton:hover {
+  background: color(var(--primary-color) lightness(+10%));
+}
