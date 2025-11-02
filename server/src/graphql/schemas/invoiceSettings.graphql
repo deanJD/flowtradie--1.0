@@ -1,0 +1,54 @@
+# server/graphql/schema/invoiceSettings.graphql
+
+type InvoiceSettings {
+  id: ID!
+  businessName: String
+  abn: String
+  address: String
+  phone: String
+  email: String
+  website: String
+  logoUrl: String
+  bankDetails: String
+  invoicePrefix: String
+  startingNumber: Int
+  defaultDueDays: Int
+  gstRate: Float
+  smtpHost: String
+  smtpPort: Int
+  smtpUser: String
+  smtpPassword: String
+  fromEmail: String
+  fromName: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input InvoiceSettingsInput {
+  businessName: String
+  abn: String
+  address: String
+  phone: String
+  email: String
+  website: String
+  logoUrl: String
+  bankDetails: String
+  invoicePrefix: String
+  startingNumber: Int
+  defaultDueDays: Int
+  gstRate: Float
+  smtpHost: String
+  smtpPort: Int
+  smtpUser: String
+  smtpPassword: String
+  fromEmail: String
+  fromName: String
+}
+
+extend type Query {
+  invoiceSettings: InvoiceSettings
+}
+
+extend type Mutation {
+  saveInvoiceSettings(input: InvoiceSettingsInput!): InvoiceSettings!
+}

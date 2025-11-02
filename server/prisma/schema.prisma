@@ -155,7 +155,7 @@ model Invoice {
   status        InvoiceStatus @default(DRAFT)
   issueDate     DateTime      @default(now())
   dueDate       DateTime
-  notes         String?       // <--- ADDED THIS LINE
+  notes         String?
   subtotal      Float
   gstRate       Float         @default(0.1)
   gstAmount     Float         @default(0.0)
@@ -164,16 +164,15 @@ model Invoice {
   updatedAt     DateTime      @updatedAt
   deletedAt     DateTime?
 
-// SNAPSHOT fields (temporarily optional for backfill)
-  businessName    String
-  abn             String?
-  address         String?
-  phone           String?
-  email           String?
-  website         String?
-  logoUrl         String?
-  bankDetails     String?
-
+  // Snapshot fields (temporarily optional for backfill)
+  businessName  String
+  abn           String?
+  address       String?
+  phone         String?
+  email         String?
+  website       String?
+  logoUrl       String?
+  bankDetails   String?
 
   projectId String
   project   Project @relation(fields: [projectId], references: [id])
@@ -181,7 +180,32 @@ model Invoice {
   payments  Payment[]
 }
 
-// ... rest of schema ...
+model InvoiceSettings {
+  id             String   @id @default(cuid())
+  businessName   String?
+  abn            String?
+  address        String?
+  phone          String?
+  email          String?
+  website        String?
+  logoUrl        String?
+  bankDetails    String?
+  invoicePrefix  String?  @default("INV-")
+  startingNumber Int?     @default(1000)
+  defaultDueDays Int?     @default(14)
+  gstRate        Float?   @default(10)
+  // Email settings
+  smtpHost       String?
+  smtpPort       Int?
+  smtpUser       String?
+  smtpPassword   String?
+  fromEmail      String?
+  fromName       String?
+  // Relations
+  ownerId        String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
 
 model InvoiceItem {
   id          String  @id @default(cuid())

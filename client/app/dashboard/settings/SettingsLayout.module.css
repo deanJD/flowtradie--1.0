@@ -1,0 +1,40 @@
+.container {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: calc(100vh - 64px);
+  background: #f9fafb;
+}
+
+.sidebar {
+  background: #fff;
+  border-right: 1px solid #e5e7eb;
+  padding: 1rem;
+}
+
+.sidebar h2 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.sidebar nav a {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  color: #333;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: 0.2s;
+}
+
+.sidebar nav a:hover {
+  background: #f3f4f6;
+}
+
+.active {
+  background: #2563eb;
+  color: white;
+}
+
+.main {
+  padding: 2rem;
+  background: #fff;
+}
