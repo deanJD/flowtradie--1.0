@@ -1,0 +1,37 @@
+[33mf74bafd[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{0}: commit: invoicesettings
+[33ma048764[m HEAD@{1}: commit: settings-invoice
+[33m7689dcd[m HEAD@{2}: commit: email-setup
+[33mc380131[m HEAD@{3}: commit: invoice-pdf
+[33m9486a3d[m HEAD@{4}: commit: business-details
+[33me5f38ea[m HEAD@{5}: commit: invoice-update
+[33m851c45b[m HEAD@{6}: commit: scalars
+[33ma84f3a6[m HEAD@{7}: commit: billable-item
+[33m9921e5e[m HEAD@{8}: commit: invoice-feature
+[33m8bb8539[m HEAD@{9}: commit: projet validation
+[33m49c1ab9[m HEAD@{10}: commit: Refresh update
+[33m6ad98e1[m HEAD@{11}: commit: dashboard-setup
+[33ma482493[m HEAD@{12}: commit: softdelete
+[33mb6cd3d5[m HEAD@{13}: commit: working-front-end
+[33m0fbdf90[m HEAD@{14}: commit: changes to
+[33md7cc26b[m HEAD@{15}: commit: customer-client
+[33m6b32c14[m HEAD@{16}: commit: name-change job-to-project
+[33m3d1cae1[m HEAD@{17}: commit: frontenddashboard
+[33m15bc86c[m HEAD@{18}: commit: frontend-invoice
+[33m13ea686[m HEAD@{19}: commit: Jobscreation
+[33m440a8c0[m HEAD@{20}: commit: login admin done
+[33m708f3ab[m HEAD@{21}: commit: Logins
+[33m65cf734[m HEAD@{22}: commit: calling it a night
+[33m66daea8[m HEAD@{23}: commit: budget adding
+[33m90fce37[m HEAD@{24}: commit: itslate
+[33m425286c[m HEAD@{25}: commit: gemi-on fire
+[33m0b4e8d5[m HEAD@{26}: commit: gpt-boo
+[33m63b9f25[m HEAD@{27}: commit: gpt messed up
+[33mb008df1[m HEAD@{28}: commit: services
+[33m7e16a57[m HEAD@{29}: commit: hashpasswords
+[33m20a9b2e[m HEAD@{30}: commit: code change
+[33m1d66df8[m HEAD@{31}: commit: customer.ts
+[33m29535af[m HEAD@{32}: commit: auth passwords
+[33md575d74[m HEAD@{33}: commit: new services update
+[33mf53577d[m HEAD@{34}: commit: auth users
+[33m6d8c1fd[m HEAD@{35}: commit: user-auth roles
+[33m02432a9[m HEAD@{36}: commit (initial): Fresh start: initial commit
