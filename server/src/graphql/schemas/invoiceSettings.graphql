@@ -50,5 +50,5 @@ extend type Query {
 }
 
 extend type Mutation {
-  saveInvoiceSettings(input: InvoiceSettingsInput!): InvoiceSettings!
+  updateInvoiceSettings(input: InvoiceSettingsInput!): InvoiceSettings!
 }

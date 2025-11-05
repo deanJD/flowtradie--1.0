@@ -17,7 +17,7 @@ type Invoice {
   payments: [Payment!]!
   notes: String
 
-# Snapshot Fields (NEW)
+  # Snapshot Fields (NEW)
   businessName: String
   abn: String
   address: String
@@ -26,8 +26,6 @@ type Invoice {
   website: String
   logoUrl: String
   bankDetails: String
-
-
 }
 
 type InvoiceItem {
@@ -51,11 +49,21 @@ input CreateInvoiceInput {
   projectId: ID!
   invoiceNumber: String!
   dueDate: DateTime!
-  issueDate: DateTime! # <-- ADDED
-  notes: String         # <-- ADDED (Optional - use String! if required)
+  issueDate: DateTime!
+  notes: String
   status: InvoiceStatus = DRAFT
   items: [CreateInvoiceItemInput!]!
   gstRate: Float = 0.1
+
+  # Snapshot Fields (NEW)
+  businessName: String
+  abn: String
+  address: String
+  phone: String
+  email: String
+  website: String
+  logoUrl: String
+  bankDetails: String
 }
 
 input UpdateInvoiceInput {
@@ -65,9 +73,17 @@ input UpdateInvoiceInput {
   items: [CreateInvoiceItemInput!]
   gstRate: Float
   notes: String
+
+  # Optional: include these if you ever want to let admin update snapshot data
+  businessName: String
+  abn: String
+  address: String
+  phone: String
+  email: String
+  website: String
+  logoUrl: String
+  bankDetails: String
 }
-
-
 
 # --- API Operations ---
 

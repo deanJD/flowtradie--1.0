@@ -1,301 +1,322 @@
-
-/* client/app/dashboard/invoices/new/NewInvoicePage.module.css (Final Version) */
+/* ---- Page container ---- */
 .container {
+  background: #f3f4f6;
+  min-height: 120vh;
   padding: 2rem;
-  max-width: 1350px;
-  margin: 2rem auto;
 }
 
 .invoiceForm {
-  background-color: var(--card-background);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 2rem;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-}
-@media (min-width: 768px) {
-  .invoiceForm { padding: 3rem; }
+  max-width: 1100px;
+  margin: 0 auto;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 2rem 2rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
 }
 
+/* ---- Header ---- */
 .header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-  flex-wrap: wrap;
+  justify-content: space-between;
   gap: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .title {
   font-size: 1.75rem;
   font-weight: 600;
-}
-@media (min-width: 768px) {
-  .title { font-size: 2rem; }
+  color: #0f172a;
 }
 
+/* ---- Meta: Bill To / From / Project ---- */
 .metaGrid {
   display: grid;
-  grid-template-columns: 1fr; /* Stack on mobile */
-  gap: 1.5rem; /* Reduced gap */
-  margin-bottom: 2rem;
-}
-@media (min-width: 768px) {
-  .metaGrid {
-    grid-template-columns: 1fr 1fr; /* Two columns on desktop */
-    gap: 3rem;
-    margin-bottom: 2rem; /* Reduced margin */
-  }
+  grid-template-columns: 1fr 1fr;
+  gap: 1.75rem;
+  margin-bottom: 1.5rem;
 }
 
+/* ---- Universal Input System ---- */
 .inputGroup {
-  margin-bottom: 1.2rem
-}
-.inputGroup:last-child {
-  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.9rem;
 }
 
 .label {
-  display: block;
-  margin-bottom: 0.8rem;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: var(--text-color);
-
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e293b;
 }
 
 .input,
 .select,
 .textarea {
   width: 100%;
-  padding: 0.65rem 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
   font-size: 0.95rem;
-  background-color: #f9fafb;
-  box-sizing: border-box;
   font-family: inherit;
-  color: var(--text-color);
+  outline: none;
+  background-color: #fff;
+  transition: border 0.15s ease, box-shadow 0.15s ease;
 }
+
 .input:focus,
 .select:focus,
 .textarea:focus {
-  outline: none;
-  border-color: var(--primary-accent);
-  box-shadow: 0 0 0 1px var(--primary-accent);
-  background-color: white;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37,99,235,0.15);
+}
+
+.select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, #475569 50%), 
+                    linear-gradient(135deg, #475569 50%, transparent 50%);
+  background-position: calc(100% - 16px) calc(1em + 2px),
+                       calc(100% - 11px) calc(1em + 2px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
 }
 
 .textarea {
   resize: vertical;
-  min-height: 70px;
-}
-
-/* Styles for the 'From' section */
-.fromDetails {
-  margin-top: 0.5rem;
-  padding: 0.75rem; /* Add padding */
-  border: 1px dashed var(--border-color); /* Add a subtle border */
-  border-radius: 6px;
-  font-size: 0.9rem;
+  min-height: 100px;
   line-height: 1.4;
-  color: var(--subtext-color);
-  background-color: #f9fafb; /* Match input background */
 }
 
+.input:disabled,
+.select:disabled,
+.textarea:disabled {
+  background-color: #f8fafc;
+  cursor: not-allowed;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: #94a3b8;
+}
+
+/* ---- Compact table input variation ---- */
+.tableInput {
+  composes: input;
+  height: 38px;
+  padding: 0.45rem 0.55rem;
+  font-size: 0.9rem;
+}
+
+/* ---- Section headings ---- */
+.sectionHeader {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 0.75rem;
+}
+
+/* From / Client quick cards */
+.clientDetails,
+.fromDetails {
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 0.75rem 0.9rem;
+  color: #334155;
+}
+
+.clientName,
 .fromName {
   font-weight: 600;
-  color: var(--text-color);
-  font-size: 1rem;
-  margin-bottom: 0.25rem;
+  color: #0f172a;
 }
 
-/* Style for the 'Client Details' title */
 .subSectionTitle {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--subtext-color);
-  margin-top: 1.5rem;
-  margin-bottom: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-/* Add some space above the Project dropdown */
-.projectInputGroup {
-  margin-top: 1.5rem;
-}
-
-/* Styles for selected client details under dropdown */
-.clientDetails {
   margin-top: 0.75rem;
-  padding-left: 0.75rem;
-  border-left: 2px solid var(--primary-accent);
+  margin-bottom: 0.35rem;
   font-size: 0.9rem;
-  color: var(--subtext-color);
-}
-
-.clientName {
-  font-size: 1rem;
   font-weight: 600;
-  color: var(--text-color);
-  margin-bottom: 3rem;
+  color: #0f172a;
 }
 
-/* client/app/dashboard/invoices/new/NewInvoicePage.module.css */
+/* Keeps project selector aligned with From block */
+.projectInputGroup {
+  margin-top: 0.75rem;
+}
 
-/* ... (other styles) ... */
-
-/* Styles for the Invoice # / Dates grid */
+/* ---- Invoice details row (number, dates, terms) ---- */
 .detailsGrid {
-    display: grid;
-    grid-template-columns: 1fr; /* Stack on mobile by default */
-    gap: 1rem;
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid var(--border-color);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
 }
 
-@media (min-width: 992px) {
-  .detailsGrid {
-    grid-template-columns: repeat(4, 1fr); /* Four equal columns */
-    gap: 1.5rem;
-    align-items: flex-end;
-    padding-bottom: 2rem;
-  }
-   .detailsGrid  {
-       margin-bottom: 0;
-   }
-}
-
-/* Style for the read-only due date input */
-.calculatedDueDateInput {
-  background-color: var(--background-color); /* Use main background to look disabled */
-  color: var(--subtext-color);
-  font-size: 0.9rem; /* Match other inputs */
-  cursor: default; /* Indicate not editable */
-  border-color: transparent; /* Remove border */
-  box-shadow: none; /* Remove default focus shadow */
-  
-}
-/* Prevent focus styles */
-.calculatedDueDateInput:focus {
-    outline: none;
-    box-shadow: none;
-    border-color: transparent; /* Keep border transparent on focus */
-}
-
-
-/* ... (rest of styles) ... */
-
+/* ---- Items table ---- */
 .sectionTitle {
-  margin-top: 2rem;
   font-size: 1.1rem;
   font-weight: 600;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border-color);
-  color: var(--primary-accent);
-}
-@media (min-width: 768px) {
-  .sectionTitle { margin-top: 2.5rem; font-size: 1.25rem; margin-bottom: 1.5rem;}
+  color: #0f172a;
+  margin: 0.25rem 0 0.6rem;
 }
 
 .itemsTable {
   width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 1rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
 }
 
-.itemsTable th,
-.itemsTable td {
-  padding: 0.75rem;
-  text-align: left;
-  border-bottom: 1px solid var(--border-color);
-  vertical-align: top;
-}
-
-.itemsTable th {
-  background-color: #f9fafb;
-  color: var(--subtext-color);
-  font-size: 0.75rem;
-  text-transform: uppercase;
+.itemsTable thead th {
+  background: #f8fafc;
   font-weight: 600;
-}
-
-@media (max-width: 768px) {
-  .itemsTable thead { display: none; }
-  .itemsTable tr { display: block; margin-bottom: 1rem; border: 1px solid var(--border-color); border-radius: 6px; padding: 0.5rem; }
-  .itemsTable td { display: block; text-align: right; border-bottom: none; padding: 0.5rem 0; }
-  .itemsTable td::before { content: attr(data-label); float: left; font-weight: 600; color: var(--text-color); }
-  .itemsTable td[data-label="Remove"]::before { display: none; }
-  .itemsTable td:last-child { text-align: center; padding-top: 0.5rem; }
-}
-
-.colDescription { width: 45%; }
-.colQty { width: 10%; }
-.colPrice { width: 15%; }
-.colTotal { width: 15%; text-align: right; font-weight: 500; }
-.colActions { width: 5%; text-align: right; }
-
-.tableInput {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  box-sizing: border-box;
   font-size: 0.9rem;
-  background-color: white;
-}
-.tableInput:focus {
-  outline: none;
-  border-color: var(--primary-accent);
-  box-shadow: 0 0 0 1px var(--primary-accent);
+  color: #334155;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  padding: 0.65rem 0.75rem;
 }
 
-.removeButton {
-  background: none; border: none; color: var(--subtext-color); cursor: pointer; font-size: 1.2rem; padding: 0; line-height: 1;
+.itemsTable td {
+  border-bottom: 1px solid #eef2f7;
+  padding: 0.5rem 0.6rem;
+  vertical-align: middle;
 }
-.removeButton:hover { color: var(--red-500); }
+
+.itemsTable tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* Column sizing */
+.colDescription { width: 54%; }
+.colQty        { width: 10%; text-align: right; }
+.colPrice      { width: 18%; text-align: right; }
+.colTotal      { width: 14%; text-align: right; font-weight: 600; }
+.colActions    { width: 4%;  text-align: center; }
+
+.colQty .tableInput,
+.colPrice .tableInput {
+  text-align: right;
+}
+
+/* Remove button */
+.removeButton {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #ef4444;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.removeButton:hover {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
 
 .addItemButtonContainer {
-  margin-top: 1rem;
-  text-align: left;
+  display: flex;
+  justify-content: flex-start;
+  margin: 0.75rem 0 1.25rem;
 }
 
-.totals {
-  margin-top: 2rem;
-  margin-left: auto;
-  width: 100%;
-  max-width: 20rem;
-  font-size: 0.9rem;
+/* ---- Notes ---- */
+.textarea {
+  min-height: 110px;
+  resize: vertical;
 }
-@media (min-width: 768px) {
-  .totals { max-width: 22rem; }
+
+/* ---- Totals ---- */
+.totals {
+  margin-top: 1rem;
+  margin-left: auto;
+  max-width: 360px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  background: #fafbff;
 }
 
 .totals p {
-  display: flex; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px dashed var(--border-color); color: var(--subtext-color);
+  display: flex;
+  justify-content: space-between;
+  padding: 0.35rem 0;
+  margin: 0;
+  color: #1f2937;
 }
-.totals p span:last-child { font-weight: 500; color: var(--text-color); }
-.totals p:last-child { border-bottom: none; }
 
 .totalAmount {
-  font-size: 1rem; font-weight: 600; color: var(--text-color); border-top: 2px solid var(--text-color); padding-top: 0.75rem !important; margin-top: 0.5rem;
+  border-top: 2px solid #e5e7eb;
+  margin-top: 0.35rem;
+  padding-top: 0.5rem;
+  font-weight: 700;
+  color: #0f172a;
 }
-.totalAmount span:last-child { font-size: 1.3rem; font-weight: 700; }
+
+/* ---- Errors & buttons ---- */
+.errorMessage {
+  color: #b91c1c;
+  margin-top: 0.5rem;
+}
 
 .buttonGroup {
-  display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;
-}
-@media (min-width: 768px) {
-  .buttonGroup { margin-top: 2.5rem; padding-top: 2rem; }
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
 }
 
-.errorMessage {
-  color: #ef4444; /* red-500 */
-  margin: 1rem 0;
-  font-size: 0.9rem;
+/* ---- Responsive ---- */
+@media (max-width: 980px) {
+  .metaGrid { grid-template-columns: 1fr; }
+  .detailsGrid { grid-template-columns: 1fr 1fr; }
+  .colDescription { width: 48%; }
+  .colQty        { width: 14%; }
+  .colPrice      { width: 20%; }
+  .colTotal      { width: 14%; }
 }
+
+@media (max-width: 640px) {
+  .container { padding: 1rem; }
+  .invoiceForm { padding: 1.25rem; }
+  .detailsGrid { grid-template-columns: 1fr; }
+  .itemsTable thead { display: none; }
+  .itemsTable, .itemsTable tbody, .itemsTable tr, .itemsTable td {
+    display: block; width: 100%;
+  }
+  .itemsTable tr { border-bottom: 1px solid #e5e7eb; padding: 0.4rem 0; }
+  .itemsTable td { border: 0; padding: 0.4rem 0; }
+  .itemsTable td[data-label]::before {
+    content: attr(data-label) ": ";
+    font-weight: 600;
+    color: #334155;
+  }
+  .totals { max-width: 100%; }
+}
+/* ---- Table Input (Unified Style) ---- */
+.tableInput {
+  composes: input;
+  height: 38px;
+  padding: 0.45rem 0.55rem;
+  font-size: 0.9rem;
+  border-radius: 6px;
+}
+
+/* Remove default spinner arrows for number fields */
+.tableInput[type="number"]::-webkit-inner-spin-button,
+.tableInput[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+

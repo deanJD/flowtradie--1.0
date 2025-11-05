@@ -34,7 +34,7 @@ export default function InvoiceSettingsSection() {
     email: '',
     website: '',
     invoicePrefix: 'INV-',
-    startingNumber: 1000,
+    startingNumber: 1,
     defaultDueDays: 14,
     gstRate: 10,
     bankDetails: '',

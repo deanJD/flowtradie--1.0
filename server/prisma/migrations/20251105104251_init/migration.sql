@@ -91,6 +91,36 @@ CREATE TABLE "QuoteItem" (
 );
 
 -- CreateTable
+CREATE TABLE "BillableItem" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "unitPrice" DOUBLE PRECISION NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
+
+    CONSTRAINT "BillableItem_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "CompanySettings" (
+    "id" TEXT NOT NULL,
+    "businessName" TEXT NOT NULL,
+    "abn" TEXT,
+    "address" TEXT,
+    "phone" TEXT,
+    "email" TEXT,
+    "website" TEXT,
+    "logoUrl" TEXT,
+    "bankDetails" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "CompanySettings_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Invoice" (
     "id" TEXT NOT NULL,
     "invoiceNumber" TEXT NOT NULL,
@@ -105,9 +135,45 @@ CREATE TABLE "Invoice" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "deletedAt" TIMESTAMP(3),
+    "businessName" TEXT NOT NULL,
+    "abn" TEXT,
+    "address" TEXT,
+    "phone" TEXT,
+    "email" TEXT,
+    "website" TEXT,
+    "logoUrl" TEXT,
+    "bankDetails" TEXT,
     "projectId" TEXT NOT NULL,
 
     CONSTRAINT "Invoice_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "InvoiceSettings" (
+    "id" TEXT NOT NULL,
+    "businessName" TEXT,
+    "abn" TEXT,
+    "address" TEXT,
+    "phone" TEXT,
+    "email" TEXT,
+    "website" TEXT,
+    "logoUrl" TEXT,
+    "bankDetails" TEXT,
+    "invoicePrefix" TEXT DEFAULT 'INV-',
+    "startingNumber" INTEGER DEFAULT 1000,
+    "defaultDueDays" INTEGER DEFAULT 14,
+    "gstRate" DOUBLE PRECISION DEFAULT 10,
+    "smtpHost" TEXT,
+    "smtpPort" INTEGER,
+    "smtpUser" TEXT,
+    "smtpPassword" TEXT,
+    "fromEmail" TEXT,
+    "fromName" TEXT,
+    "ownerId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "InvoiceSettings_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -183,19 +249,6 @@ CREATE TABLE "TimeLog" (
     CONSTRAINT "TimeLog_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "BillableItem" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "description" TEXT,
-    "unitPrice" DOUBLE PRECISION NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-    "deletedAt" TIMESTAMP(3),
-
-    CONSTRAINT "BillableItem_pkey" PRIMARY KEY ("id")
-);
-
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
@@ -206,10 +259,10 @@ CREATE UNIQUE INDEX "Client_email_key" ON "Client"("email");
 CREATE UNIQUE INDEX "Quote_quoteNumber_key" ON "Quote"("quoteNumber");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Invoice_invoiceNumber_key" ON "Invoice"("invoiceNumber");
+CREATE UNIQUE INDEX "BillableItem_name_key" ON "BillableItem"("name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "BillableItem_name_key" ON "BillableItem"("name");
+CREATE UNIQUE INDEX "Invoice_invoiceNumber_key" ON "Invoice"("invoiceNumber");
 
 -- AddForeignKey
 ALTER TABLE "Project" ADD CONSTRAINT "Project_clientId_fkey" FOREIGN KEY ("clientId") REFERENCES "Client"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

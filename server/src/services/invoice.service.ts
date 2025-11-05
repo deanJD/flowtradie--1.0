@@ -55,10 +55,10 @@ export const invoiceService = {
   create: async (input: CreateInvoiceInput, ctx: GraphQLContext) => {
     const { projectId, items, gstRate, status, ...restInput } = input;
 
-    const settings = await ctx.prisma.companySettings.findFirst();
+    const settings = await ctx.prisma.invoiceSettings.findFirst();
     if (!settings) {
       throw new Error(
-        "Company settings not found. Please configure them before creating invoices."
+        "Invoice settings not found. Please configure them before creating invoices."
       );
     }
 
@@ -82,7 +82,7 @@ export const invoiceService = {
         ...totals,
 
         // ✅ SNAPSHOT
-        businessName: settings.businessName,
+        businessName: settings.businessName ?? "",
         abn: settings.abn ?? null,
         address: settings.address ?? null,
         phone: settings.phone ?? null,
@@ -110,10 +110,10 @@ export const invoiceService = {
     if (!quote || !quote.project)
       throw new Error("Quote or associated project not found.");
 
-    const settings = await ctx.prisma.companySettings.findFirst();
+    const settings = await ctx.prisma.invoiceSettings.findFirst();
     if (!settings) {
       throw new Error(
-        "Company settings not found. Please configure them before creating invoices."
+        "Invoice settings not found. Please configure them before creating invoices."
       );
     }
 
@@ -135,15 +135,15 @@ export const invoiceService = {
           gstAmount: quote.gstAmount,
           totalAmount: quote.totalAmount,
 
-          // ✅ SNAPSHOT
-          businessName: settings.businessName,
-          abn: settings.abn ?? null,
-          address: settings.address ?? null,
-          phone: settings.phone ?? null,
-          email: settings.email ?? null,
-          website: settings.website ?? null,
-          logoUrl: settings.logoUrl ?? null,
-          bankDetails: settings.bankDetails ?? null,
+          // ✅ SNAPSHOT (convert null → empty string for consistency)
+           businessName: settings.businessName ?? "",
+           abn: settings.abn ?? "",
+           address: settings.address ?? "",
+           phone: settings.phone ?? "",
+           email: settings.email ?? "",
+           website: settings.website ?? "",
+           logoUrl: settings.logoUrl ?? "",
+           bankDetails: settings.bankDetails ?? "",
 
           items: {
             createMany: {

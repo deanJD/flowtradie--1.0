@@ -7,7 +7,6 @@ import { fileURLToPath } from "url";
 // vvvv IMPORT OUR NEW RESOLVER vvvv
 import { billableItemResolvers } from "./resolvers/billable_item.js";
 // ^^^^ END OF IMPORT ^^^^
-import { settingsResolvers } from "./resolvers/settings.js";
 
 import { clientResolvers } from "./resolvers/client.js";
 import { projectResolvers } from "./resolvers/project.js";
@@ -45,7 +44,6 @@ const resolverModules = [
   paymentResolvers,
   reportingResolvers,
   billableItemResolvers,
-  settingsResolvers,
   invoiceSettingsResolvers, // <-- ADD THE NEW RESOLVER TO THE ARRAY
 ];
 

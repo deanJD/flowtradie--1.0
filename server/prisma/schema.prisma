@@ -134,19 +134,7 @@ model BillableItem {
   deletedAt   DateTime?
 }
 
-model CompanySettings {
-  id           String   @id @default(cuid())
-  businessName String
-  abn          String?
-  address      String?
-  phone        String?
-  email        String?
-  website      String?
-  logoUrl      String?
-  bankDetails  String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-}
+
 
 
 model Invoice {
