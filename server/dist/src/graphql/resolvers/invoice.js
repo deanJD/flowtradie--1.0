@@ -24,9 +24,21 @@ export const invoiceResolvers = {
         deleteInvoice: (_p, { id }, ctx) => {
             return invoiceService.delete(id, ctx);
         },
-        createInvoiceFromQuote: (_p, { quoteId }, ctx) => {
-            return invoiceService.createFromQuote(quoteId, ctx);
-        },
+        /*
+     // --- Create from quote (disabled for now) ---
+     createInvoiceFromQuote: async (
+       _p: unknown,
+       { quoteId }: { quoteId: string },
+       ctx: GraphQLContext
+     ) => {
+       try {
+         return await invoiceService.createFromQuote(quoteId, ctx);
+       } catch (error) {
+         console.error("❌ Error creating invoice from quote:", error);
+         throw new Error("Failed to create invoice from quote");
+       }
+     },
+     */
     },
 };
 //# sourceMappingURL=invoice.js.map

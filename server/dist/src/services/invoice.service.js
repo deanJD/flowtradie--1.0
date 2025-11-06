@@ -1,14 +1,20 @@
 import { InvoiceStatus } from "@prisma/client";
-// Helper to calculate totals based on items
-const calculateInvoiceTotals = (items, gstRate) => {
+/** ---- Helpers ---- */
+const calcTotals = (items, gstRate) => {
     const rate = gstRate ?? 0.1;
     const subtotal = items.reduce((sum, item) => sum + ((item.quantity ?? 1) * item.unitPrice), 0);
     const gstAmount = subtotal * rate;
     const totalAmount = subtotal + gstAmount;
     return { subtotal, gstAmount, totalAmount };
 };
+/** Optional: 10 → 0.1 guard if settings accidentally stored as percent */
+const normalizeGst = (rate) => {
+    if (rate == null)
+        return 0.1;
+    return rate > 1 ? rate / 100 : rate;
+};
 export const invoiceService = {
-    // --- Get All Invoices ---
+    /** --- Get all invoices --- */
     getAll: async (projectId, ctx) => {
         const where = { deletedAt: null };
         if (projectId)
@@ -23,7 +29,7 @@ export const invoiceService = {
             },
         });
     },
-    // --- Get Single Invoice ---
+    /** --- Get single invoice --- */
     getById: async (id, ctx) => {
         return ctx.prisma.invoice.findFirst({
             where: { id, deletedAt: null },
@@ -34,94 +40,73 @@ export const invoiceService = {
             },
         });
     },
-    // --- Create Invoice (SNAPSHOT) ---
+    /** --- Create invoice (race-safe auto-number + snapshot) --- */
     create: async (input, ctx) => {
         const { projectId, items, gstRate, status, ...restInput } = input;
-        const settings = await ctx.prisma.invoiceSettings.findFirst();
-        if (!settings) {
-            throw new Error("Invoice settings not found. Please configure them before creating invoices.");
-        }
-        const currentGstRate = gstRate ?? 0.1;
-        const currentStatus = status ?? InvoiceStatus.DRAFT;
-        const totals = calculateInvoiceTotals(items, currentGstRate);
-        const itemsData = items.map((i) => ({
-            description: i.description,
-            quantity: i.quantity ?? 1,
-            unitPrice: i.unitPrice,
-            total: (i.quantity ?? 1) * i.unitPrice,
-        }));
-        return ctx.prisma.invoice.create({
-            data: {
-                ...restInput,
-                projectId,
-                gstRate: currentGstRate,
-                status: currentStatus,
-                ...totals,
-                // ✅ SNAPSHOT
-                businessName: settings.businessName ?? "",
-                abn: settings.abn ?? null,
-                address: settings.address ?? null,
-                phone: settings.phone ?? null,
-                email: settings.email ?? null,
-                website: settings.website ?? null,
-                logoUrl: settings.logoUrl ?? null,
-                bankDetails: settings.bankDetails ?? null,
-                items: { createMany: { data: itemsData } },
-            },
-            include: {
-                items: true,
-                project: { include: { client: true } },
-                payments: true,
-            },
-        });
-    },
-    // --- Create from Quote (SNAPSHOT) ---
-    createFromQuote: async (quoteId, ctx) => {
-        const quote = await ctx.prisma.quote.findFirst({
-            where: { id: quoteId, deletedAt: null },
-            include: { items: true, project: true },
-        });
-        if (!quote || !quote.project)
-            throw new Error("Quote or associated project not found.");
-        const settings = await ctx.prisma.invoiceSettings.findFirst();
-        if (!settings) {
-            throw new Error("Invoice settings not found. Please configure them before creating invoices.");
-        }
-        const newInvoiceNumber = `INV-${quote.quoteNumber}`;
-        const issueDate = new Date();
-        const dueDate = new Date();
-        dueDate.setDate(dueDate.getDate() + 30);
-        return ctx.prisma.$transaction(async (prismaTX) => {
-            return prismaTX.invoice.create({
+        // Do not pre-read settings outside the transaction for numbering!
+        return ctx.prisma.$transaction(async (tx) => {
+            // Lock + atomically increment the counter and fetch needed fields
+            const settings = await tx.invoiceSettings.findFirst();
+            if (!settings) {
+                throw new Error("Invoice settings not found. Please configure them before creating invoices.");
+            }
+            const updatedSettings = await tx.invoiceSettings.update({
+                where: { id: settings.id },
+                data: { startingNumber: { increment: 1 } },
+                select: {
+                    id: true,
+                    businessName: true,
+                    abn: true,
+                    address: true,
+                    phone: true,
+                    email: true,
+                    website: true,
+                    logoUrl: true,
+                    bankDetails: true,
+                    invoicePrefix: true,
+                    startingNumber: true, // this is the *new* incremented value
+                    gstRate: true,
+                },
+            });
+            // Use the *previous* number (incremented - 1) for this invoice
+            const prefix = updatedSettings.invoicePrefix ?? "INV-";
+            const currentNumber = (updatedSettings.startingNumber ?? 1) - 1;
+            const numberWidth = 3; // adjust if you want 4+ digits
+            const nextNumberStr = Math.max(currentNumber, 0)
+                .toString()
+                .padStart(numberWidth, "0");
+            const invoiceNumber = `${prefix}${nextNumberStr}`;
+            // Totals
+            const rate = normalizeGst(gstRate ?? updatedSettings.gstRate);
+            const { subtotal, gstAmount, totalAmount } = calcTotals(items, rate);
+            const itemsData = items.map((i) => ({
+                description: i.description,
+                quantity: i.quantity ?? 1,
+                unitPrice: i.unitPrice,
+                total: (i.quantity ?? 1) * i.unitPrice,
+            }));
+            const invoice = await tx.invoice.create({
                 data: {
-                    projectId: quote.projectId,
-                    invoiceNumber: newInvoiceNumber,
-                    issueDate,
-                    dueDate,
-                    status: InvoiceStatus.DRAFT,
-                    subtotal: quote.subtotal,
-                    gstRate: quote.gstRate,
-                    gstAmount: quote.gstAmount,
-                    totalAmount: quote.totalAmount,
-                    // ✅ SNAPSHOT (convert null → empty string for consistency)
-                    businessName: settings.businessName ?? "",
-                    abn: settings.abn ?? "",
-                    address: settings.address ?? "",
-                    phone: settings.phone ?? "",
-                    email: settings.email ?? "",
-                    website: settings.website ?? "",
-                    logoUrl: settings.logoUrl ?? "",
-                    bankDetails: settings.bankDetails ?? "",
-                    items: {
-                        createMany: {
-                            data: quote.items.map((item) => ({
-                                description: item.description,
-                                quantity: item.quantity,
-                                unitPrice: item.unitPrice,
-                                total: item.total,
-                            })),
-                        },
-                    },
+                    ...restInput,
+                    projectId,
+                    invoiceNumber,
+                    issueDate: restInput.issueDate, // already Date from resolver input
+                    dueDate: restInput.dueDate,
+                    status: status ?? InvoiceStatus.DRAFT,
+                    gstRate: rate,
+                    subtotal,
+                    gstAmount,
+                    totalAmount,
+                    // Snapshot fields
+                    businessName: updatedSettings.businessName ?? "",
+                    abn: updatedSettings.abn ?? "",
+                    address: updatedSettings.address ?? "",
+                    phone: updatedSettings.phone ?? "",
+                    email: updatedSettings.email ?? "",
+                    website: updatedSettings.website ?? "",
+                    logoUrl: updatedSettings.logoUrl ?? "",
+                    bankDetails: updatedSettings.bankDetails ?? "",
+                    items: { createMany: { data: itemsData } },
                 },
                 include: {
                     items: true,
@@ -129,11 +114,12 @@ export const invoiceService = {
                     payments: true,
                 },
             });
+            return invoice;
         });
     },
-    // --- Update Invoice (NULLS IGNORED ✅) ---
+    /** --- Update invoice (recalculate totals if items change) --- */
     update: async (id, input, ctx) => {
-        return ctx.prisma.$transaction(async (prismaTX) => {
+        return ctx.prisma.$transaction(async (tx) => {
             const { items, ...invoiceDataInput } = input;
             const invoiceData = {};
             if (invoiceDataInput.invoiceNumber != null)
@@ -144,12 +130,14 @@ export const invoiceService = {
                 invoiceData.status = invoiceDataInput.status;
             if (invoiceDataInput.gstRate != null)
                 invoiceData.gstRate = invoiceDataInput.gstRate;
-            let updatedInvoice = await prismaTX.invoice.update({
+            if (invoiceDataInput.notes !== undefined)
+                invoiceData.notes = invoiceDataInput.notes; // notes is in your schema
+            await tx.invoice.update({
                 where: { id },
                 data: invoiceData,
             });
             if (items && items.length > 0) {
-                await prismaTX.invoiceItem.deleteMany({ where: { invoiceId: id } });
+                await tx.invoiceItem.deleteMany({ where: { invoiceId: id } });
                 const itemsData = items.map((item) => ({
                     invoiceId: id,
                     description: item.description,
@@ -157,18 +145,24 @@ export const invoiceService = {
                     unitPrice: item.unitPrice,
                     total: (item.quantity ?? 1) * item.unitPrice,
                 }));
-                await prismaTX.invoiceItem.createMany({ data: itemsData });
+                await tx.invoiceItem.createMany({ data: itemsData });
             }
-            const currentItems = await prismaTX.invoiceItem.findMany({
+            // Recompute totals using current items
+            const currentItems = await tx.invoiceItem.findMany({
                 where: { invoiceId: id },
+                select: { quantity: true, unitPrice: true },
             });
-            const totals = calculateInvoiceTotals(currentItems, updatedInvoice.gstRate);
-            return prismaTX.invoice.update({
+            const currentInvoice = await tx.invoice.findUnique({
+                where: { id },
+                select: { gstRate: true },
+            });
+            const { subtotal, gstAmount, totalAmount } = calcTotals(currentItems, currentInvoice?.gstRate);
+            return tx.invoice.update({
                 where: { id },
                 data: {
-                    subtotal: totals.subtotal,
-                    gstAmount: totals.gstAmount,
-                    totalAmount: totals.totalAmount,
+                    subtotal,
+                    gstAmount,
+                    totalAmount,
                 },
                 include: {
                     items: true,
@@ -178,7 +172,7 @@ export const invoiceService = {
             });
         });
     },
-    // --- Soft Delete Invoice ---
+    /** --- Soft delete --- */
     delete: async (id, ctx) => {
         return ctx.prisma.invoice.update({
             where: { id },

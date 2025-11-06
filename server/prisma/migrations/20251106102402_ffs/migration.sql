@@ -104,23 +104,6 @@ CREATE TABLE "BillableItem" (
 );
 
 -- CreateTable
-CREATE TABLE "CompanySettings" (
-    "id" TEXT NOT NULL,
-    "businessName" TEXT NOT NULL,
-    "abn" TEXT,
-    "address" TEXT,
-    "phone" TEXT,
-    "email" TEXT,
-    "website" TEXT,
-    "logoUrl" TEXT,
-    "bankDetails" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "CompanySettings_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "Invoice" (
     "id" TEXT NOT NULL,
     "invoiceNumber" TEXT NOT NULL,

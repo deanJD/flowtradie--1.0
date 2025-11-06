@@ -50,12 +50,21 @@ export const invoiceResolvers = {
     ) => {
       return invoiceService.delete(id, ctx);
     },
-    createInvoiceFromQuote: (
+       /*
+    // --- Create from quote (disabled for now) ---
+    createInvoiceFromQuote: async (
       _p: unknown,
       { quoteId }: { quoteId: string },
       ctx: GraphQLContext
     ) => {
-      return invoiceService.createFromQuote(quoteId, ctx);
+      try {
+        return await invoiceService.createFromQuote(quoteId, ctx);
+      } catch (error) {
+        console.error("❌ Error creating invoice from quote:", error);
+        throw new Error("Failed to create invoice from quote");
+      }
     },
+    */
+
   },
 };

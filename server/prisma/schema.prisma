@@ -151,6 +151,7 @@ model Invoice {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   deletedAt     DateTime?
+  
 
   // Snapshot fields (temporarily optional for backfill)
   businessName  String
