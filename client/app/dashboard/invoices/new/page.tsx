@@ -10,11 +10,15 @@ import { GET_PROJECTS_QUERY } from '@/app/lib/graphql/queries/projects';
 import { GET_INVOICES_QUERY } from '@/app/lib/graphql/queries/invoices';
 import { CREATE_INVOICE_MUTATION } from '@/app/lib/graphql/mutations/invoice';
 import { GET_INVOICE_SETTINGS } from '@/app/lib/graphql/queries/invoiceSettings';
-import { UPDATE_INVOICE_SETTINGS_NUMBER } from '@/app/lib/graphql/mutations/invoiceSettings';
+import { UPDATE_INVOICE_SETTINGS } from '@/app/lib/graphql/mutations/invoiceSettings';
+
 
 
 // --- Component Imports ---
-import styles from './NewInvoicePage.module.css';
+
+import styles from '../shared/InvoiceForm.module.css';
+
+
 import Button from '@/components/Button/Button';
 
 // --- Interfaces ---
@@ -54,7 +58,7 @@ export default function NewInvoicePage() {
   const [clientAddress, setClientAddress] = useState('');
   const [clientPhone, setClientPhone] = useState('');
   const [clientEmail, setClientEmail] = useState('');
-  const [updateInvoiceSettings] = useMutation(UPDATE_INVOICE_SETTINGS_NUMBER);
+  const [updateInvoiceSettings] = useMutation(UPDATE_INVOICE_SETTINGS);
 
   // --- Business info state ---
   const [fromBusiness, setFromBusiness] = useState({

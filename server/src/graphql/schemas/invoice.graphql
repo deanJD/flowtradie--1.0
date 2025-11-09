@@ -68,13 +68,19 @@ input CreateInvoiceInput {
 
 input UpdateInvoiceInput {
   invoiceNumber: String
+  issueDate: DateTime
   dueDate: DateTime
   status: InvoiceStatus
-  items: [CreateInvoiceItemInput!]
-  gstRate: Float
   notes: String
+  subtotal: Float
+  gstRate: Float
+  gstAmount: Float
+  totalAmount: Float
 
-  # Optional: include these if you ever want to let admin update snapshot data
+  # Full item list replaces existing ones
+  items: [CreateInvoiceItemInput!]
+
+  # Snapshot fields
   businessName: String
   abn: String
   address: String

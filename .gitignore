@@ -23,3 +23,7 @@ Thumbs.db
 *.zip
 *.tgz
 *.node
+
+# Do not commit uploaded files
+public/uploads/*
+!public/uploads/.gitkeep

@@ -14,7 +14,7 @@ function buildFileName(inv: any) {
   return `${clientName} - ${number}.pdf`.replace(/[\/\\:*?"<>|]+/g, "-");
 }
 
-/** Shared HTML renderer — matches H1 classes and base/h1 CSS */
+/** Shared HTML renderer — matches H1 classes and invoice CSS */
 function renderInvoiceHTML(inv: any, cssBase: string, cssH1: string) {
   const styles = `${cssBase}\n\n${cssH1}`;
 
@@ -159,10 +159,11 @@ function renderInvoiceHTML(inv: any, cssBase: string, cssH1: string) {
 </html>`;
 }
 
+/* GraphQL endpoint */
 const GRAPHQL_URL =
-  (process.env.NEXT_PUBLIC_SERVER_URL
+  process.env.NEXT_PUBLIC_SERVER_URL
     ? `${process.env.NEXT_PUBLIC_SERVER_URL}/graphql`
-    : "http://localhost:4000/graphql");
+    : "http://localhost:4000/graphql";
 
 async function fetchInvoice(invoiceId: string, cookieHeader?: string) {
   const query = `
@@ -208,28 +209,28 @@ export async function GET(
     const url = new URL(req.url);
     const forceDownload = url.searchParams.get("download") === "1";
 
-    // Forward cookies to GraphQL for auth
     const hdrs = await headers();
     const cookieHeader = hdrs.get("cookie") ?? undefined;
 
-    // 1) Load data
+    // Fetch invoice
     const invoice = await fetchInvoice(invoiceId, cookieHeader);
     if (!invoice) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    // 2) Load CSS from confirmed paths (A)
+    // Load CSS
     const cssBase = fs.readFileSync(path.join(process.cwd(), "styles/invoice/base.css"), "utf8");
     const cssH1   = fs.readFileSync(path.join(process.cwd(), "styles/invoice/h1.css"), "utf8");
 
-    // 3) HTML
+    // Build HTML
     const html = renderInvoiceHTML(invoice, cssBase, cssH1);
 
-    // 4) Puppeteer → PDF
+    // Puppeteer → PDF
     const browser = await puppeteer.launch({
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
+
     const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true,
@@ -239,7 +240,10 @@ export async function GET(
     await browser.close();
 
     const fileName = buildFileName(invoice);
-    return new Response(Buffer.from(pdfBuffer), { headers: buildHeaders(fileName, forceDownload) });
+
+    return new Response(Buffer.from(pdfBuffer), {
+      headers: buildHeaders(fileName, forceDownload),
+    });
   } catch (err: any) {
     console.error("PDF route error:", err);
     return NextResponse.json({ error: err?.message ?? "PDF failed" }, { status: 500 });

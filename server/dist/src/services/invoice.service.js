@@ -131,32 +131,45 @@ export const invoiceService = {
             if (invoiceDataInput.gstRate != null)
                 invoiceData.gstRate = invoiceDataInput.gstRate;
             if (invoiceDataInput.notes !== undefined)
-                invoiceData.notes = invoiceDataInput.notes; // notes is in your schema
+                invoiceData.notes = invoiceDataInput.notes;
+            // Update invoice main fields
             await tx.invoice.update({
                 where: { id },
                 data: invoiceData,
             });
-            if (items && items.length > 0) {
-                await tx.invoiceItem.deleteMany({ where: { invoiceId: id } });
-                const itemsData = items.map((item) => ({
-                    invoiceId: id,
-                    description: item.description,
-                    quantity: item.quantity ?? 1,
-                    unitPrice: item.unitPrice,
-                    total: (item.quantity ?? 1) * item.unitPrice,
-                }));
-                await tx.invoiceItem.createMany({ data: itemsData });
+            // ✅ Handle item logic with FULL semantics:
+            // null = leave items unchanged
+            // [] = delete all items
+            // [..] = replace items
+            if (items !== undefined) {
+                // Always delete existing items first
+                await tx.invoiceItem.deleteMany({
+                    where: { invoiceId: id },
+                });
+                // Create new items only if array is non-empty
+                if (items && items.length > 0) {
+                    const itemsData = items.map((item) => ({
+                        invoiceId: id,
+                        description: item.description,
+                        quantity: item.quantity ?? 1,
+                        unitPrice: item.unitPrice,
+                        total: (item.quantity ?? 1) * item.unitPrice,
+                    }));
+                    await tx.invoiceItem.createMany({ data: itemsData });
+                }
             }
-            // Recompute totals using current items
+            // Pull updated items
             const currentItems = await tx.invoiceItem.findMany({
                 where: { invoiceId: id },
                 select: { quantity: true, unitPrice: true },
             });
+            // Pull updated invoice
             const currentInvoice = await tx.invoice.findUnique({
                 where: { id },
                 select: { gstRate: true },
             });
             const { subtotal, gstAmount, totalAmount } = calcTotals(currentItems, currentInvoice?.gstRate);
+            // Final update with totals and full include (for UI return)
             return tx.invoice.update({
                 where: { id },
                 data: {
@@ -168,6 +181,8 @@ export const invoiceService = {
                     items: true,
                     payments: { where: { deletedAt: null }, orderBy: { date: "asc" } },
                     project: { include: { client: true } },
+                    // ✅ Snapshot fields needed by Edit + Preview
+                    // We include them by default because they exist on the Invoice model itself
                 },
             });
         });

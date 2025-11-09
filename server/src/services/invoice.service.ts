@@ -146,29 +146,44 @@ export const invoiceService = {
 
   /** --- Update invoice (recalculate totals if items change) --- */
   update: async (id: string, input: UpdateInvoiceInput, ctx: GraphQLContext) => {
-    return ctx.prisma.$transaction(async (tx) => {
-      const { items, ...invoiceDataInput } = input;
-      const invoiceData: Prisma.InvoiceUpdateInput = {};
+  return ctx.prisma.$transaction(async (tx) => {
+    const { items, ...invoiceDataInput } = input;
 
-      if (invoiceDataInput.invoiceNumber != null)
-        invoiceData.invoiceNumber = invoiceDataInput.invoiceNumber;
-      if (invoiceDataInput.dueDate != null)
-        invoiceData.dueDate = invoiceDataInput.dueDate;
-      if (invoiceDataInput.status != null)
-        invoiceData.status = invoiceDataInput.status;
-      if (invoiceDataInput.gstRate != null)
-        invoiceData.gstRate = invoiceDataInput.gstRate;
-      if (invoiceDataInput.notes !== undefined)
-        invoiceData.notes = invoiceDataInput.notes; // notes is in your schema
+    const invoiceData: Prisma.InvoiceUpdateInput = {};
 
-      await tx.invoice.update({
-        where: { id },
-        data: invoiceData,
+    if (invoiceDataInput.invoiceNumber != null)
+      invoiceData.invoiceNumber = invoiceDataInput.invoiceNumber;
+
+    if (invoiceDataInput.dueDate != null)
+      invoiceData.dueDate = invoiceDataInput.dueDate;
+
+    if (invoiceDataInput.status != null)
+      invoiceData.status = invoiceDataInput.status;
+
+    if (invoiceDataInput.gstRate != null)
+      invoiceData.gstRate = invoiceDataInput.gstRate;
+
+    if (invoiceDataInput.notes !== undefined)
+      invoiceData.notes = invoiceDataInput.notes;
+
+    // Update invoice main fields
+    await tx.invoice.update({
+      where: { id },
+      data: invoiceData,
+    });
+
+    // ✅ Handle item logic with FULL semantics:
+    // null = leave items unchanged
+    // [] = delete all items
+    // [..] = replace items
+    if (items !== undefined) {
+      // Always delete existing items first
+      await tx.invoiceItem.deleteMany({
+        where: { invoiceId: id },
       });
 
+      // Create new items only if array is non-empty
       if (items && items.length > 0) {
-        await tx.invoiceItem.deleteMany({ where: { invoiceId: id } });
-
         const itemsData = items.map((item) => ({
           invoiceId: id,
           description: item.description,
@@ -179,38 +194,45 @@ export const invoiceService = {
 
         await tx.invoiceItem.createMany({ data: itemsData });
       }
+    }
 
-      // Recompute totals using current items
-      const currentItems = await tx.invoiceItem.findMany({
-        where: { invoiceId: id },
-        select: { quantity: true, unitPrice: true },
-      });
-
-      const currentInvoice = await tx.invoice.findUnique({
-        where: { id },
-        select: { gstRate: true },
-      });
-
-      const { subtotal, gstAmount, totalAmount } = calcTotals(
-        currentItems,
-        currentInvoice?.gstRate
-      );
-
-      return tx.invoice.update({
-        where: { id },
-        data: {
-          subtotal,
-          gstAmount,
-          totalAmount,
-        },
-        include: {
-          items: true,
-          payments: { where: { deletedAt: null }, orderBy: { date: "asc" } },
-          project: { include: { client: true } },
-        },
-      });
+    // Pull updated items
+    const currentItems = await tx.invoiceItem.findMany({
+      where: { invoiceId: id },
+      select: { quantity: true, unitPrice: true },
     });
-  },
+
+    // Pull updated invoice
+    const currentInvoice = await tx.invoice.findUnique({
+      where: { id },
+      select: { gstRate: true },
+    });
+
+    const { subtotal, gstAmount, totalAmount } = calcTotals(
+      currentItems,
+      currentInvoice?.gstRate
+    );
+
+    // Final update with totals and full include (for UI return)
+    return tx.invoice.update({
+      where: { id },
+      data: {
+        subtotal,
+        gstAmount,
+        totalAmount,
+      },
+      include: {
+        items: true,
+        payments: { where: { deletedAt: null }, orderBy: { date: "asc" } },
+        project: { include: { client: true } },
+
+        // ✅ Snapshot fields needed by Edit + Preview
+        // We include them by default because they exist on the Invoice model itself
+      },
+    });
+  });
+},
+
 
   /** --- Soft delete --- */
   delete: async (id: string, ctx: GraphQLContext) => {

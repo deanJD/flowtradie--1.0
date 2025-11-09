@@ -10,7 +10,6 @@
     "migrate": "prisma migrate dev",
     "start": "node dist/src/index.js",
     "build": "tsc"
-
   },
   "dependencies": {
     "@apollo/server": "^4.12.2",
@@ -25,15 +24,16 @@
     "jsonwebtoken": "^9.0.2",
     "lodash.merge": "^4.6.2",
     "pg": "^8.11.3",
-    "prisma": "^6.15.0"
+    "prisma": "^6.15.0",
+    "puppeteer": "^24.29.1"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.2",
     "@types/cors": "^2.8.19",
+    "@types/express": "4.17.21",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/lodash.merge": "^4.6.9",
     "@types/node": "^24.3.1",
-    "@types/express": "4.17.21",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2"

@@ -164,22 +164,39 @@
     padding: 0;
   }
 }
-/* PDF mode removes paddings and shadows */
-.pdfWrapper {
-  padding: 0 !important;
-  background: white !important;
+/* ============================================================
+   EMBEDDED MODE (read-only, clean, no toolbar)
+   ============================================================ */
+
+/* Outer wrapper when used in embed mode */
+.embedWrapper {
+  background: #f6f7f9;
+  padding: 16px;
 }
 
-.pdfPaper {
-  box-shadow: none !important;
-  border: none !important;
-  width: 100% !important;
-  padding: 0 !important;
+/* Embedded "paper" appearance */
+.embeddedPaper {
+  pointer-events: none;        /* 🛑 Disable all interactions inside invoice */
+  user-select: text;           /* ✅ Allow copying text */
+  box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+  border-radius: 12px;
+  margin: 0 auto;
+  transform-origin: top center;
+  background: white;
 }
 
-/* Ensure toolbar never prints */
-@media print {
-  .toolbar {
-    display: none !important;
-  }
+/* Ensure wrapper + toolbar remain interactive */
+.embedWrapper,
+.toolbar {
+  pointer-events: auto;
+}
+
+/* Optional: scaled-down view when embedded */
+.embeddedPaper {
+  transform: scale(0.98);   /* subtle shrink */
+}
+
+/* Prevent weird hover states */
+.embeddedPaper * {
+  cursor: default !important;
 }

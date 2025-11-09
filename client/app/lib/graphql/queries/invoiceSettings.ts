@@ -26,9 +26,9 @@ export const GET_INVOICE_SETTINGS = gql`
   }
 `;
 
-export const SAVE_INVOICE_SETTINGS = gql`
-  mutation SaveInvoiceSettings($input: InvoiceSettingsInput!) {
-    saveInvoiceSettings(input: $input) {
+export const UPDATE_INVOICE_SETTINGS = gql`
+  mutation UpdateInvoiceSettings($input: InvoiceSettingsInput!) {
+    updateInvoiceSettings(input: $input) {
       id
       businessName
       abn
