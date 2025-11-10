@@ -1,3 +1,4 @@
+// server/src/services/invoice.service.ts
 import { GraphQLContext } from "../context.js";
 import { Prisma, InvoiceStatus } from "@prisma/client";
 import {
@@ -5,7 +6,10 @@ import {
   UpdateInvoiceInput,
 } from "@/__generated__/graphql.js";
 
-/** ---- Helpers ---- */
+/* -------------------------------------------------------
+   Helpers
+------------------------------------------------------- */
+
 const calcTotals = (
   items: { quantity?: number | null; unitPrice: number }[],
   gstRate: number | null | undefined
@@ -20,14 +24,19 @@ const calcTotals = (
   return { subtotal, gstAmount, totalAmount };
 };
 
-/** Optional: 10 → 0.1 guard if settings accidentally stored as percent */
 const normalizeGst = (rate?: number | null) => {
   if (rate == null) return 0.1;
   return rate > 1 ? rate / 100 : rate;
 };
 
+/* -------------------------------------------------------
+   Invoice Service
+------------------------------------------------------- */
+
 export const invoiceService = {
-  /** --- Get all invoices --- */
+  /* ----------------------------
+     Get All Invoices
+  ---------------------------- */
   getAll: async (projectId: string | undefined, ctx: GraphQLContext) => {
     const where: Prisma.InvoiceWhereInput = { deletedAt: null };
     if (projectId) where.projectId = projectId;
@@ -36,14 +45,16 @@ export const invoiceService = {
       where,
       orderBy: { createdAt: "desc" },
       include: {
-        items: { select: { id: true } },
-        payments: { where: { deletedAt: null }, select: { amount: true } },
-        project: { include: { client: { select: { id: true, name: true } } } },
+        items: true,
+        payments: { where: { deletedAt: null }, orderBy: { date: "asc" } },
+        project: { include: { client: true } },
       },
     });
   },
 
-  /** --- Get single invoice --- */
+  /* ----------------------------
+     Get Single Invoice
+  ---------------------------- */
   getById: async (id: string, ctx: GraphQLContext) => {
     return ctx.prisma.invoice.findFirst({
       where: { id, deletedAt: null },
@@ -55,13 +66,14 @@ export const invoiceService = {
     });
   },
 
-  /** --- Create invoice (race-safe auto-number + snapshot) --- */
+  /* -------------------------------------------------------
+     Create Invoice (with race-safe number increment + snapshots)
+  ------------------------------------------------------- */
   create: async (input: CreateInvoiceInput, ctx: GraphQLContext) => {
     const { projectId, items, gstRate, status, ...restInput } = input;
 
-    // Do not pre-read settings outside the transaction for numbering!
     return ctx.prisma.$transaction(async (tx) => {
-      // Lock + atomically increment the counter and fetch needed fields
+      // Get current settings AND atomically increment the invoice number
       const settings = await tx.invoiceSettings.findFirst();
       if (!settings) {
         throw new Error(
@@ -76,26 +88,33 @@ export const invoiceService = {
           id: true,
           businessName: true,
           abn: true,
-          address: true,
           phone: true,
           email: true,
           website: true,
           logoUrl: true,
           bankDetails: true,
           invoicePrefix: true,
-          startingNumber: true, // this is the *new* incremented value
+          startingNumber: true,
           gstRate: true,
+
+          // Structured address snapshot
+          addressLine1: true,
+          addressLine2: true,
+          city: true,
+          state: true,
+          postcode: true,
+          country: true,
         },
       });
 
-      // Use the *previous* number (incremented - 1) for this invoice
+      // Invoice number generation
       const prefix = updatedSettings.invoicePrefix ?? "INV-";
       const currentNumber = (updatedSettings.startingNumber ?? 1) - 1;
-      const numberWidth = 3; // adjust if you want 4+ digits
-      const nextNumberStr = Math.max(currentNumber, 0)
+      const next = Math.max(currentNumber, 0)
         .toString()
-        .padStart(numberWidth, "0");
-      const invoiceNumber = `${prefix}${nextNumberStr}`;
+        .padStart(3, "0");
+
+      const invoiceNumber = `${prefix}${next}`;
 
       // Totals
       const rate = normalizeGst(gstRate ?? updatedSettings.gstRate);
@@ -108,12 +127,13 @@ export const invoiceService = {
         total: (i.quantity ?? 1) * i.unitPrice,
       }));
 
+      // Create invoice
       const invoice = await tx.invoice.create({
         data: {
           ...restInput,
           projectId,
           invoiceNumber,
-          issueDate: restInput.issueDate, // already Date from resolver input
+          issueDate: restInput.issueDate,
           dueDate: restInput.dueDate,
           status: status ?? InvoiceStatus.DRAFT,
           gstRate: rate,
@@ -124,19 +144,26 @@ export const invoiceService = {
           // Snapshot fields
           businessName: updatedSettings.businessName ?? "",
           abn: updatedSettings.abn ?? "",
-          address: updatedSettings.address ?? "",
           phone: updatedSettings.phone ?? "",
           email: updatedSettings.email ?? "",
           website: updatedSettings.website ?? "",
           logoUrl: updatedSettings.logoUrl ?? "",
           bankDetails: updatedSettings.bankDetails ?? "",
 
+          // Structured address snapshot
+          addressLine1: updatedSettings.addressLine1 ?? "",
+          addressLine2: updatedSettings.addressLine2 ?? "",
+          city: updatedSettings.city ?? "",
+          state: updatedSettings.state ?? "",
+          postcode: updatedSettings.postcode ?? "",
+          country: updatedSettings.country ?? "",
+
           items: { createMany: { data: itemsData } },
         },
         include: {
           items: true,
-          project: { include: { client: true } },
           payments: true,
+          project: { include: { client: true } },
         },
       });
 
@@ -144,97 +171,136 @@ export const invoiceService = {
     });
   },
 
-  /** --- Update invoice (recalculate totals if items change) --- */
+  /* -------------------------------------------------------
+     Update Invoice + Replace items + Recalculate totals
+  ------------------------------------------------------- */
   update: async (id: string, input: UpdateInvoiceInput, ctx: GraphQLContext) => {
-  return ctx.prisma.$transaction(async (tx) => {
-    const { items, ...invoiceDataInput } = input;
+    return ctx.prisma.$transaction(async (tx) => {
+      const { items, ...invoiceDataInput } = input;
 
-    const invoiceData: Prisma.InvoiceUpdateInput = {};
+      const invoiceData: Prisma.InvoiceUpdateInput = {};
 
-    if (invoiceDataInput.invoiceNumber != null)
-      invoiceData.invoiceNumber = invoiceDataInput.invoiceNumber;
+      /* Standard fields */
+      if (invoiceDataInput.invoiceNumber !== undefined && invoiceDataInput.invoiceNumber !== null)
+        invoiceData.invoiceNumber = invoiceDataInput.invoiceNumber;
 
-    if (invoiceDataInput.dueDate != null)
-      invoiceData.dueDate = invoiceDataInput.dueDate;
+      if (invoiceDataInput.issueDate !== undefined)
+        invoiceData.issueDate = invoiceDataInput.issueDate;
 
-    if (invoiceDataInput.status != null)
-      invoiceData.status = invoiceDataInput.status;
+      if (invoiceDataInput.dueDate !== undefined)
+        invoiceData.dueDate = invoiceDataInput.dueDate;
 
-    if (invoiceDataInput.gstRate != null)
-      invoiceData.gstRate = invoiceDataInput.gstRate;
+      if (invoiceDataInput.status !== undefined && invoiceDataInput.status !== null)
+        invoiceData.status = invoiceDataInput.status;
 
-    if (invoiceDataInput.notes !== undefined)
-      invoiceData.notes = invoiceDataInput.notes;
+      if (invoiceDataInput.gstRate !== undefined)
+        invoiceData.gstRate = invoiceDataInput.gstRate === null ? undefined : invoiceDataInput.gstRate;
 
-    // Update invoice main fields
-    await tx.invoice.update({
-      where: { id },
-      data: invoiceData,
-    });
+      if (invoiceDataInput.notes !== undefined)
+        invoiceData.notes = invoiceDataInput.notes;
 
-    // ✅ Handle item logic with FULL semantics:
-    // null = leave items unchanged
-    // [] = delete all items
-    // [..] = replace items
-    if (items !== undefined) {
-      // Always delete existing items first
-      await tx.invoiceItem.deleteMany({
-        where: { invoiceId: id },
+      /* Snapshot business fields */
+      if (invoiceDataInput.businessName !== undefined)
+        invoiceData.businessName = invoiceDataInput.businessName;
+
+      if (invoiceDataInput.abn !== undefined)
+        invoiceData.abn = invoiceDataInput.abn;
+
+      if (invoiceDataInput.phone !== undefined)
+        invoiceData.phone = invoiceDataInput.phone;
+
+      if (invoiceDataInput.email !== undefined)
+        invoiceData.email = invoiceDataInput.email;
+
+      if (invoiceDataInput.website !== undefined)
+        invoiceData.website = invoiceDataInput.website;
+
+      if (invoiceDataInput.logoUrl !== undefined)
+        invoiceData.logoUrl = invoiceDataInput.logoUrl;
+
+      if (invoiceDataInput.bankDetails !== undefined)
+        invoiceData.bankDetails = invoiceDataInput.bankDetails;
+
+      /* Structured snapshot address fields */
+      if (invoiceDataInput.addressLine1 !== undefined)
+        invoiceData.addressLine1 = invoiceDataInput.addressLine1;
+
+      if (invoiceDataInput.addressLine2 !== undefined)
+        invoiceData.addressLine2 = invoiceDataInput.addressLine2;
+
+      if (invoiceDataInput.city !== undefined)
+        invoiceData.city = invoiceDataInput.city;
+
+      if (invoiceDataInput.state !== undefined)
+        invoiceData.state = invoiceDataInput.state;
+
+      if (invoiceDataInput.postcode !== undefined)
+        invoiceData.postcode = invoiceDataInput.postcode;
+
+      if (invoiceDataInput.country !== undefined)
+        invoiceData.country = invoiceDataInput.country;
+
+      /* Update invoice record */
+      await tx.invoice.update({
+        where: { id },
+        data: invoiceData,
       });
 
-      // Create new items only if array is non-empty
-      if (items && items.length > 0) {
-        const itemsData = items.map((item) => ({
-          invoiceId: id,
-          description: item.description,
-          quantity: item.quantity ?? 1,
-          unitPrice: item.unitPrice,
-          total: (item.quantity ?? 1) * item.unitPrice,
-        }));
+      /* Replace items if provided */
+      if (items !== undefined) {
+        await tx.invoiceItem.deleteMany({ where: { invoiceId: id } });
 
-        await tx.invoiceItem.createMany({ data: itemsData });
+        if (items && items.length > 0) {
+          const itemsData = items.map((i) => ({
+            invoiceId: id,
+            description: i.description,
+            quantity: i.quantity ?? 1,
+            unitPrice: i.unitPrice,
+            total: (i.quantity ?? 1) * i.unitPrice,
+          }));
+
+          await tx.invoiceItem.createMany({ data: itemsData });
+        }
       }
-    }
 
-    // Pull updated items
-    const currentItems = await tx.invoiceItem.findMany({
-      where: { invoiceId: id },
-      select: { quantity: true, unitPrice: true },
+      /* Pull updated items & GST rate */
+      const updatedItems = await tx.invoiceItem.findMany({
+        where: { invoiceId: id },
+        select: {
+          quantity: true,
+          unitPrice: true,
+        },
+      });
+
+      const invoiceRecord = await tx.invoice.findUnique({
+        where: { id },
+        select: { gstRate: true },
+      });
+
+      const { subtotal, gstAmount, totalAmount } = calcTotals(
+        updatedItems,
+        invoiceRecord?.gstRate
+      );
+
+      /* Save recalculated totals */
+      return tx.invoice.update({
+        where: { id },
+        data: { subtotal, gstAmount, totalAmount },
+        include: {
+          items: true,
+          payments: {
+            where: { deletedAt: null },
+            orderBy: { date: "asc" },
+          },
+          project: { include: { client: true } },
+        },
+      });
     });
+  },
 
-    // Pull updated invoice
-    const currentInvoice = await tx.invoice.findUnique({
-      where: { id },
-      select: { gstRate: true },
-    });
-
-    const { subtotal, gstAmount, totalAmount } = calcTotals(
-      currentItems,
-      currentInvoice?.gstRate
-    );
-
-    // Final update with totals and full include (for UI return)
-    return tx.invoice.update({
-      where: { id },
-      data: {
-        subtotal,
-        gstAmount,
-        totalAmount,
-      },
-      include: {
-        items: true,
-        payments: { where: { deletedAt: null }, orderBy: { date: "asc" } },
-        project: { include: { client: true } },
-
-        // ✅ Snapshot fields needed by Edit + Preview
-        // We include them by default because they exist on the Invoice model itself
-      },
-    });
-  });
-},
-
-
-  /** --- Soft delete --- */
+  /* ----------------------------
+     Soft Delete
+  ---------------------------- */
   delete: async (id: string, ctx: GraphQLContext) => {
     return ctx.prisma.invoice.update({
       where: { id },

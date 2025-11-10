@@ -1,0 +1,10 @@
+schema: "./src/graphql/schemas/**/*.graphql"
+documents: []
+generates:
+  ./src/__generated__/graphql.ts:
+    plugins:
+      - "typescript"
+      - "typescript-resolvers"
+    config:
+      useIndexSignature: true
+      contextType: "../context#GraphQLContext"

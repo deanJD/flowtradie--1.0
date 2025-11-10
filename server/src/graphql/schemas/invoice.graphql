@@ -1,4 +1,6 @@
-# --- Invoice Type Definitions ---
+# ================================
+#        INVOICE TYPE
+# ================================
 
 type Invoice {
   id: ID!
@@ -6,27 +8,40 @@ type Invoice {
   status: InvoiceStatus!
   issueDate: DateTime!
   dueDate: DateTime!
+  notes: String
   subtotal: Float!
   gstRate: Float!
   gstAmount: Float!
   totalAmount: Float!
   createdAt: DateTime!
   updatedAt: DateTime!
+
+  # Project Relations
   project: Project!
   items: [InvoiceItem!]!
   payments: [Payment!]!
-  notes: String
 
-  # Snapshot Fields (NEW)
+  # =============== SNAPSHOT FIELDS ===============
   businessName: String
   abn: String
-  address: String
   phone: String
   email: String
   website: String
   logoUrl: String
   bankDetails: String
+
+  # ✅ STRUCTURED SNAPSHOT ADDRESS FIELDS
+  addressLine1: String
+  addressLine2: String
+  city: String
+  state: String
+  postcode: String
+  country: String
 }
+
+# ================================
+#          INVOICE ITEMS
+# ================================
 
 type InvoiceItem {
   id: ID!
@@ -37,7 +52,9 @@ type InvoiceItem {
   invoice: Invoice!
 }
 
-# --- Input Types ---
+# ================================
+#          INPUT TYPES
+# ================================
 
 input CreateInvoiceItemInput {
   description: String!
@@ -58,12 +75,19 @@ input CreateInvoiceInput {
   # Snapshot Fields (NEW)
   businessName: String
   abn: String
-  address: String
   phone: String
   email: String
   website: String
   logoUrl: String
   bankDetails: String
+
+  # ✅ STRUCTURED SNAPSHOT ADDRESS FIELDS
+  addressLine1: String
+  addressLine2: String
+  city: String
+  state: String
+  postcode: String
+  country: String
 }
 
 input UpdateInvoiceInput {
@@ -72,26 +96,31 @@ input UpdateInvoiceInput {
   dueDate: DateTime
   status: InvoiceStatus
   notes: String
-  subtotal: Float
   gstRate: Float
-  gstAmount: Float
-  totalAmount: Float
 
-  # Full item list replaces existing ones
   items: [CreateInvoiceItemInput!]
 
   # Snapshot fields
   businessName: String
   abn: String
-  address: String
   phone: String
   email: String
   website: String
   logoUrl: String
   bankDetails: String
+
+  # ✅ STRUCTURED SNAPSHOT ADDRESS FIELDS
+  addressLine1: String
+  addressLine2: String
+  city: String
+  state: String
+  postcode: String
+  country: String
 }
 
-# --- API Operations ---
+# ================================
+#         OPERATIONS
+# ================================
 
 extend type Query {
   invoice(id: ID!): Invoice

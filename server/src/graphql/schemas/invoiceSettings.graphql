@@ -4,22 +4,32 @@ type InvoiceSettings {
   id: ID!
   businessName: String
   abn: String
-  address: String
+
+  addressLine1: String
+  addressLine2: String
+  city: String
+  state: String
+  postcode: String
+  country: String
+
   phone: String
   email: String
   website: String
   logoUrl: String
   bankDetails: String
+
   invoicePrefix: String
   startingNumber: Int
   defaultDueDays: Int
   gstRate: Float
+
   smtpHost: String
   smtpPort: Int
   smtpUser: String
   smtpPassword: String
   fromEmail: String
   fromName: String
+
   createdAt: DateTime!
   updatedAt: DateTime!
 }
@@ -27,16 +37,25 @@ type InvoiceSettings {
 input InvoiceSettingsInput {
   businessName: String
   abn: String
-  address: String
+
+  addressLine1: String
+  addressLine2: String
+  city: String
+  state: String
+  postcode: String
+  country: String
+
   phone: String
   email: String
   website: String
   logoUrl: String
   bankDetails: String
+
   invoicePrefix: String
   startingNumber: Int
   defaultDueDays: Int
   gstRate: Float
+
   smtpHost: String
   smtpPort: Int
   smtpUser: String
@@ -44,6 +63,7 @@ input InvoiceSettingsInput {
   fromEmail: String
   fromName: String
 }
+
 
 extend type Query {
   invoiceSettings: InvoiceSettings

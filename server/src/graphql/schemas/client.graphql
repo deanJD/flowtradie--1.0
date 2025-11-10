@@ -1,35 +1,56 @@
-# server/src/graphql/schemas/client.graphql
-
 type Client {
   id: ID!
   name: String!
   email: String!
   phone: String
-  address: String
+
+  # ✅ Structured Address Fields
+  addressLine1: String
+  addressLine2: String
+  city: String
+  state: String
+  postcode: String
+  country: String
+
   createdAt: DateTime!
   updatedAt: DateTime!
   projects: [Project!]!
 }
 
+# ✅ INPUT TYPES
 input CreateClientInput {
   name: String!
   email: String!
   phone: String
-  address: String
+
+  addressLine1: String
+  addressLine2: String
+  city: String
+  state: String
+  postcode: String
+  country: String
 }
 
 input UpdateClientInput {
   name: String
   email: String
   phone: String
-  address: String
+
+  addressLine1: String
+  addressLine2: String
+  city: String
+  state: String
+  postcode: String
+  country: String
 }
 
+# ✅ QUERIES
 extend type Query {
   client(id: ID!): Client
   clients: [Client!]!
 }
 
+# ✅ MUTATIONS
 extend type Mutation {
   createClient(input: CreateClientInput!): Client!
   updateClient(id: ID!, input: UpdateClientInput!): Client!

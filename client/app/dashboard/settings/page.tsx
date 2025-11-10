@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { gql, useMutation, useQuery } from '@apollo/client';
-import styles from './SettingsPage.module.css';
+import { useEffect, useState } from "react";
+import { gql, useMutation, useQuery } from "@apollo/client";
+import styles from "./SettingsPage.module.css";
 
-// ✅ Queries & Mutations
+// Queries
 const GET_INVOICE_SETTINGS = gql`
   query GetInvoiceSettings {
     invoiceSettings {
@@ -26,11 +26,11 @@ const GET_INVOICE_SETTINGS = gql`
       smtpUser
       smtpPassword
       fromEmail
-      fromName
     }
   }
 `;
 
+// Mutations
 const UPDATE_INVOICE_SETTINGS = gql`
   mutation UpdateInvoiceSettings($input: InvoiceSettingsInput!) {
     updateInvoiceSettings(input: $input) {
@@ -52,7 +52,6 @@ const UPDATE_INVOICE_SETTINGS = gql`
       smtpUser
       smtpPassword
       fromEmail
-      fromName
     }
   }
 `;
@@ -60,172 +59,180 @@ const UPDATE_INVOICE_SETTINGS = gql`
 export default function SettingsPage() {
   const { data, loading, error } = useQuery(GET_INVOICE_SETTINGS);
 
-  const [updateSettings, { loading: saving }] = useMutation(UPDATE_INVOICE_SETTINGS, {
-    refetchQueries: [{ query: GET_INVOICE_SETTINGS }],
-    awaitRefetchQueries: true,
-  });
+  const [updateSettings, { loading: saving }] = useMutation(
+    UPDATE_INVOICE_SETTINGS,
+    {
+      refetchQueries: [{ query: GET_INVOICE_SETTINGS }],
+      awaitRefetchQueries: true,
+    }
+  );
 
   const [form, setForm] = useState<any>({
-    businessName: '',
-    abn: '',
-    address: '',
-    phone: '',
-    email: '',
-    website: '',
-    logoUrl: '',
-    bankDetails: '',
-    invoicePrefix: 'INV-',
-    startingNumber: '1',
-    defaultDueDays: '14',
-    gstRate: '10',
-    smtpHost: '',
-    smtpPort: '',
-    smtpUser: '',
-    smtpPassword: '',
-    fromEmail: '',
-    fromName: '',
+    businessName: "",
+    abn: "",
+    address: "",
+    phone: "",
+    email: "",
+    website: "",
+    logoUrl: "",
+    bankDetails: "",
+    invoicePrefix: "INV-",
+    startingNumber: "1",
+    defaultDueDays: "14",
+    gstRate: "10",
+    smtpHost: "",
+    smtpPort: "",
+    smtpUser: "",
+    smtpPassword: "",
+    fromEmail: "",
+    fromName: "", // reused as Business Owner Name
   });
 
-  // ✅ Load DB settings
   useEffect(() => {
     if (!data?.invoiceSettings) return;
     const s = data.invoiceSettings;
 
     setForm({
-      businessName: s.businessName ?? '',
-      abn: s.abn ?? '',
-      address: s.address ?? '',
-      phone: s.phone ?? '',
-      email: s.email ?? '',
-      website: s.website ?? '',
-      logoUrl: s.logoUrl ?? '',
-      bankDetails: s.bankDetails ?? '',
-      invoicePrefix: s.invoicePrefix ?? 'INV-',
-      startingNumber: s.startingNumber?.toString() ?? '1',
-      defaultDueDays: s.defaultDueDays?.toString() ?? '14',
-      gstRate: s.gstRate != null ? String(s.gstRate * 100) : '10',
-      smtpHost: s.smtpHost ?? '',
-      smtpPort: s.smtpPort?.toString() ?? '',
-      smtpUser: s.smtpUser ?? '',
-      smtpPassword: s.smtpPassword ?? '',
-      fromEmail: s.fromEmail ?? '',
-      fromName: s.fromName ?? '',
+      businessName: s.businessName ?? "",
+      abn: s.abn ?? "",
+      address: s.address ?? "",
+      phone: s.phone ?? "",
+      email: s.email ?? "",
+      website: s.website ?? "",
+      logoUrl: s.logoUrl ?? "",
+      bankDetails: s.bankDetails ?? "",
+      invoicePrefix: s.invoicePrefix ?? "INV-",
+      startingNumber: s.startingNumber?.toString() ?? "1",
+      defaultDueDays: s.defaultDueDays?.toString() ?? "14",
+      gstRate: s.gstRate != null ? String(s.gstRate * 100) : "10",
+      smtpHost: s.smtpHost ?? "",
+      smtpPort: s.smtpPort?.toString() ?? "",
+      smtpUser: s.smtpUser ?? "",
+      smtpPassword: s.smtpPassword ?? "",
+      fromEmail: s.fromEmail ?? "",
+      fromName: s.fromName ?? "", // reused
     });
   }, [data]);
 
-  // ✅ Update form values
   const set = (key: string) => (e: any) =>
-    setForm((prev: any) => ({ ...prev, [key]: e.target.value }));
+    setForm((p: any) => ({ ...p, [key]: e.target.value }));
 
-  // ✅ Prepare data for backend
-  const buildPayload = () => ({
-    businessName: form.businessName,
-    abn: form.abn,
-    address: form.address,
-    phone: form.phone,
-    email: form.email,
-    website: form.website,
-    logoUrl: form.logoUrl,
-    bankDetails: form.bankDetails,
-    invoicePrefix: form.invoicePrefix,
-    startingNumber: form.startingNumber ? Number(form.startingNumber) : undefined,
-    defaultDueDays: form.defaultDueDays ? Number(form.defaultDueDays) : undefined,
-    gstRate: form.gstRate ? Number(form.gstRate) / 100 : undefined,
-    smtpHost: form.smtpHost,
-    smtpPort: form.smtpPort ? Number(form.smtpPort) : undefined,
-    smtpUser: form.smtpUser,
-    smtpPassword: form.smtpPassword,
-    fromEmail: form.fromEmail,
-    fromName: form.fromName,
-  });
+  // Logo uploader
+  const MAX_FILE_SIZE_MB = 3;
+
+  async function handleLogoUpload(file: File) {
+    const sizeMB = file.size / (1024 * 1024);
+    if (sizeMB > MAX_FILE_SIZE_MB) {
+      alert(`Max file size is ${MAX_FILE_SIZE_MB} MB.`);
+      return;
+    }
+
+    const body = new FormData();
+    body.append("file", file);
+
+    const res = await fetch("/api/uploads/logo", {
+      method: "POST",
+      body,
+    }).then((r) => r.json());
+
+    if (!res.ok) {
+      alert("Upload failed");
+      return;
+    }
+
+    setForm((prev: any) => ({ ...prev, logoUrl: res.url }));
+  }
 
   const onSave = async () => {
     try {
-      await updateSettings({ variables: { input: buildPayload() } });
-      alert('Settings saved ✅');
-    } catch (e: any) {
-      console.error(e);
-      alert('Failed to save settings.');
+      await updateSettings({ variables: { input: {
+        ...form,
+        gstRate: Number(form.gstRate) / 100,
+        startingNumber: Number(form.startingNumber),
+        defaultDueDays: Number(form.defaultDueDays),
+        smtpPort: Number(form.smtpPort),
+      }} });
+
+      alert("Settings saved ✅");
+    } catch (err) {
+      alert("Failed to save settings");
     }
   };
 
-  if (loading) return <p>Loading settings…</p>;
-  if (error) return <p>Error loading settings: {error.message}</p>;
+  if (loading) return <p>Loading…</p>;
+  if (error) return <p>Error: {error.message}</p>;
 
-  return (
-    <div className={styles.container}>
-      <h1 className={styles.title}>Invoice Settings</h1>
+return (
+  <div className={styles.wrapper}>
+    <h1 className={styles.sectionTitle}>Business Details</h1>
 
-      <form className={styles.form}>
-        {/* BUSINESS INFO */}
-        <div className={styles.card}>
-          <h2>Business Information</h2>
+    {/* LOGO UPLOAD CARD */}
+    <div className={styles.logoCard}>
+      <label className={styles.logoLabel}>Logo</label>
 
-          {[
-            'businessName',
-            'abn',
-            'address',
-            'phone',
-            'email',
-            'website',
-            'logoUrl',
-            'bankDetails',
-          ].map((field) => (
-            <div key={field} className={styles.inputGroup}>
-              <label>{field}</label>
-              <input type="text" value={form[field]} onChange={set(field)} />
-            </div>
-          ))}
-        </div>
+      <div className={styles.logoBox}>
+        {form.logoUrl ? (
+          <img src={form.logoUrl} className={styles.logoImage} />
+        ) : (
+          <div className={styles.logoPlaceholder}>+ Logo</div>
+        )}
 
-        {/* INVOICE PREFERENCES */}
-        <div className={styles.card}>
-          <h2>Invoice Preferences</h2>
-
-          <div className={styles.inputGroup}>
-            <label>Invoice Prefix</label>
-            <input value={form.invoicePrefix} onChange={set('invoicePrefix')} />
-          </div>
-
-          <div className={styles.inputGroup}>
-            <label>Starting Number</label>
-            <input type="number" value={form.startingNumber} onChange={set('startingNumber')} />
-          </div>
-
-          <div className={styles.inputGroup}>
-            <label>Default Due Days</label>
-            <input type="number" value={form.defaultDueDays} onChange={set('defaultDueDays')} />
-          </div>
-
-          <div className={styles.inputGroup}>
-            <label>GST Rate (%)</label>
-            <input type="number" value={form.gstRate} onChange={set('gstRate')} />
-          </div>
-        </div>
-
-        {/* EMAIL SETTINGS */}
-        <div className={styles.card}>
-          <h2>Email Settings</h2>
-
-          {[
-            'smtpHost',
-            'smtpPort',
-            'smtpUser',
-            'smtpPassword',
-            'fromEmail',
-            'fromName',
-          ].map((field) => (
-            <div key={field} className={styles.inputGroup}>
-              <label>{field}</label>
-              <input value={form[field]} onChange={set(field)} />
-            </div>
-          ))}
-        </div>
-
-        <button type="button" className={styles.saveBtn} disabled={saving} onClick={onSave}>
-          {saving ? 'Saving…' : 'Save Settings'}
-        </button>
-      </form>
+        <input
+          type="file"
+          accept="image/*"
+          className={styles.fileInput}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) handleLogoUpload(f);
+          }}
+        />
+      </div>
     </div>
-  );
+
+    {/* BUSINESS FIELDS */}
+    <div className={styles.formCard}>
+      <label className={styles.label}>Business Name</label>
+      <input className={styles.input} value={form.businessName} onChange={set("businessName")} />
+
+      <label className={styles.label}>Business Number</label>
+      <input className={styles.input} value={form.abn} onChange={set("abn")} />
+
+      <label className={styles.label}>Business Address</label>
+      <input className={styles.input} placeholder="Street" value={form.address} onChange={set("address")} />
+
+      <label className={styles.label}></label>
+      <input className={styles.input} placeholder="City, State" />
+
+      <label className={styles.label}></label>
+      <input className={styles.input} placeholder="Postcode" />
+
+      
+
+      <label className={styles.label}>Email</label>
+      <input className={styles.input} value={form.email} onChange={set("email")} />
+
+      <label className={styles.label}>Phone</label>
+      <input className={styles.input} value={form.phone} onChange={set("phone")} />
+
+      <label className={styles.label}>Mobile</label>
+      <input className={styles.input} />
+
+      <label className={styles.label}>Website</label>
+      <input className={styles.input} value={form.website} onChange={set("website")} />
+
+      <label className={styles.helperText}>Your Business Address will appear on your documents</label>
+    </div>
+
+    {/* TEMPLATE PREVIEW */}
+    <div className={styles.templateCard}>
+      <label className={styles.label}>Invoice Template</label>
+      <img src="/invoice-template-preview.png" className={styles.templatePreview} />
+    </div>
+
+    <button className={styles.saveButton} disabled={saving} onClick={onSave}>
+      Customize Template
+    </button>
+  </div>
+);
+// Add closing curly brace for the function
 }
