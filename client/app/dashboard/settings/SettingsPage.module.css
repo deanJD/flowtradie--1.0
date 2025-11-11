@@ -18,48 +18,66 @@
    LOGO CARD
 ----------------------------------------- */
 .logoCard {
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .logoLabel {
+  font-size: 14px;
+  margin-bottom: 6px;
   display: block;
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: #555;
 }
 
-.logoBox {
+.logoDropArea {
   width: 100%;
-  height: 140px;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  background: #fafafa;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-
+  height: 200px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  /* position property removed or set to a valid value */
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .logoPlaceholder {
-  color: #999;
+  color: #888;
+  text-align: center;
   font-size: 14px;
+  padding: 10px;
 }
 
 .logoImage {
-  max-width: 200px;
-  max-height: 120px;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
-  border-radius: 6px;
+  padding: 10px;
 }
 
 .fileInput {
-  opacity: 0;
-  position: absolute;
-  width: 100%;
-  height: 100%;
+  display: none;
+}
+
+.logoButtons {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+}
+
+.uploadButton {
+  background: #0070f3;
+  color: white;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+.deleteButton {
+  background: #ff4d4d;
+  color: white;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: none;
   cursor: pointer;
 }
 

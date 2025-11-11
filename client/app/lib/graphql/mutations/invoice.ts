@@ -45,7 +45,12 @@ export const UPDATE_INVOICE_MUTATION = gql`
         client {
           id
           name
-          address
+          addressLine1
+          addressLine2
+          city
+          state
+          postcode
+          country
           phone
           email
         }
@@ -69,7 +74,12 @@ export const UPDATE_INVOICE_MUTATION = gql`
       # Snapshot fields
       businessName
       abn
-      address
+      addressLine1
+      addressLine2
+      city
+      state
+      postcode
+      country
       phone
       email
       website

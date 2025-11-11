@@ -10,7 +10,12 @@ export const CREATE_CLIENT_MUTATION = gql`
       name
       email
       phone
-      address
+      addressLine1
+      addressLine2
+      city
+      state
+      postcode
+      country
       createdAt # Include if your list query uses it
       updatedAt # Include if your list query uses it
       # Add other fields like 'projects' if your list query needs them
@@ -27,7 +32,12 @@ export const UPDATE_CLIENT_MUTATION = gql`
       name
       email
       phone
-      address
+      addressLine1
+      addressLine2
+      city
+      state
+      postcode
+      country
     }
   }
 `;

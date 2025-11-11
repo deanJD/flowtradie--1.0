@@ -1,37 +1,33 @@
-import type { GraphQLContext } from "../../context.js";
-import { requireOwnerOrAdmin } from "../../auth/authorize.js";
-
+// server/src/graphql/resolvers/invoiceSettings.ts
+import { GraphQLContext } from "../../context.js";
 import {
   getInvoiceSettings,
   updateInvoiceSettings,
 } from "../../services/invoiceSettings.service.js";
+import { InvoiceSettingsInput } from "@/__generated__/graphql.js";
 
 export const invoiceSettingsResolvers = {
   Query: {
-    invoiceSettings: (
+    invoiceSettings: async (
       _parent: unknown,
       _args: unknown,
       ctx: GraphQLContext
     ) => {
-      requireOwnerOrAdmin(ctx);
-      if (!ctx.user) {
-        throw new Error("User not authenticated");
-      }
-      return getInvoiceSettings(ctx.user.id);
+      // ✅ No authentication required
+      // Just return the first settings row in the DB
+      return getInvoiceSettings();
     },
   },
 
   Mutation: {
-    updateInvoiceSettings: (
+    updateInvoiceSettings: async (
       _parent: unknown,
-      { input }: { input: any },
+      { input }: { input: InvoiceSettingsInput },
       ctx: GraphQLContext
     ) => {
-      requireOwnerOrAdmin(ctx);
-      if (!ctx.user) {
-        throw new Error("User not authenticated");
-      }
-      return updateInvoiceSettings(ctx.user.id, input);
+      // ✅ No authentication required
+      // Always use the first settings record
+      return updateInvoiceSettings(input);
     },
   },
 };

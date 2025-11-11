@@ -1,17 +1,17 @@
-import { requireOwnerOrAdmin } from "../../auth/authorize.js";
-import { invoiceSettingsService } from "../../services/invoiceSettings.service.js";
+import { getInvoiceSettings, updateInvoiceSettings, } from "../../services/invoiceSettings.service.js";
 export const invoiceSettingsResolvers = {
     Query: {
-        invoiceSettings: (_parent, _args, ctx) => {
-            // Only allow authenticated users to read settings
-            requireOwnerOrAdmin(ctx);
-            return invoiceSettingsService.get(ctx);
+        invoiceSettings: async (_parent, _args, ctx) => {
+            // ✅ No authentication required
+            // Just return the first settings row in the DB
+            return getInvoiceSettings();
         },
     },
     Mutation: {
-        updateInvoiceSettings: (_parent, { input }, ctx) => {
-            requireOwnerOrAdmin(ctx);
-            return invoiceSettingsService.upsert(input, ctx);
+        updateInvoiceSettings: async (_parent, { input }, ctx) => {
+            // ✅ No authentication required
+            // Always use the first settings record
+            return updateInvoiceSettings(input);
         },
     },
 };

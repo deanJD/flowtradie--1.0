@@ -19,8 +19,7 @@ export const clientResolvers = {
             return clientService.delete(id, ctx);
         },
     },
-    // Since our service calls don't include the 'projects' relation,
-    // this relational resolver is still needed for now.
+    // Relation: client → projects
     Client: {
         projects: (parent, _a, ctx) => {
             return ctx.prisma.project.findMany({

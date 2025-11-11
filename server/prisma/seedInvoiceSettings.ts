@@ -10,27 +10,36 @@ async function main() {
 
   // ✅ Create your default Invoice Settings record
   const settings = await prisma.invoiceSettings.create({
-    data: {
-      businessName: "Flowtradie Pty Ltd",
-      abn: "98 977 056 345",
-      address: "1 Rise Rd, Perth WA",
-      phone: "0482 789 345",
-      email: "contact@flowtradie.com",
-      website: "https://flowtradie.com",
-      logoUrl: "",
-      bankDetails: "BSB: 123-456 | ACC: 987654321",
-      invoicePrefix: "INV-",
-      startingNumber: 1,
-      defaultDueDays: 14,
-      gstRate: 0.1,
-      smtpHost: "",
-      smtpPort: null,
-      smtpUser: "",
-      smtpPassword: "",
-      fromEmail: "noreply@flowtradie.com",
-      fromName: "Flowtradie Admin",
-    },
-  });
+     data: {
+    businessName: "FlowTradie",
+    abn: "123456789",
+
+    addressLine1: "1 Rise Rd",
+    addressLine2: "",
+    city: "Perth",
+    state: "WA",
+    postcode: "6000",
+    country: "Australia",
+
+    phone: "0400 000 000",
+    email: "admin@flowtradie.com",
+    website: "flowtradie.com",
+    logoUrl: "/uploads/logo/default.png",
+    bankDetails: "BSB 000-000, ACC 00000000",
+
+    invoicePrefix: "INV-",
+    startingNumber: 1000,
+    defaultDueDays: 14,
+    gstRate: 0.10,
+
+    smtpHost: "",
+    smtpPort: 587,
+    smtpUser: "",
+    smtpPassword: "",
+    fromEmail: "",
+    fromName: "",
+  },
+});
 
   console.log("✅ Invoice settings saved to your database:");
   console.log(settings);

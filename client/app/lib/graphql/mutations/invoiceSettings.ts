@@ -6,16 +6,25 @@ export const UPDATE_INVOICE_SETTINGS = gql`
       id
       businessName
       abn
-      address
+
+      addressLine1
+      addressLine2
+      city
+      state
+      postcode
+      country
+
       phone
       email
       website
       logoUrl
       bankDetails
+
       invoicePrefix
       startingNumber
       defaultDueDays
       gstRate
+
       smtpHost
       smtpPort
       smtpUser
