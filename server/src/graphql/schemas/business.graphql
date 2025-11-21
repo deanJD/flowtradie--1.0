@@ -1,0 +1,66 @@
+# ======================================
+#  REGION TYPE (OK TO KEEP HERE)
+# ======================================
+type Region {
+  id: ID!
+  code: String!         # AU, US, UK, etc.
+  name: String!
+  defaultTaxRate: Float
+  defaultTaxLabel: String
+  currencyCode: String
+}
+
+# ======================================
+#  BUSINESS TYPE — references Address
+# ======================================
+type Business {
+  id: ID!
+  name: String!
+  legalName: String
+  registrationNumber: String
+  email: String!
+  phone: String
+  website: String
+  logoUrl: String
+
+  regionId: ID!
+  region: Region
+
+  address: Address      # 🚨 DO NOT define here — comes from /common/address.graphql
+
+  invoicePrefix: String!
+  nextInvoiceNumber: Int!
+  defaultDueDays: Int!
+  defaultNotes: String
+
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+# ======================================
+#  INPUTS
+# ======================================
+input CreateBusinessInput {
+  name: String!
+  legalName: String
+  registrationNumber: String
+  email: String!
+  phone: String
+  website: String
+  logoUrl: String
+
+  regionId: ID!         # 🧠 Better than regionCode
+  line1: String
+  line2: String
+  city: String
+  state: String
+  postcode: String
+  country: String
+}
+
+# ======================================
+#  MUTATIONS
+# ======================================
+extend type Mutation {
+  createBusiness(input: CreateBusinessInput!): Business!
+}

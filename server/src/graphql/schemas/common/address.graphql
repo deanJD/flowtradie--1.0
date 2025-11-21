@@ -1,0 +1,18 @@
+# ------------------------------------------------------
+#   GLOBAL ADDRESS TYPE (Single Source of Truth)
+#   Used by: Client, Business, Invoice, etc.
+#   DO NOT DEFINE THIS TYPE ANYWHERE ELSE.
+# ------------------------------------------------------
+
+type Address {
+  id: ID!
+  line1: String
+  line2: String
+  city: String
+  state: String
+  postcode: String
+  country: String
+
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}

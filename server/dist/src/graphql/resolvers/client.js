@@ -1,30 +1,19 @@
 import { clientService } from "../../services/client.service.js";
 export const clientResolvers = {
     Query: {
-        clients: (_p, _a, ctx) => {
-            return clientService.getAll(ctx);
-        },
-        client: (_p, { id }, ctx) => {
-            return clientService.getById(id, ctx);
-        },
+        clients: (_, __, ctx) => clientService.getAll(ctx),
+        client: (_, { id }, ctx) => clientService.getById(id, ctx),
     },
     Mutation: {
-        createClient: (_p, { input }, ctx) => {
+        createClient: async (_, { input }, ctx) => {
             return clientService.create(input, ctx);
         },
-        updateClient: (_p, { id, input }, ctx) => {
+        updateClient: async (_, { id, input }, ctx) => {
             return clientService.update(id, input, ctx);
         },
-        deleteClient: (_p, { id }, ctx) => {
-            return clientService.delete(id, ctx);
-        },
-    },
-    // Relation: client → projects
-    Client: {
-        projects: (parent, _a, ctx) => {
-            return ctx.prisma.project.findMany({
-                where: { clientId: parent.id },
-            });
+        deleteClient: async (_, { id }, ctx) => {
+            await clientService.delete(id, ctx);
+            return true;
         },
     },
 };

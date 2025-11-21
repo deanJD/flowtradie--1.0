@@ -1,30 +1,29 @@
+# ======================================
+#   CLIENT TYPE — references Address model
+# ======================================
 type Client {
   id: ID!
   name: String!
   email: String!
   phone: String
-
-  # ✅ Structured Address Fields
-  addressLine1: String
-  addressLine2: String
-  city: String
-  state: String
-  postcode: String
-  country: String
-
   createdAt: DateTime!
   updatedAt: DateTime!
+
+  address: Address    # comes from /common/address.graphql
   projects: [Project!]!
 }
 
-# ✅ INPUT TYPES
+# ======================================
+#   INPUTS — match service + Prisma
+# ======================================
 input CreateClientInput {
   name: String!
   email: String!
   phone: String
 
-  addressLine1: String
-  addressLine2: String
+  # nested create (optional)
+  line1: String
+  line2: String
   city: String
   state: String
   postcode: String
@@ -36,23 +35,28 @@ input UpdateClientInput {
   email: String
   phone: String
 
-  addressLine1: String
-  addressLine2: String
+  # nested update (optional)
+  line1: String
+  line2: String
   city: String
   state: String
   postcode: String
   country: String
 }
 
-# ✅ QUERIES
+# ======================================
+#   QUERIES
+# ======================================
 extend type Query {
   client(id: ID!): Client
   clients: [Client!]!
 }
 
-# ✅ MUTATIONS
+# ======================================
+#   MUTATIONS
+# ======================================
 extend type Mutation {
   createClient(input: CreateClientInput!): Client!
   updateClient(id: ID!, input: UpdateClientInput!): Client!
-  deleteClient(id: ID!): Client!
+  deleteClient(id: ID!): Boolean!
 }

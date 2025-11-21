@@ -9,7 +9,13 @@
     "studio": "prisma studio",
     "migrate": "prisma migrate dev",
     "start": "node dist/src/index.js",
-    "build": "tsc"
+    "build": "tsc",
+    "codegen": "graphql-codegen --config codegen.yml"
+
+  },
+
+  "prisma": {
+    "seed": "node --loader ts-node/esm prisma/seed.ts"
   },
   "dependencies": {
     "@apollo/server": "^4.12.2",

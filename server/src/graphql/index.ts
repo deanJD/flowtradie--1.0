@@ -21,6 +21,7 @@ import { authResolvers } from "./resolvers/auth.js";
 import { userResolvers } from "./resolvers/user.js";
 import { dateTimeScalar } from "./scalars/dateTime.js";
 import { invoiceSettingsResolvers } from "./resolvers/invoiceSettings.js";
+import { businessResolvers } from "./resolvers/business.js";
 // ... (file path logic is the same) ...
 
 const __filename = fileURLToPath(import.meta.url);
@@ -44,7 +45,8 @@ const resolverModules = [
   paymentResolvers,
   reportingResolvers,
   billableItemResolvers,
-  invoiceSettingsResolvers, // <-- ADD THE NEW RESOLVER TO THE ARRAY
+  invoiceSettingsResolvers,
+  businessResolvers, // <-- ADD THE NEW RESOLVER TO THE ARRAY
 ];
 
 export const resolvers = mergeResolvers(resolverModules.filter(Boolean));

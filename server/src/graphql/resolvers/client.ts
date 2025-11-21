@@ -1,51 +1,23 @@
-
 // server/src/graphql/resolvers/client.ts
-import { GraphQLContext } from "../../context.js";
+import { Resolvers } from "@/__generated__/graphql.js";
 import { clientService } from "../../services/client.service.js";
-import {
-  CreateClientInput,
-  UpdateClientInput,
-} from "@/__generated__/graphql.js";
 
-export const clientResolvers = {
+export const clientResolvers: Resolvers = {
   Query: {
-    clients: (_p: unknown, _a: unknown, ctx: GraphQLContext) => {
-      return clientService.getAll(ctx);
-    },
-
-    client: (_p: unknown, { id }: { id: string }, ctx: GraphQLContext) => {
-      return clientService.getById(id, ctx);
-    },
+    clients: (_, __, ctx) => clientService.getAll(ctx),
+    client: (_, { id }, ctx) => clientService.getById(id, ctx),
   },
 
   Mutation: {
-    createClient: (
-      _p: unknown,
-      { input }: { input: CreateClientInput },
-      ctx: GraphQLContext
-    ) => {
+    createClient: async (_, { input }, ctx) => {
       return clientService.create(input, ctx);
     },
-
-    updateClient: (
-      _p: unknown,
-      { id, input }: { id: string; input: UpdateClientInput },
-      ctx: GraphQLContext
-    ) => {
+    updateClient: async (_, { id, input }, ctx) => {
       return clientService.update(id, input, ctx);
     },
-
-    deleteClient: (_p: unknown, { id }: { id: string }, ctx: GraphQLContext) => {
-      return clientService.delete(id, ctx);
-    },
-  },
-
-  // Relation: client → projects
-  Client: {
-    projects: (parent: { id: string }, _a: unknown, ctx: GraphQLContext) => {
-      return ctx.prisma.project.findMany({
-        where: { clientId: parent.id },
-      });
+    deleteClient: async (_, { id }, ctx) => {
+      await clientService.delete(id, ctx);
+      return true;
     },
   },
 };

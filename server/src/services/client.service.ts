@@ -7,63 +7,88 @@ import {
 } from "@/__generated__/graphql.js";
 
 export const clientService = {
-  // ✅ GET ALL (soft-delete aware)
+  // 🔹 GET ALL (soft delete safe)
   getAll: (ctx: GraphQLContext) => {
     return ctx.prisma.client.findMany({
-      where: { deletedAt: null },
+      where: { deletedAt: null, businessId: ctx.businessId },
       orderBy: { createdAt: "desc" },
+      include: { address: true }, // 🆕 Include address for frontend convenience
     });
   },
 
-  // ✅ GET BY ID (soft-delete aware)
+  // 🔹 GET BY ID (soft delete safe)
   getById: (id: string, ctx: GraphQLContext) => {
     return ctx.prisma.client.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: null, businessId: ctx.businessId },
+      include: { address: true },
     });
   },
 
-  // ✅ CREATE (includes new address fields)
-  create: (input: CreateClientInput, ctx: GraphQLContext) => {
+  // 🔹 CREATE — with nested Address model
+  create: async (input: CreateClientInput, ctx: GraphQLContext) => {
     return ctx.prisma.client.create({
       data: {
         name: input.name,
-        email: input.email,
+        email: input.email ?? null,
         phone: input.phone ?? null,
+        businessId: ctx.businessId, // 🆕 required for multi-tenant
 
-        // ✅ NEW STRUCTURED ADDRESS FIELDS
-        addressLine1: input.addressLine1 ?? null,
-        addressLine2: input.addressLine2 ?? null,
-        city: input.city ?? null,
-        state: input.state ?? null,
-        postcode: input.postcode ?? null,
-        country: input.country ?? null,
+        // 🆕 CREATE NESTED ADDRESS ONLY IF PROVIDED
+        address: input.line1
+          ? {
+              create: {
+                line1: input.line1,
+                line2: input.line2 ?? null,
+                city: input.city ?? null,
+                state: input.state ?? null,
+                postcode: input.postcode ?? null,
+                country: input.country ?? null,
+              },
+            }
+          : undefined,
       },
+      include: { address: true },
     });
   },
 
-  // ✅ UPDATE (also structured + partial-safe)
-  update: (id: string, input: UpdateClientInput, ctx: GraphQLContext) => {
-    const data: Prisma.ClientUpdateInput = {
-      name: input.name ?? undefined,
-      email: input.email ?? undefined,
-      phone: input.phone ?? undefined,
-
-      // ✅ STRUCTURED ADDRESS FIELDS
-      addressLine1: input.addressLine1 ?? undefined,
-      addressLine2: input.addressLine2 ?? undefined,
-      city: input.city ?? undefined,
-      state: input.state ?? undefined,
-      postcode: input.postcode ?? undefined,
-      country: input.country ?? undefined,
-    };
+  // 🔹 UPDATE — safely updates only provided fields
+  update: async (id: string, input: UpdateClientInput, ctx: GraphQLContext) => {
+    const addressData = input.line1
+      ? {
+          upsert: {
+            create: {
+              line1: input.line1,
+              line2: input.line2 ?? null,
+              city: input.city ?? null,
+              state: input.state ?? null,
+              postcode: input.postcode ?? null,
+              country: input.country ?? null,
+            },
+            update: {
+              line1: input.line1 ?? undefined,
+              line2: input.line2 ?? undefined,
+              city: input.city ?? undefined,
+              state: input.state ?? undefined,
+              postcode: input.postcode ?? undefined,
+              country: input.country ?? undefined,
+            },
+          },
+        }
+      : undefined;
 
     return ctx.prisma.client.update({
       where: { id },
-      data,
+      data: {
+        name: input.name ?? undefined,
+        email: input.email ?? undefined,
+        phone: input.phone ?? undefined,
+        address: addressData,
+      },
+      include: { address: true },
     });
   },
 
-  // ✅ SOFT DELETE
+  // 🔹 SOFT DELETE
   delete: (id: string, ctx: GraphQLContext) => {
     return ctx.prisma.client.update({
       where: { id },

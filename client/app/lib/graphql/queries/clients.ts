@@ -1,4 +1,3 @@
-// client/app/lib/graphql/queries/clients.ts
 import { gql } from '@apollo/client';
 
 export const GET_CLIENTS_QUERY = gql`
@@ -8,7 +7,14 @@ export const GET_CLIENTS_QUERY = gql`
       name
       email
       phone
-      address
+      addressLine1
+      addressLine2
+      city
+      state
+      postcode
+      country
+      createdAt
+      updatedAt
     }
   }
 `;

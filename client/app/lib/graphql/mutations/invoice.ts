@@ -1,6 +1,11 @@
 // client/app/lib/graphql/mutations/invoice.ts
 import { gql } from '@apollo/client';
 
+//
+// =========================
+//    CREATE INVOICE
+// =========================
+//
 export const CREATE_INVOICE_MUTATION = gql`
   mutation CreateInvoice($input: CreateInvoiceInput!) {
     createInvoice(input: $input) {
@@ -10,21 +15,42 @@ export const CREATE_INVOICE_MUTATION = gql`
       dueDate
       status
       subtotal
+      gstRate
       gstAmount
       totalAmount
+
       project {
+        id
+        title
         client {
+          id
           name
         }
       }
+
+      # Snapshot fields coming from settings
+      businessName
+      abn
+      addressLine1
+      addressLine2
+      city
+      state
+      postcode
+      country
+      phone
+      email
+      website
+      logoUrl
+      bankDetails
     }
   }
 `;
 
-/**
- * ✅ FIXED: Update now returns the FULL updated invoice,
- * so the Edit Page and Preview Page always stay in sync.
- */
+//
+// =========================
+//    UPDATE INVOICE
+// =========================
+//
 export const UPDATE_INVOICE_MUTATION = gql`
   mutation UpdateInvoice($updateInvoiceId: ID!, $input: UpdateInvoiceInput!) {
     updateInvoice(id: $updateInvoiceId, input: $input) {
@@ -89,6 +115,11 @@ export const UPDATE_INVOICE_MUTATION = gql`
   }
 `;
 
+//
+// =========================
+//    DELETE INVOICE
+// =========================
+//
 export const DELETE_INVOICE_MUTATION = gql`
   mutation DeleteInvoice($deleteInvoiceId: ID!) {
     deleteInvoice(id: $deleteInvoiceId) {

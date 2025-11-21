@@ -1,5 +1,6 @@
-// server/prisma/schema.prisma
-
+// ======================
+//  GENERATOR & DB
+// ======================
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,19 +10,23 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// --- ENUMS ---
+// ======================
+//  ENUMS
+// ======================
 enum ProjectStatus {
   PENDING
   ACTIVE
   COMPLETED
   CANCELLED
 }
+
 enum QuoteStatus {
   DRAFT
   SENT
   ACCEPTED
   REJECTED
 }
+
 enum InvoiceStatus {
   DRAFT
   SENT
@@ -29,6 +34,7 @@ enum InvoiceStatus {
   OVERDUE
   PARTIALLY_PAID
 }
+
 enum UserRole {
   OWNER
   ADMIN
@@ -38,63 +44,182 @@ enum UserRole {
   CONTRACTOR
 }
 
-// --- MODELS ---
+enum ClientType {
+  RESIDENTIAL
+  COMMERCIAL
+  OTHER
+}
 
+enum AddressType {
+  BUSINESS        // Billing / Registered
+  SITE            // Job location
+  CLIENT_BUSINESS
+  CLIENT_SITE
+  OTHER
+}
+
+// ======================
+//  REGION (FOR TAX & LANGUAGE)
+// ======================
+model Region {
+  id             String   @id @default(cuid())
+  code           String   @unique        // "AU", "UK", "US"
+  name           String                // "Australia"
+  currencyCode   String                // "AUD"
+  currencySymbol String                // "$"
+  taxLabel       String                // "GST", "VAT"
+  defaultTaxRate Decimal  @db.Decimal(5, 2)
+  locale         String                // "en-AU"
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?    // Soft delete
+  
+  businesses     Business[]
+}
+
+// ======================
+//  ADDRESS
+// ======================
+model Address {
+  id           String       @id @default(cuid())
+  addressType  AddressType  @default(BUSINESS)
+
+  line1        String
+  line2        String?
+  city         String
+  state        String?
+  postcode     String
+  country      String?
+  countryCode  String?
+
+  deletedAt    DateTime?    // Soft delete
+
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  // RELATIONS
+  businesses   Business[]   @relation("BusinessAddresses")
+  clients      Client[]     @relation("ClientAddresses")
+}
+
+// ======================
+//  BUSINESS (TENANT)
+// ======================
+model Business {
+  id                 String   @id @default(cuid())
+  name               String
+  legalName          String?
+  registrationNumber String?  // ABN / company number
+  email              String
+  phone              String?
+  website            String?
+  logoUrl            String?
+
+  regionId   String
+  region     Region   @relation(fields: [regionId], references: [id])
+
+  addressId  String?
+  address    Address? @relation(fields: [addressId], references: [id], name: "BusinessAddresses")
+
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+
+  users           User[]
+  clients         Client[]
+  projects        Project[]
+  quotes          Quote[]
+  invoices        Invoice[]
+  billableItems   BillableItem[]
+  invoiceSettings InvoiceSettings?
+  tasks           Task[]
+  projectExpenses ProjectExpense[]
+  timeLogs        TimeLog[]
+}
+
+// ======================
+//  USERS / EMPLOYEES
+// ======================
 model User {
-  id         String    @id @default(cuid())
-  email      String    @unique
+  id         String   @id @default(cuid())
+
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id])
+
+  email      String   @unique
   password   String
   name       String
-  role       UserRole  @default(WORKER)
+  role       UserRole @default(WORKER)
   phone      String?
-  hourlyRate Float?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  deletedAt  DateTime? // <-- Added soft delete flag
+  hourlyRate Decimal? @db.Decimal(10, 2)
 
-  tasks         Task[]
-  timeLogs      TimeLog[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deletedAt  DateTime?
+
+  tasks           Task[]
+  timeLogs        TimeLog[]
   managedProjects Project[] @relation("ProjectManager")
 }
 
+// ======================
+//  CLIENT
+// ======================
 model Client {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  phone     String?
+  id            String      @id @default(cuid())
 
-   // ✅ NEW STRUCTURED ADDRESS FIELDS
-  addressLine1  String?
-  addressLine2  String?
-  city          String?
-  state         String?
-  postcode      String?
-  country       String?
+  firstName     String
+  lastName      String
+  businessName  String?
+  phone         String?
+  email         String?
+  type          ClientType  @default(RESIDENTIAL)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime? // <-- Added soft delete flag
+  businessId    String
+  business      Business     @relation(fields: [businessId], references: [id])
 
-  projects  Project[]
+  // Multiple addresses (HQ + sites)
+  addresses     Address[]    @relation("ClientAddresses")
+
+  projects      Project[]
+  invoices      Invoice[]
+
+  notes         String?      @db.Text
+  deletedAt     DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 }
 
+// ======================
+//  PROJECT
+// ======================
 model Project {
   id             String        @id @default(cuid())
+
+  businessId     String
+  business       Business      @relation(fields: [businessId], references: [id])
+
   title          String
   description    String?
   location       String?
   status         ProjectStatus @default(PENDING)
   startDate      DateTime?
   endDate        DateTime?
-  budgetedAmount Float?
+  budgetedAmount Decimal?      @db.Decimal(10, 2)
+
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
-  deletedAt      DateTime? // <-- Added soft delete flag
+  deletedAt      DateTime?
 
-  clientId String
-  client   Client   @relation(fields: [clientId], references: [id])
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id])
+
   managerId String?
   manager   User?    @relation("ProjectManager", fields: [managerId], references: [id])
+
   quotes   Quote[]
   invoices Invoice[]
   tasks    Task[]
@@ -102,189 +227,237 @@ model Project {
   timeLogs TimeLog[]
 }
 
+// ======================
+//  QUOTE
+// ======================
 model Quote {
   id          String      @id @default(cuid())
+
+  businessId  String
+  business    Business    @relation(fields: [businessId], references: [id])
+
   quoteNumber String      @unique
   status      QuoteStatus @default(DRAFT)
   issueDate   DateTime    @default(now())
   expiryDate  DateTime?
-  subtotal    Float
-  gstRate     Float       @default(0.1)
-  gstAmount   Float
-  totalAmount Float
+
+  subtotal    Decimal     @db.Decimal(10, 2)
+  taxRate     Decimal     @db.Decimal(5, 2) @default(0.00)
+  taxAmount   Decimal     @db.Decimal(10, 2)
+  totalAmount Decimal     @db.Decimal(10, 2)
+
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
-  deletedAt   DateTime? // <-- Added soft delete flag
+  deletedAt   DateTime?
 
   projectId String
   project   Project @relation(fields: [projectId], references: [id])
+
   items     QuoteItem[]
 }
 
 model QuoteItem {
-  id          String @id @default(cuid())
+  id          String   @id @default(cuid())
   description String
-  quantity    Int    @default(1)
-  unitPrice   Float
-  total       Float
+  quantity    Int      @default(1)
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  total       Decimal  @db.Decimal(10, 2)
+
   quoteId     String
-  quote       Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  quote       Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 }
 
-// vvvv THIS IS THE NEW MODEL YOU ARE ADDING vvvv
+// ======================
+//  PRICE BOOK
+// ======================
 model BillableItem {
   id          String   @id @default(cuid())
-  name        String   @unique // The short name for the lookup (e.g., "Hourly Labor")
-  description String?  // The full description that will appear on the invoice
-  unitPrice   Float    // The default price to auto-fill
+
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id])
+
+  name        String   @unique
+  description String?
+  unitPrice   Decimal  @db.Decimal(10, 2)
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   deletedAt   DateTime?
 }
 
+// ======================
+//  INVOICE SETTINGS
+// ======================
 
+model InvoiceSettings {
+  id           String   @id @default(cuid())
 
+  businessId   String   @unique
+  business     Business @relation(fields: [businessId], references: [id])
+
+  businessName String?
+  abn          String?
+
+  // 🧊 NEW — STRUCTURED JSON
+  addressSnapshot Json?   // replaces addressLine1, city, etc.
+
+  phone        String?
+  email        String?
+  website      String?
+  logoUrl      String?
+  bankDetails  String?
+
+  invoicePrefix  String?  @default("INV-")
+  startingNumber Int?     @default(1000)
+  defaultDueDays Int?     @default(14)
+  taxRate        Decimal  @db.Decimal(5, 2) @default(0.10)
+
+  smtpHost     String?
+  smtpPort     Int?
+  smtpUser     String?
+  smtpPassword String?
+  fromEmail    String?
+  fromName     String?
+
+  ownerId      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ======================
+//  INVOICE 
+// ======================
 
 model Invoice {
   id            String        @id @default(cuid())
-  invoiceNumber String        @unique
-  status        InvoiceStatus @default(DRAFT)
-  issueDate     DateTime      @default(now())
-  dueDate       DateTime
-  notes         String?
-  subtotal      Float
-  gstRate       Float         @default(0.1)
-  gstAmount     Float         @default(0.0)
-  totalAmount   Float
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  deletedAt     DateTime?
-  
 
-  // ✅ snapshot business fields
-  businessName  String?
-  abn           String?
-  phone         String?
-  email         String?
-  website       String?
-  logoUrl       String?
-  bankDetails   String?
+  businessId    String
+  business      Business      @relation(fields: [businessId], references: [id])
 
-  // ✅ NEW SNAPSHOT ADDRESS FIELDS
-  addressLine1  String?
-  addressLine2  String?
-  city          String?
-  state         String?
-  postcode      String?
-  country       String?
+  projectId     String
+  project       Project       @relation(fields: [projectId], references: [id])
 
-  projectId String
-  project   Project @relation(fields: [projectId], references: [id])
+  clientId      String
+  client        Client        @relation(fields: [clientId], references: [id])
+
+  invoiceNumber    String  @unique
+  invoicePrefix    String
+  invoiceSequence  Int
+
+  status           InvoiceStatus @default(DRAFT)
+  issueDate        DateTime      @default(now())
+  dueDate          DateTime
+  notes            String?
+
+  // Money
+  taxRate           Decimal  @db.Decimal(5, 2) @default(0.00)
+  taxLabelSnapshot  String
+  subtotal          Decimal  @db.Decimal(10, 2)
+  taxAmount         Decimal  @db.Decimal(10, 2)
+  totalAmount       Decimal  @db.Decimal(10, 2)
+  currencyCode      String
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
+
+  // 🧊 JSON SNAPSHOTS (FROZEN ON CREATION)
+  businessSnapshot Json     // ← pulls from InvoiceSettings OR Business.address
+  clientSnapshot   Json     // ← pulls from Client + Address selection
+
   items     InvoiceItem[]
   payments  Payment[]
 }
 
-model InvoiceSettings {
-  id             String   @id @default(cuid())
-  businessName   String?
-  abn            String?
 
-// ✅ NEW STRUCTURED ADDRESS FIELDS
-  addressLine1  String?
-  addressLine2  String?
-  city          String?
-  state         String?
-  postcode      String?
-  country       String?
-
-  phone          String?
-  email          String?
-  website        String?
-  logoUrl        String?
-  bankDetails    String?
-  invoicePrefix  String?  @default("INV-")
-  startingNumber Int?     @default(1000)
-  defaultDueDays Int?     @default(14)
-   gstRate        Float?   @default(0.1)   // ✅ FIXED
-  
-  // Email settings
-  smtpHost       String?
-  smtpPort       Int?
-  smtpUser       String?
-  smtpPassword   String?
-  fromEmail      String?
-  fromName       String?
-  // Relations
-  ownerId        String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-}
 
 model InvoiceItem {
-  id          String  @id @default(cuid())
+  id          String   @id @default(cuid())
   description String
-  quantity    Int     @default(1)
-  unitPrice   Float
-  total       Float
+  quantity    Int      @default(1)
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  total       Decimal  @db.Decimal(10, 2)
+
   invoiceId   String
-  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 }
 
+// ======================
+//  PAYMENTS
+// ======================
 model Payment {
   id        String   @id @default(cuid())
-  amount    Float
+  amount    Decimal  @db.Decimal(10, 2)
   date      DateTime @default(now())
   method    String
   notes     String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  deletedAt DateTime? // <-- Added soft delete flag
+  deletedAt DateTime?
 
   invoiceId String
   invoice   Invoice  @relation(fields: [invoiceId], references: [id])
 }
 
+// ======================
+//  TASKS & EXPENSES & TIMELOGS
+// ======================
 model Task {
-  id           String    @id @default(cuid())
+  id           String   @id @default(cuid())
   title        String
   description  String?
-  isCompleted  Boolean   @default(false)
+  isCompleted  Boolean  @default(false)
   dueDate      DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  deletedAt    DateTime? // <-- Added soft delete flag
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
+
+  businessId   String
+  business     Business @relation(fields: [businessId], references: [id])
 
   projectId    String
-  project      Project   @relation(fields: [projectId], references: [id])
+  project      Project  @relation(fields: [projectId], references: [id])
+
   assignedToId String?
-  assignedTo   User?     @relation(fields: [assignedToId], references: [id])
+  assignedTo   User?    @relation(fields: [assignedToId], references: [id])
 }
 
 model ProjectExpense {
   id          String   @id @default(cuid())
   description String
-  amount      Float
+  amount      Decimal  @db.Decimal(10, 2)
   date        DateTime @default(now())
   category    String
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  deletedAt   DateTime? // <-- Added soft delete flag
+  deletedAt   DateTime?
 
-  projectId String
-  project   Project @relation(fields: [projectId], references: [id])
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id])
+
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id])
 }
 
 model TimeLog {
   id          String   @id @default(cuid())
   date        DateTime
-  hoursWorked Float
+  hoursWorked Decimal  @db.Decimal(5, 2)
   notes       String?
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  deletedAt   DateTime? // <-- Added soft delete flag
+  deletedAt   DateTime?
 
-  projectId String
-  project   Project  @relation(fields: [projectId], references: [id])
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id])
+
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id])
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
 }
