@@ -1,17 +1,18 @@
 # ======================================
-#  REGION TYPE (OK TO KEEP HERE)
+#  REGION TYPE  (OK TO KEEP)
 # ======================================
 type Region {
   id: ID!
   code: String!         # AU, US, UK, etc.
   name: String!
+  currencyCode: String!
+  currencySymbol: String
+  taxLabel: String
   defaultTaxRate: Float
-  defaultTaxLabel: String
-  currencyCode: String
 }
 
 # ======================================
-#  BUSINESS TYPE — references Address
+#  BUSINESS TYPE — Address is RELATION ONLY 🧠
 # ======================================
 type Business {
   id: ID!
@@ -24,21 +25,18 @@ type Business {
   logoUrl: String
 
   regionId: ID!
-  region: Region
+  region: Region!
 
-  address: Address      # 🚨 DO NOT define here — comes from /common/address.graphql
-
-  invoicePrefix: String!
-  nextInvoiceNumber: Int!
-  defaultDueDays: Int!
-  defaultNotes: String
+  # 👇 Comes from `/common/address.graphql`
+  address: Address
 
   createdAt: DateTime!
   updatedAt: DateTime!
+  deletedAt: DateTime
 }
 
 # ======================================
-#  INPUTS
+#  INPUTS — Address INCLUDED ONLY AS FLAT FIELDS
 # ======================================
 input CreateBusinessInput {
   name: String!
@@ -49,7 +47,27 @@ input CreateBusinessInput {
   website: String
   logoUrl: String
 
-  regionId: ID!         # 🧠 Better than regionCode
+  regionId: ID!
+
+  # 👇 Flat input used to CREATE Address
+  line1: String!
+  line2: String
+  city: String!
+  state: String
+  postcode: String!
+  country: String
+}
+
+input UpdateBusinessInput {
+  name: String
+  legalName: String
+  registrationNumber: String
+  email: String
+  phone: String
+  website: String
+  logoUrl: String
+
+  # 🧠 Address update is optional
   line1: String
   line2: String
   city: String
@@ -59,8 +77,14 @@ input CreateBusinessInput {
 }
 
 # ======================================
-#  MUTATIONS
+#  OPERATIONS
 # ======================================
+extend type Query {
+  business(id: ID!): Business
+  businesses: [Business!]!
+}
+
 extend type Mutation {
   createBusiness(input: CreateBusinessInput!): Business!
+  updateBusiness(id: ID!, input: UpdateBusinessInput!): Business!
 }

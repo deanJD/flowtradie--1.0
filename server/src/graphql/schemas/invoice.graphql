@@ -1,48 +1,38 @@
 # ================================
-#        INVOICE TYPE
+#        INVOICE TYPE (UPDATED)
 # ================================
-
 type Invoice {
   id: ID!
   invoiceNumber: String!
+  invoicePrefix: String!
+  invoiceSequence: Int!
   status: InvoiceStatus!
   issueDate: DateTime!
   dueDate: DateTime!
   notes: String
   subtotal: Float!
-  gstRate: Float!
-  gstAmount: Float!
+  taxRate: Float!
+  taxAmount: Float!
   totalAmount: Float!
+  currencyCode: String!
+  taxLabelSnapshot: String!
+
   createdAt: DateTime!
   updatedAt: DateTime!
 
-  # Project Relations
+  # Relations
   project: Project!
   items: [InvoiceItem!]!
   payments: [Payment!]!
 
-  # =============== SNAPSHOT FIELDS ===============
-  businessName: String
-  abn: String
-  phone: String
-  email: String
-  website: String
-  logoUrl: String
-  bankDetails: String
-
-  # ✅ STRUCTURED SNAPSHOT ADDRESS FIELDS
-  addressLine1: String
-  addressLine2: String
-  city: String
-  state: String
-  postcode: String
-  country: String
+  # 🧊 IMMUTABLE SNAPSHOTS (required)
+  businessSnapshot: JSON!
+  clientSnapshot: JSON!
 }
 
 # ================================
 #          INVOICE ITEMS
 # ================================
-
 type InvoiceItem {
   id: ID!
   description: String!
@@ -55,7 +45,6 @@ type InvoiceItem {
 # ================================
 #          INPUT TYPES
 # ================================
-
 input CreateInvoiceItemInput {
   description: String!
   quantity: Int = 1
@@ -64,30 +53,19 @@ input CreateInvoiceItemInput {
 
 input CreateInvoiceInput {
   projectId: ID!
-  invoiceNumber: String!
-  dueDate: DateTime!
-  issueDate: DateTime!
+  clientId: ID!           # NEW
+  clientAddressId: ID     # OPTIONAL — job/site
+
   notes: String
-  status: InvoiceStatus = DRAFT
+  issueDate: DateTime
+  dueDate: DateTime
+
+  # Totals
   items: [CreateInvoiceItemInput!]!
-  gstRate: Float = 0.1
-
-  # Snapshot Fields (NEW)
-  businessName: String
-  abn: String
-  phone: String
-  email: String
-  website: String
-  logoUrl: String
-  bankDetails: String
-
-  # ✅ STRUCTURED SNAPSHOT ADDRESS FIELDS
-  addressLine1: String
-  addressLine2: String
-  city: String
-  state: String
-  postcode: String
-  country: String
+  taxRate: Float = 0.1
+  subtotal: Float!
+  taxAmount: Float!
+  totalAmount: Float!
 }
 
 input UpdateInvoiceInput {
@@ -96,32 +74,18 @@ input UpdateInvoiceInput {
   dueDate: DateTime
   status: InvoiceStatus
   notes: String
-  gstRate: Float
+  taxRate: Float
 
   items: [CreateInvoiceItemInput!]
 
-  # Snapshot fields
-  businessName: String
-  abn: String
-  phone: String
-  email: String
-  website: String
-  logoUrl: String
-  bankDetails: String
-
-  # ✅ STRUCTURED SNAPSHOT ADDRESS FIELDS
-  addressLine1: String
-  addressLine2: String
-  city: String
-  state: String
-  postcode: String
-  country: String
+  # Allow editing JSON snapshots if needed:
+  businessSnapshot: JSON
+  clientSnapshot: JSON
 }
 
 # ================================
 #         OPERATIONS
 # ================================
-
 extend type Query {
   invoice(id: ID!): Invoice
   invoices(projectId: ID): [Invoice!]!

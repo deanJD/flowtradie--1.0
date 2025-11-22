@@ -17,6 +17,7 @@ type ProjectExpense {
 # --- Input Types ---
 
 input CreateExpenseInput {
+  businessId: ID!    
   projectId: ID!
   description: String!
   amount: Float!

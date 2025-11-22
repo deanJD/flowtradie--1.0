@@ -1,18 +1,22 @@
-# ------------------------------------------------------
-#   GLOBAL ADDRESS TYPE (Single Source of Truth)
-#   Used by: Client, Business, Invoice, etc.
-#   DO NOT DEFINE THIS TYPE ANYWHERE ELSE.
-# ------------------------------------------------------
-
+# ==============================
+#   ADDRESS TYPE ENUM
+# ==============================
+enum AddressType {
+  CLIENT_BUSINESS
+  CLIENT_CONTACT
+  BUSINESS_HQ
+}
 type Address {
   id: ID!
-  line1: String
+  line1: String!
   line2: String
-  city: String
+  city: String!
   state: String
-  postcode: String
+  postcode: String!
   country: String
-
+  countryCode: String
+  addressType: AddressType!
   createdAt: DateTime!
   updatedAt: DateTime!
+  deletedAt: DateTime
 }

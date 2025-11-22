@@ -22,7 +22,7 @@ import { userResolvers } from "./resolvers/user.js";
 import { dateTimeScalar } from "./scalars/dateTime.js";
 import { invoiceSettingsResolvers } from "./resolvers/invoiceSettings.js";
 import { businessResolvers } from "./resolvers/business.js";
-// ... (file path logic is the same) ...
+import { GraphQLJSON } from "graphql-type-json";// ... (file path logic is the same) ...
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

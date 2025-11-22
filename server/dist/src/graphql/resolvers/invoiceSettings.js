@@ -1,16 +1,14 @@
+// server/src/graphql/resolvers/invoiceSettings.ts
 import { getInvoiceSettings, updateInvoiceSettings, } from "../../services/invoiceSettings.service.js";
+// 👉 Correct resolver structure using generated type
 export const invoiceSettingsResolvers = {
     Query: {
-        invoiceSettings: async (_parent, _args, ctx) => {
-            // ✅ No authentication required
-            // Just return the first settings row in the DB
+        invoiceSettings: async (_parent, _args, _ctx) => {
             return getInvoiceSettings();
         },
     },
     Mutation: {
-        updateInvoiceSettings: async (_parent, { input }, ctx) => {
-            // ✅ No authentication required
-            // Always use the first settings record
+        updateInvoiceSettings: async (_parent, { input }, _ctx) => {
             return updateInvoiceSettings(input);
         },
     },

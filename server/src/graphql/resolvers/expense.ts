@@ -2,30 +2,39 @@
 
 import { GraphQLContext } from "../../context.js";
 import { expenseService } from "../../services/expense.service.js";
-import { CreateExpenseInput } from "@/__generated__/graphql.js";
+import {
+  Resolvers,
+  QueryExpensesArgs,
+  MutationCreateExpenseArgs,
+  MutationDeleteExpenseArgs,
+} from "@/__generated__/graphql.js";
 
-export const expenseResolvers = {
+export const expenseResolvers: Resolvers = {
   Query: {
-    expenses: (
+    expenses: async (
       _p: unknown,
-      { projectId }: { projectId: string },
+      { projectId }: QueryExpensesArgs,
       ctx: GraphQLContext
-    ) => expenseService.getAllByProject(projectId, ctx),
+    ) => {
+      return expenseService.getAllByProject(projectId, ctx) as any;
+    },
   },
+
   Mutation: {
-    createExpense: (
+    createExpense: async (
       _p: unknown,
-      { input }: { input: CreateExpenseInput },
+      { input }: MutationCreateExpenseArgs,
       ctx: GraphQLContext
-    ) => expenseService.create(input, ctx),
+    ) => {
+      return expenseService.create(input, ctx) as any;
+    },
 
-    deleteExpense: (
+    deleteExpense: async (
       _p: unknown,
-      { id }: { id: string },
+      { id }: MutationDeleteExpenseArgs,
       ctx: GraphQLContext
-    ) => expenseService.delete(id, ctx),
+    ) => {
+      return expenseService.delete(id, ctx) as any;
+    },
   },
-
-  // Note: The relational resolver for `ProjectExpense.project` is no longer needed
-  // because our new service functions automatically include that data.
 };

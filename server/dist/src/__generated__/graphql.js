@@ -1,3 +1,9 @@
+export var AddressType;
+(function (AddressType) {
+    AddressType["BusinessHq"] = "BUSINESS_HQ";
+    AddressType["ClientBusiness"] = "CLIENT_BUSINESS";
+    AddressType["ClientContact"] = "CLIENT_CONTACT";
+})(AddressType || (AddressType = {}));
 export var InvoiceStatus;
 (function (InvoiceStatus) {
     InvoiceStatus["Draft"] = "DRAFT";

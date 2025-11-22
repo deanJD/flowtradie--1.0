@@ -138,6 +138,8 @@ model Business {
   tasks           Task[]
   projectExpenses ProjectExpense[]
   timeLogs        TimeLog[]
+  payments        Payment[]
+
 }
 
 // ======================
@@ -396,8 +398,12 @@ model Payment {
   updatedAt DateTime @updatedAt
   deletedAt DateTime?
 
-  invoiceId String
-  invoice   Invoice  @relation(fields: [invoiceId], references: [id])
+  invoiceId  String
+  invoice    Invoice  @relation(fields: [invoiceId], references: [id])
+
+  // 🔥 ADD THIS:
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
 }
 
 // ======================

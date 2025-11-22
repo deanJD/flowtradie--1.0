@@ -1,84 +1,103 @@
+// server/src/services/client.service.ts
 export const clientService = {
-    // 🔹 GET ALL (soft delete safe)
-    getAll: (ctx) => {
+    /* ----------------------------
+       Get All Clients by Business
+    ---------------------------- */
+    getAll: async (businessId, ctx) => {
         return ctx.prisma.client.findMany({
-            where: { deletedAt: null, businessId: ctx.businessId },
+            where: { businessId, deletedAt: null },
             orderBy: { createdAt: "desc" },
-            include: { address: true }, // 🆕 Include address for frontend convenience
+            include: { addresses: true, projects: true },
         });
     },
-    // 🔹 GET BY ID (soft delete safe)
-    getById: (id, ctx) => {
+    /* ----------------------------
+       Get Single Client by ID
+    ---------------------------- */
+    getById: async (id, ctx) => {
         return ctx.prisma.client.findFirst({
-            where: { id, deletedAt: null, businessId: ctx.businessId },
-            include: { address: true },
+            where: { id, deletedAt: null },
+            include: { addresses: true, projects: true },
         });
     },
-    // 🔹 CREATE — with nested Address model
+    /* ----------------------------
+       Create Client
+    ---------------------------- */
     create: async (input, ctx) => {
+        const { addresses, businessId, ...rest } = input;
         return ctx.prisma.client.create({
             data: {
-                name: input.name,
-                email: input.email ?? null,
-                phone: input.phone ?? null,
-                businessId: ctx.businessId, // 🆕 required for multi-tenant
-                // 🆕 CREATE NESTED ADDRESS ONLY IF PROVIDED
-                address: input.line1
+                ...rest,
+                business: { connect: { id: businessId } },
+                ...(Array.isArray(addresses) && addresses.length > 0
                     ? {
-                        create: {
-                            line1: input.line1,
-                            line2: input.line2 ?? null,
-                            city: input.city ?? null,
-                            state: input.state ?? null,
-                            postcode: input.postcode ?? null,
-                            country: input.country ?? null,
+                        addresses: {
+                            create: addresses.map((addr) => ({
+                                addressType: addr.addressType, // enum safe cast
+                                line1: addr.line1,
+                                line2: addr.line2 ?? null,
+                                city: addr.city,
+                                state: addr.state ?? null,
+                                postcode: addr.postcode,
+                                country: addr.country ?? null,
+                                countryCode: addr.countryCode ?? null,
+                            })),
                         },
                     }
-                    : undefined,
+                    : {}),
             },
-            include: { address: true },
+            include: { addresses: true },
         });
     },
-    // 🔹 UPDATE — safely updates only provided fields
+    /* ----------------------------
+       Update Client (FULL REPLACE addresses)
+    ---------------------------- */
     update: async (id, input, ctx) => {
-        const addressData = input.line1
-            ? {
-                upsert: {
-                    create: {
-                        line1: input.line1,
-                        line2: input.line2 ?? null,
-                        city: input.city ?? null,
-                        state: input.state ?? null,
-                        postcode: input.postcode ?? null,
-                        country: input.country ?? null,
-                    },
-                    update: {
-                        line1: input.line1 ?? undefined,
-                        line2: input.line2 ?? undefined,
-                        city: input.city ?? undefined,
-                        state: input.state ?? undefined,
-                        postcode: input.postcode ?? undefined,
-                        country: input.country ?? undefined,
-                    },
-                },
+        const { addresses, ...rest } = input;
+        // Remove nulls → Prisma hates null values if field is optional
+        const filteredInput = Object.fromEntries(Object.entries(rest).filter(([_, v]) => v !== null));
+        return ctx.prisma.$transaction(async (tx) => {
+            // 1️⃣ update basic fields
+            await tx.client.update({
+                where: { id },
+                data: filteredInput,
+            });
+            // 2️⃣ replace addresses ONLY if provided
+            if (Array.isArray(addresses)) {
+                // delete existing
+                await tx.address.deleteMany({
+                    where: { clients: { some: { id } } },
+                });
+                // create new ones
+                if (addresses.length > 0) {
+                    await tx.address.createMany({
+                        data: addresses.map((addr) => ({
+                            addressType: addr.addressType,
+                            line1: addr.line1,
+                            line2: addr.line2 ?? null,
+                            city: addr.city,
+                            state: addr.state ?? null,
+                            postcode: addr.postcode,
+                            country: addr.country ?? null,
+                            countryCode: addr.countryCode ?? null,
+                        })),
+                    });
+                }
             }
-            : undefined;
-        return ctx.prisma.client.update({
-            where: { id },
-            data: {
-                name: input.name ?? undefined,
-                email: input.email ?? undefined,
-                phone: input.phone ?? undefined,
-                address: addressData,
-            },
-            include: { address: true },
+            // 3️⃣ return updated client
+            return tx.client.findUnique({
+                where: { id },
+                include: { addresses: true, projects: true },
+            });
         });
     },
-    // 🔹 SOFT DELETE
-    delete: (id, ctx) => {
+    /* ----------------------------
+       Soft Delete Client
+    ---------------------------- */
+    delete: async (id, ctx) => {
         return ctx.prisma.client.update({
             where: { id },
             data: { deletedAt: new Date() },
+            select: { id: true },
         });
     },
 };

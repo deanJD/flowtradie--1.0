@@ -1,62 +1,49 @@
-# ======================================
-#   CLIENT TYPE — references Address model
-# ======================================
-type Client {
-  id: ID!
-  name: String!
-  email: String!
-  phone: String
-  createdAt: DateTime!
-  updatedAt: DateTime!
-
-  address: Address    # comes from /common/address.graphql
-  projects: [Project!]!
-}
-
-# ======================================
-#   INPUTS — match service + Prisma
-# ======================================
 input CreateClientInput {
-  name: String!
+  businessId: ID!   # REQUIRED to assign the client to a business
+
+  firstName: String!
+  lastName: String!
   email: String!
   phone: String
 
-  # nested create (optional)
-  line1: String
-  line2: String
-  city: String
-  state: String
-  postcode: String
-  country: String
+  # OPTIONAL address array
+  addresses: [CreateAddressInput!]
 }
 
 input UpdateClientInput {
-  name: String
+  firstName: String
+  lastName: String
   email: String
   phone: String
 
-  # nested update (optional)
-  line1: String
+  addresses: [CreateAddressInput!]
+}
+
+# Reuse your shared schema (already in /common/address.graphql)
+input CreateAddressInput {
+  addressType: AddressType = CLIENT_BUSINESS
+  line1: String!
   line2: String
-  city: String
+  city: String!
   state: String
-  postcode: String
+  postcode: String!
   country: String
+  countryCode: String
 }
-
-# ======================================
-#   QUERIES
-# ======================================
 extend type Query {
+  # Get all clients for a business
+  clients(businessId: ID!): [Client!]!
+
+  # Get a single client by ID
   client(id: ID!): Client
-  clients: [Client!]!
 }
 
-# ======================================
-#   MUTATIONS
-# ======================================
 extend type Mutation {
+  # Create a client
   createClient(input: CreateClientInput!): Client!
+
+  # Update a client
   updateClient(id: ID!, input: UpdateClientInput!): Client!
-  deleteClient(id: ID!): Boolean!
+
+
 }

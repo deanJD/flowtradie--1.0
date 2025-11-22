@@ -1,44 +1,37 @@
 import { paymentService } from "../../services/payment.service.js";
 import { GraphQLContext } from "../../context.js";
-import { RecordPaymentInput } from "@/__generated__/graphql.js";
-
-interface CreatePaymentArgs {
-  input: {
-    invoiceId: string;
-    amount: number;
-    method: string;
-    notes?: string;
-    date?: Date;
-  };
-}
-
-interface UpdatePaymentArgs {
-  id: string;
-  input: {
-    amount?: number;
-    method?: string;
-    notes?: string;
-    date?: Date;
-  };
-}
+import { CreatePaymentInput, UpdatePaymentInput } from "@/__generated__/graphql.js"; // check names
 
 export const paymentResolvers = {
   Query: {
-    paymentsByInvoice: (_p: unknown, { invoiceId }: { invoiceId: string }, ctx: GraphQLContext) =>
-      paymentService.getByInvoice(invoiceId, ctx),
+    // MATCHES: payments(invoiceId: ID!): [Payment!]!
+    payments: (
+      _p: unknown,
+      { invoiceId }: { invoiceId: string },
+      ctx: GraphQLContext
+    ) => paymentService.getByInvoice(invoiceId, ctx),
   },
 
-   Mutation: {
-    // THIS IS THE FIX: Renamed to match the schema
-    recordPayment: (
+  Mutation: {
+    // MATCHES: createPayment(input: CreatePaymentInput!): Payment!
+    createPayment: (
       _p: unknown,
-      { input }: { input: RecordPaymentInput },
+      { input }: { input: CreatePaymentInput },
       ctx: GraphQLContext
     ) => paymentService.create(input, ctx),
-    updatePayment: (_p: unknown, { id, input }: UpdatePaymentArgs, ctx: GraphQLContext) =>
-      paymentService.update(id, input, ctx),
 
-    deletePayment: (_p: unknown, { id }: { id: string }, ctx: GraphQLContext) =>
-      paymentService.delete(id, ctx),
+    // MATCHES: updatePayment(id: ID!, input: UpdatePaymentInput!): Payment!
+    updatePayment: (
+      _p: unknown,
+      { id, input }: { id: string; input: UpdatePaymentInput },
+      ctx: GraphQLContext
+    ) => paymentService.update(id, input, ctx),
+
+    // MATCHES: deletePayment(id: ID!): Payment!
+    deletePayment: (
+      _p: unknown,
+      { id }: { id: string },
+      ctx: GraphQLContext
+    ) => paymentService.delete(id, ctx),
   },
 };

@@ -1,26 +1,39 @@
 // server/src/services/business.service.ts
 import { GraphQLContext } from "../context.js";
-import { CreateBusinessInput } from "@/__generated__/graphql.js";
+import { Prisma, AddressType } from "@prisma/client";
 
 export const businessService = {
-  async createBusiness(input: CreateBusinessInput, ctx: GraphQLContext) {
-    const userId = ctx?.user?.id; // From auth context (decoded JWT)
-
-    if (!userId) {
-      throw new Error("You must be logged in to create a business.");
-    }
-
-    // 🛡 Prevent multiple businesses per user (for now)
-    const user = await ctx.prisma.user.findUnique({
-      where: { id: userId },
+  // -------------------------
+  // 1) Get ALL businesses
+  // -------------------------
+  getAll: async (ctx: GraphQLContext) => {
+    return ctx.prisma.business.findMany({
+      where: { deletedAt: null },
+      orderBy: { createdAt: "desc" },
+      include: {
+        region: true,
+        address: true,
+      },
     });
+  },
 
-    if (!user) throw new Error("User not found.");
+  // -------------------------
+  // 2) Get by ID
+  // -------------------------
+  getById: async (id: string, ctx: GraphQLContext) => {
+    return ctx.prisma.business.findUnique({
+      where: { id, deletedAt: null },
+      include: {
+        region: true,
+        address: true,
+      },
+    });
+  },
 
-    if (user.businessId) {
-      throw new Error("You already have a business assigned.");
-    }
-
+  // -------------------------
+  // 3) CREATE BUSINESS
+  // -------------------------
+  createBusiness: async (input: any, ctx: GraphQLContext) => {
     const {
       name,
       legalName,
@@ -29,37 +42,25 @@ export const businessService = {
       phone,
       website,
       logoUrl,
-      regionCode,
-      addressLine1,
-      addressLine2,
+      regionId,
+
+      // address fields (optional)
+      line1,
+      line2,
       city,
       state,
       postcode,
       country,
     } = input;
 
-    // 🔍 1️⃣ Validate Region
-    const region = await ctx.prisma.region.findUnique({
-      where: { code: regionCode },
-    });
-    if (!region) {
-      throw new Error(`Region "${regionCode}" does not exist.`);
-    }
-
-    // 🏠 2️⃣ Create Address (only if fields provided)
+    // create address only if provided
     let address = null;
-    if (
-      addressLine1 ||
-      addressLine2 ||
-      city ||
-      state ||
-      postcode ||
-      country
-    ) {
+    if (line1 || city || postcode) {
       address = await ctx.prisma.address.create({
         data: {
-          addressLine1,
-          addressLine2,
+          addressType: AddressType.BUSINESS,
+          line1,
+          line2,
           city,
           state,
           postcode,
@@ -68,8 +69,7 @@ export const businessService = {
       });
     }
 
-    // 🧱 3️⃣ Create Business
-    const business = await ctx.prisma.business.create({
+    return ctx.prisma.business.create({
       data: {
         name,
         legalName,
@@ -78,29 +78,96 @@ export const businessService = {
         phone,
         website,
         logoUrl,
-        region: { connect: { id: region.id } },
-        address: address ? { connect: { id: address.id } } : undefined,
+        regionId,
+        addressId: address?.id ?? null,
       },
       include: {
         region: true,
         address: true,
       },
     });
+  },
 
-    // 🔗 4️⃣ Link Business to User (make them OWNER officially)
-    await ctx.prisma.user.update({
-      where: { id: userId },
-      data: { businessId: business.id, role: "OWNER" },
+  // -------------------------
+  // 4) UPDATE BUSINESS
+  // -------------------------
+  updateBusiness: async (
+    id: string,
+    input: any,
+    ctx: GraphQLContext
+  ) => {
+    const {
+      name,
+      legalName,
+      registrationNumber,
+      email,
+      phone,
+      website,
+      logoUrl,
+      regionId,
+
+      // possible address edits
+      line1,
+      line2,
+      city,
+      state,
+      postcode,
+      country,
+    } = input;
+
+    const business = await ctx.prisma.business.findUnique({
+      where: { id },
     });
 
-    // ⚙️ 5️⃣ Optional — Create Invoice Settings (default to region values)
-    await ctx.prisma.invoiceSettings.create({
+    if (!business) throw new Error("Business not found");
+
+    // update existing address OR create new one
+    let addressId = business.addressId ?? null;
+
+    if (addressId) {
+      await ctx.prisma.address.update({
+        where: { id: addressId },
+        data: {
+          line1,
+          line2,
+          city,
+          state,
+          postcode,
+          country,
+        },
+      });
+    } else if (line1 || city || postcode) {
+      const newAddress = await ctx.prisma.address.create({
+        data: {
+          addressType: AddressType.BUSINESS,
+          line1,
+          line2,
+          city,
+          state,
+          postcode,
+          country,
+        },
+      });
+      addressId = newAddress.id;
+    }
+
+    return ctx.prisma.business.update({
+      where: { id },
       data: {
-        business: { connect: { id: business.id } },
-        taxRate: region.defaultTaxRate ?? 0.1,
+        name,
+        legalName,
+        registrationNumber,
+        email,
+        phone,
+        website,
+        logoUrl,
+        regionId,
+        addressId,
+      },
+      include: {
+        region: true,
+        address: true,
       },
     });
-
-    return business;
   },
 };

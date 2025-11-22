@@ -1,15 +1,26 @@
+
+
+# -----------------------------
+# Payment Types & Inputs
+# -----------------------------
+
 type Payment {
   id: ID!
   amount: Float!
   date: DateTime!
   method: String!
   notes: String
-  createdAt: DateTime!
-  updatedAt: DateTime!
+
+  # Relations
+  invoiceId: ID!
+  businessId: ID!
   invoice: Invoice!
 }
 
-input RecordPaymentInput {
+# -------- INPUTS --------
+
+input CreatePaymentInput {
+  businessId: ID!
   invoiceId: ID!
   amount: Float!
   date: DateTime
@@ -17,7 +28,6 @@ input RecordPaymentInput {
   notes: String
 }
 
-# This input type was missing
 input UpdatePaymentInput {
   amount: Float
   date: DateTime
@@ -25,13 +35,16 @@ input UpdatePaymentInput {
   notes: String
 }
 
+# -------- QUERIES --------
+
 extend type Query {
-  paymentsByInvoice(invoiceId: ID!): [Payment!]!
+  payments(invoiceId: ID!): [Payment!]!
 }
 
+# -------- MUTATIONS --------
+
 extend type Mutation {
-  recordPayment(input: RecordPaymentInput!): Payment!
-  # These two mutations were missing
+  createPayment(input: CreatePaymentInput!): Payment!
   updatePayment(id: ID!, input: UpdatePaymentInput!): Payment!
   deletePayment(id: ID!): Payment!
 }

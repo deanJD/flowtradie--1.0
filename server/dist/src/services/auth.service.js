@@ -1,58 +1,54 @@
+// server/src/services/auth.service.ts
 import { hashPassword, verifyPassword } from "../utils/password.js";
 import { signToken } from "../utils/jwt.js";
 import { UserRole } from "@prisma/client";
 export const authService = {
-    // 🔹 Register a new user (NO business yet)
+    // 🔹 Register → user becomes OWNER immediately
     async register(input, ctx) {
         const { name, email, password } = input;
-        // Check if active user exists
+        // Check if email already exists
         const existing = await ctx.prisma.user.findFirst({
-            where: {
-                email: email,
-                deletedAt: null,
-            },
+            where: { email, deletedAt: null },
         });
         if (existing) {
             throw new Error("Email already in use.");
         }
         const hashedPassword = await hashPassword(password);
-        // Create a user WITHOUT businessId
+        // Create user as OWNER — but NO business yet
         const user = await ctx.prisma.user.create({
             data: {
                 name,
                 email,
                 password: hashedPassword,
-                role: UserRole.WORKER, // 🔥 user is OWNER only AFTER creating a business
-                business: undefined, // or null, depending on your Prisma schema
+                role: UserRole.OWNER, // 🔥 OWNER immediately
+                businessId: null, // creates business after signup
             },
         });
-        return user;
+        return user; // return only user – token comes AFTER business is added
     },
     // 🔹 Login
     async login(input, ctx) {
         const { email, password } = input;
         // Find active user
         const user = await ctx.prisma.user.findFirst({
-            where: {
-                email,
-                deletedAt: null, // keep if you still use soft delete
-            },
+            where: { email, deletedAt: null },
         });
         if (!user)
             throw new Error("Invalid credentials");
         const valid = await verifyPassword(password, user.password);
         if (!valid)
             throw new Error("Invalid credentials");
-        // Include businessId in the JWT
+        // 🚨 Business is REQUIRED for full access (payments/invoices)
+        if (!user.businessId) {
+            throw new Error("No business linked to user. Please create a business first.");
+        }
+        // 🔐 Token now includes businessId
         const token = signToken({
             id: user.id,
             role: user.role,
-            businessId: user.businessId ?? null,
+            businessId: user.businessId,
         });
-        return {
-            token,
-            user,
-        };
+        return { token, user };
     },
 };
 //# sourceMappingURL=auth.service.js.map

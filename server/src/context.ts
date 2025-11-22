@@ -1,22 +1,32 @@
 // src/context.ts
 import { PrismaClient, UserRole } from "@prisma/client";
 import { decodeToken } from "./utils/jwt.js";
-import { IncomingMessage } from "http"; // ✅ this fixes the type issue
+import { IncomingMessage } from "http";
 
 const prisma = new PrismaClient();
 
+// 🔥 Add businessId to user
 export interface GraphQLContext {
   prisma: PrismaClient;
-  user?: { id: string; role: UserRole };
+  user?: {
+    id: string;
+    role: UserRole;
+    businessId: string;
+  };
 }
 
-// ✅ Explicitly type req as IncomingMessage
 export function buildContext({ req }: { req: IncomingMessage }): GraphQLContext {
   const token = req.headers.authorization?.replace("Bearer ", "");
   const decoded = token ? decodeToken(token) : null;
 
   return {
     prisma,
-    user: decoded ? { id: decoded.id, role: decoded.role } : undefined,
+    user: decoded
+      ? {
+          id: decoded.id,
+          role: decoded.role,
+          businessId: decoded.businessId, // 🚨 NEEDED FOR PAYMENTS/INVOICES
+        }
+      : undefined,
   };
 }

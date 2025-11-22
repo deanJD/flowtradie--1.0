@@ -1,19 +1,27 @@
 import { clientService } from "../../services/client.service.js";
 export const clientResolvers = {
     Query: {
-        clients: (_, __, ctx) => clientService.getAll(ctx),
-        client: (_, { id }, ctx) => clientService.getById(id, ctx),
+        clients: async (_p, args, ctx) => {
+            const { businessId } = args;
+            return (await clientService.getAll(businessId, ctx));
+        },
+        client: async (_p, args, ctx) => {
+            return (await clientService.getById(args.id, ctx));
+        },
     },
     Mutation: {
-        createClient: async (_, { input }, ctx) => {
-            return clientService.create(input, ctx);
+        createClient: async (_p, args, ctx) => {
+            return (await clientService.create(args.input, ctx));
         },
-        updateClient: async (_, { id, input }, ctx) => {
-            return clientService.update(id, input, ctx);
+        updateClient: async (_p, args, ctx) => {
+            return (await clientService.update(args.id, args.input, ctx));
         },
-        deleteClient: async (_, { id }, ctx) => {
-            await clientService.delete(id, ctx);
-            return true;
+    },
+    Client: {
+        addresses: async (parent, _args, ctx) => {
+            return ctx.prisma.address.findMany({
+                where: { clients: { some: { id: parent.id } } },
+            });
         },
     },
 };
