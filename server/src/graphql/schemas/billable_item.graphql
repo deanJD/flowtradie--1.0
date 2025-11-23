@@ -6,7 +6,7 @@ type BillableItem {
   id: ID!
   name: String!
   description: String
-  rate: Float!
+  unitPrice: Float!
   businessId: ID!
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -19,13 +19,13 @@ input CreateBillableItemInput {
   businessId: ID!
   name: String!
   description: String
-  rate: Float!
+  unitPrice: Float!
 }
 
 input UpdateBillableItemInput {
   name: String
   description: String
-  rate: Float
+  unitPrice: Float!
 }
 
 # -------- QUERIES --------

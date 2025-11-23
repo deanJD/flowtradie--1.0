@@ -1,25 +1,58 @@
-input CreateClientInput {
-  businessId: ID!   # REQUIRED to assign the client to a business
+# server/src/graphql/schemas/client.graphql
 
+enum ClientType {
+  RESIDENTIAL
+  COMMERCIAL
+  OTHER
+}
+
+type Client {
+  id: ID!
+  businessId: ID!
   firstName: String!
   lastName: String!
-  email: String!
+  businessName: String
+  email: String
   phone: String
+  type: ClientType!
+  notes: String
 
-  # OPTIONAL address array
+  addresses: [Address!]!
+  projects: [Project!]!
+  invoices: [Invoice!]!
+
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  deletedAt: DateTime
+}
+
+input CreateClientInput {
+  businessId: ID!
+  firstName: String!
+  lastName: String!
+  businessName: String
+  email: String
+  phone: String
+  type: ClientType = RESIDENTIAL
+  notes: String
+
   addresses: [CreateAddressInput!]
 }
 
 input UpdateClientInput {
   firstName: String
   lastName: String
+  businessName: String
   email: String
   phone: String
+  type: ClientType
+  notes: String
 
   addresses: [CreateAddressInput!]
 }
 
-# Reuse your shared schema (already in /common/address.graphql)
+# (Reusing CreateAddressInput from your existing setup is fine, 
+# assuming it handles the mapping in the resolver)
 input CreateAddressInput {
   addressType: AddressType = CLIENT_BUSINESS
   line1: String!
@@ -30,20 +63,14 @@ input CreateAddressInput {
   country: String
   countryCode: String
 }
-extend type Query {
-  # Get all clients for a business
-  clients(businessId: ID!): [Client!]!
 
-  # Get a single client by ID
+extend type Query {
+  clients(businessId: ID!): [Client!]!
   client(id: ID!): Client
 }
 
 extend type Mutation {
-  # Create a client
   createClient(input: CreateClientInput!): Client!
-
-  # Update a client
   updateClient(id: ID!, input: UpdateClientInput!): Client!
-
-
+  deleteClient(id: ID!): Client!
 }

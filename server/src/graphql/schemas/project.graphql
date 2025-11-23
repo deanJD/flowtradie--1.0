@@ -3,6 +3,7 @@
 type Project {
   id: ID!
   title: String!
+  businessId: ID!           # ✅ KEEP THIS
   description: String
   location: String
   status: ProjectStatus!
@@ -10,22 +11,22 @@ type Project {
   endDate: DateTime
   createdAt: DateTime!
   updatedAt: DateTime!
-  budgetedAmount: Float 
-  
+  deletedAt: DateTime
+  budgetedAmount: Float
+
   # --- Relationships ---
   client: Client!
   manager: User
-  quotes: [Quote!]!        # <-- Changed
-  invoices: [Invoice!]!    # <-- Changed
-  tasks: [Task!]!          # <-- Changed
-  expenses: [ProjectExpense!]! # <-- Changed
-  timeLogs: [TimeLog!]!    # <-- Changed
+  quotes: [Quote!]!
+  invoices: [Invoice!]!
+  tasks: [Task!]!
+  expenses: [ProjectExpense!]!
+  timeLogs: [TimeLog!]!
 }
 
 # --- Input Types ---
-# These define the shape of data for creating and updating projects.
-# (No changes were needed here)
 input CreateProjectInput {
+  businessId: ID!  # 🔥 MUST ADD THIS
   title: String!
   clientId: ID!
   managerId: ID
@@ -34,7 +35,6 @@ input CreateProjectInput {
   status: ProjectStatus
   startDate: DateTime
   endDate: DateTime
-  
 }
 
 input UpdateProjectInput {
@@ -48,16 +48,12 @@ input UpdateProjectInput {
   budgetedAmount: Float
 }
 
-# --- API Operations ---
 extend type Query {
-  # Get all projects, optionally filtered by client
-  projects(clientId: ID): [Project!]! # <-- Changed
-  # Get a single project by its ID
+  projects: [Project!]!      # NO ARGS — filter by business in service layer
   project(id: ID!): Project
 }
 
 extend type Mutation {
-  # (No changes were needed here)
   createProject(input: CreateProjectInput!): Project!
   updateProject(id: ID!, input: UpdateProjectInput!): Project!
   deleteProject(id: ID!): Project!

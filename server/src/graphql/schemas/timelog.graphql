@@ -1,19 +1,21 @@
 # Defines the TimeLog type and its related API operations for time tracking.
-
 type TimeLog {
   id: ID!
   date: DateTime!
   hoursWorked: Float!
   notes: String
 
-  # Relationships
+  # Relations (from Prisma)
+  businessId: ID!
+  projectId: ID!
+  userId: ID!
+
+  # GraphQL relations
   project: Project!
   user: User!
 }
 
-
-# --- Input Types ---
-
+# --- Inputs ---
 input CreateTimeLogInput {
   date: DateTime!
   hoursWorked: Float!
@@ -28,16 +30,13 @@ input UpdateTimeLogInput {
   notes: String
 }
 
-
-# --- API Operations ---
-
+# --- Queries ---
 extend type Query {
-  # Get all time logs for a specific project
-  timeLogsForProject(projectId: ID!): [TimeLog!]! # <-- Changed
-  # Get all time logs for a specific user
-  timeLogsForUser(userId: ID!): [TimeLog!]! # <-- Changed
+  timeLogs: [TimeLog!]!               # 🔥 ALL logs for THIS BUSINESS ONLY
+  timeLog(id: ID!): TimeLog           # Single
 }
 
+# --- Mutations ---
 extend type Mutation {
   createTimeLog(input: CreateTimeLogInput!): TimeLog!
   updateTimeLog(id: ID!, input: UpdateTimeLogInput!): TimeLog!

@@ -1,44 +1,51 @@
-// server/src/graphql/resolvers/timelog.ts
-
+// src/graphql/resolvers/timelog.ts
 import { GraphQLContext } from "../../context.js";
-import { timeLogService } from "../../services/timelog.service.js";
-import { CreateTimeLogInput, UpdateTimeLogInput } from "@/__generated__/graphql.js";
+import * as timeLogService from "../../services/timelog.service.js";
+
+import {
+  QueryTimeLogArgs,
+  MutationCreateTimeLogArgs,
+  MutationUpdateTimeLogArgs,
+  MutationDeleteTimeLogArgs,
+  TimeLog as GQLTimeLog,
+} from "@/__generated__/graphql.js";
 
 export const timeLogResolvers = {
   Query: {
-    timeLogsForProject: (
-      _p: unknown,
-      { projectId }: { projectId: string },
-      ctx: GraphQLContext
-    ) => timeLogService.getAllByProject(projectId, ctx),
+    // Get all time logs for THIS BUSINESS
+    timeLogs: async (_p: unknown, _args: unknown, ctx: GraphQLContext): Promise<GQLTimeLog[]> => {
+      return (await timeLogService.getAll(ctx)) as unknown as GQLTimeLog[];
+    },
 
-    timeLogsForUser: (
-      _p: unknown,
-      { userId }: { userId: string },
-      ctx: GraphQLContext
-    ) => timeLogService.getAllByUser(userId, ctx),
+    // Get single timelog by ID
+    timeLog: async (_p: unknown, { id }: QueryTimeLogArgs, ctx: GraphQLContext) => {
+      return (await timeLogService.getById(id, ctx)) as unknown as GQLTimeLog | null;
+    },
   },
+
   Mutation: {
-    createTimeLog: (
+    createTimeLog: async (
       _p: unknown,
-      { input }: { input: CreateTimeLogInput },
+      { input }: MutationCreateTimeLogArgs,
       ctx: GraphQLContext
-    ) => timeLogService.create(input, ctx),
+    ): Promise<GQLTimeLog> => {
+      return (await timeLogService.create(input, ctx)) as unknown as GQLTimeLog;
+    },
 
-    updateTimeLog: (
+    updateTimeLog: async (
       _p: unknown,
-      { id, input }: { id: string; input: UpdateTimeLogInput },
+      { id, input }: MutationUpdateTimeLogArgs,
       ctx: GraphQLContext
-    ) => timeLogService.update(id, input, ctx),
+    ): Promise<GQLTimeLog> => {
+      return (await timeLogService.update(id, input, ctx)) as unknown as GQLTimeLog;
+    },
 
-    deleteTimeLog: (
+    deleteTimeLog: async (
       _p: unknown,
-      { id }: { id: string },
+      { id }: MutationDeleteTimeLogArgs,
       ctx: GraphQLContext
-    ) => timeLogService.delete(id, ctx),
+    ): Promise<GQLTimeLog> => {
+      return (await timeLogService.remove(id, ctx)) as unknown as GQLTimeLog;
+    },
   },
-
-  // Note: The relational resolvers for `TimeLog.project` and `TimeLog.user`
-  // are no longer needed because our new service functions automatically
-  // include that data.
 };

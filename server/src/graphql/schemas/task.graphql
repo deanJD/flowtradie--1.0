@@ -4,25 +4,29 @@ type Task {
   id: ID!
   title: String!
   description: String
-  isCompleted: Boolean!
+  isCompleted: Boolean!      # Keep your existing field
   dueDate: DateTime
   createdAt: DateTime!
   updatedAt: DateTime!
+  businessId: ID!            # 🔥 REQUIRED by Prisma
+  projectId: ID!             # Prisma relation field
+  assignedToId: ID           # Prisma relation field (may be null)
 
   # Relationships
   project: Project!
   assignedTo: User
 }
 
-
 # --- Input Types ---
 
 input CreateTaskInput {
+  businessId: ID!  # <-- ADD THIS
   title: String!
   projectId: ID!
   description: String
   assignedToId: ID
   dueDate: DateTime
+  # ❌ DO NOT ADD businessId — added at service layer.
 }
 
 input UpdateTaskInput {
@@ -33,13 +37,11 @@ input UpdateTaskInput {
   dueDate: DateTime
 }
 
-
 # --- API Operations ---
 
 extend type Query {
-  # Get all tasks for a specific project
-  tasks(projectId: ID!): [Task!]! # <-- Changed
-  # Get a single task by its ID
+  # ❌ Remove projectId filter — service now filters by business only
+  tasks: [Task!]!            
   task(id: ID!): Task
 }
 

@@ -2,15 +2,23 @@
 
 import { GraphQLContext } from "../context.js";
 import { Prisma } from "@prisma/client";
-import { CreateProjectInput, UpdateProjectInput } from "@/__generated__/graphql.js";
+import {
+  CreateProjectInput,
+  UpdateProjectInput,
+} from "@/__generated__/graphql.js";
 
 export const projectService = {
-  // Find all projects, including their client
+  /** --------------------------------------
+   *  🔍 Get ALL projects for THIS business
+   *  -------------------------------------- */
   getAll: (clientId: string | undefined, ctx: GraphQLContext) => {
-    // Build the "where" clause to only find non-deleted projects
+    if (!ctx.user?.businessId) throw new Error("Unauthorized");
+
     const where: Prisma.ProjectWhereInput = {
-      deletedAt: null, // <-- THIS IS THE FIX
+      deletedAt: null,
+      businessId: ctx.user.businessId, // 🔥 MUST FILTER BY BUSINESS
     };
+
     if (clientId) {
       where.clientId = clientId;
     }
@@ -22,33 +30,49 @@ export const projectService = {
     });
   },
 
-  // Find a single non-deleted project by its ID
+  /** --------------------------------------
+   *  🔎 Get ONE project by ID
+   *  -------------------------------------- */
   getById: (id: string, ctx: GraphQLContext) => {
+    if (!ctx.user?.businessId) throw new Error("Unauthorized");
+
     return ctx.prisma.project.findFirst({
       where: {
         id,
         deletedAt: null,
+        businessId: ctx.user.businessId, // 🔥 Security filter
       },
       include: {
         client: true,
         tasks: true,
         quotes: true,
         invoices: true,
+        timeLogs: true,
+        expenses: true,
       },
     });
   },
 
-  // Create a new project
+  /** --------------------------------------
+   *  🆕 Create a project
+   *  -------------------------------------- */
   create: (input: CreateProjectInput, ctx: GraphQLContext) => {
+    if (!ctx.user?.businessId) throw new Error("Unauthorized");
+
     const data: Prisma.ProjectCreateInput = {
+      business: { connect: { id: ctx.user.businessId } }, // 🔥 SIMPLE & CORRECT
+
       title: input.title,
       description: input.description ?? undefined,
       location: input.location ?? undefined,
       status: input.status ?? undefined,
       startDate: input.startDate ?? undefined,
       endDate: input.endDate ?? undefined,
+
       client: { connect: { id: input.clientId } },
-      manager: input.managerId ? { connect: { id: input.managerId } } : undefined,
+      manager: input.managerId
+        ? { connect: { id: input.managerId } }
+        : undefined,
     };
 
     return ctx.prisma.project.create({
@@ -57,8 +81,12 @@ export const projectService = {
     });
   },
 
-  // Update a project
+  /** --------------------------------------
+   *  🔄 Update a project
+   *  -------------------------------------- */
   update: (id: string, input: UpdateProjectInput, ctx: GraphQLContext) => {
+    if (!ctx.user?.businessId) throw new Error("Unauthorized");
+
     const data: Prisma.ProjectUpdateInput = {
       title: input.title ?? undefined,
       description: input.description ?? undefined,
@@ -67,6 +95,7 @@ export const projectService = {
       startDate: input.startDate ?? undefined,
       endDate: input.endDate ?? undefined,
       budgetedAmount: input.budgetedAmount ?? undefined,
+
       manager:
         input.managerId === null
           ? { disconnect: true }
@@ -82,13 +111,15 @@ export const projectService = {
     });
   },
 
-  // "Delete" a project (now a soft delete)
+  /** --------------------------------------
+   *  🗑️ SOFT DELETE a project
+   *  -------------------------------------- */
   delete: (id: string, ctx: GraphQLContext) => {
+    if (!ctx.user?.businessId) throw new Error("Unauthorized");
+
     return ctx.prisma.project.update({
       where: { id },
-      data: {
-        deletedAt: new Date(),
-      },
+      data: { deletedAt: new Date() },
     });
   },
 };

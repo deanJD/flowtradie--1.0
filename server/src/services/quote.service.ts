@@ -1,41 +1,40 @@
-// server/src/services/quote.service.ts
 import { GraphQLContext } from "../context.js";
 import { Prisma } from "@prisma/client";
 import { CreateQuoteInput, UpdateQuoteInput } from "@/__generated__/graphql.js";
 
 export const quoteService = {
   getById: (id: string, ctx: GraphQLContext) => {
-    // CHANGED: Use findFirst to ensure we don't fetch a deleted quote
     return ctx.prisma.quote.findFirst({
-      where: {
-        id,
-        deletedAt: null,
-      },
+      where: { id, deletedAt: null },
       include: { items: true, project: true },
     });
   },
 
   getByProject: (projectId: string, ctx: GraphQLContext) => {
     return ctx.prisma.quote.findMany({
-      where: {
-        projectId,
-        deletedAt: null, // <-- CHANGED: Only find non-deleted quotes
-      },
+      where: { projectId, deletedAt: null },
       include: { items: true, project: true },
     });
   },
 
   create: async (input: CreateQuoteInput, ctx: GraphQLContext) => {
+    if (!ctx.user?.businessId) throw new Error("Unauthorized");
+
+    // FIX: Explicitly cast inputs or ensure they exist. 
+    // Assuming generated types are correct, we treat unitPrice as Decimal or number.
     const subtotal = input.items.reduce(
-      (sum, item) => sum + (item.quantity ?? 1) * item.unitPrice,
+      (sum, item) => sum + (item.quantity ?? 1) * Number(item.unitPrice),
       0
     );
-    const gstRate = input.gstRate ?? 0.1;
-    const gstAmount = subtotal * gstRate;
-    const totalAmount = subtotal + gstAmount;
+    
+    // FIX: GST -> Tax renaming
+    const taxRate = input.gstRate ?? 0.1;
+    const taxAmount = subtotal * taxRate;
+    const totalAmount = subtotal + taxAmount;
 
     return ctx.prisma.quote.create({
       data: {
+        businessId: ctx.user.businessId, // FIX: Connect to business
         projectId: input.projectId,
         quoteNumber: input.quoteNumber,
         expiryDate: input.expiryDate,
@@ -45,29 +44,27 @@ export const quoteService = {
             description: item.description,
             quantity: item.quantity ?? 1,
             unitPrice: item.unitPrice,
-            total: (item.quantity ?? 1) * item.unitPrice,
+            total: (item.quantity ?? 1) * Number(item.unitPrice),
           })),
         },
         subtotal,
-        gstRate,
-        gstAmount,
+        taxRate,    // FIX: Renamed from gstRate
+        taxAmount,  // FIX: Renamed from gstAmount
         totalAmount,
       },
-      include: {
-        items: true,
-        project: true,
-      },
+      include: { items: true, project: true },
     });
   },
 
   update: async (id: string, input: UpdateQuoteInput, ctx: GraphQLContext) => {
     return ctx.prisma.$transaction(async (prisma) => {
       const { items, ...quoteDataWithNulls } = input;
+      
       const quoteData: Prisma.QuoteUpdateInput = {
         quoteNumber: quoteDataWithNulls.quoteNumber ?? undefined,
         expiryDate: quoteDataWithNulls.expiryDate ?? undefined,
         status: quoteDataWithNulls.status ?? undefined,
-        gstRate: quoteDataWithNulls.gstRate ?? undefined,
+        taxRate: quoteDataWithNulls.gstRate ?? undefined, // FIX: Map gstRate to taxRate
       };
 
       await prisma.quote.update({ where: { id }, data: quoteData });
@@ -80,20 +77,27 @@ export const quoteService = {
             description: item.description,
             quantity: item.quantity ?? 1,
             unitPrice: item.unitPrice,
-            total: (item.quantity ?? 1) * item.unitPrice,
+            total: (item.quantity ?? 1) * Number(item.unitPrice),
           })),
         });
       }
 
       const currentItems = await prisma.quoteItem.findMany({ where: { quoteId: id } });
-      const subtotal = currentItems.reduce((sum, i) => sum + i.total, 0);
+      
+      // FIX: Use .toNumber() to sum Decimals
+      const subtotal = currentItems.reduce((sum, i) => sum + i.total.toNumber(), 0);
 
       const currentQuoteState = await prisma.quote.findUnique({ where: { id } });
-      const gstRate = currentQuoteState!.gstRate;
-      const gstAmount = subtotal * gstRate;
-      const totalAmount = subtotal + gstAmount;
+      
+      // FIX: Use .toNumber() and correct field name
+      const taxRate = currentQuoteState!.taxRate.toNumber();
+      const taxAmount = subtotal * taxRate;
+      const totalAmount = subtotal + taxAmount;
 
-      await prisma.quote.update({ where: { id }, data: { subtotal, gstAmount, totalAmount } });
+      await prisma.quote.update({ 
+        where: { id }, 
+        data: { subtotal, taxAmount, totalAmount } 
+      });
 
       if (input.status === "ACCEPTED") {
         const finalQuote = await prisma.quote.findUnique({ where: { id } });
@@ -111,12 +115,9 @@ export const quoteService = {
   },
 
   delete: (id: string, ctx: GraphQLContext) => {
-    // CHANGED: This is now a soft delete
     return ctx.prisma.quote.update({
       where: { id },
-      data: {
-        deletedAt: new Date(),
-      },
+      data: { deletedAt: new Date() },
     });
   },
 };

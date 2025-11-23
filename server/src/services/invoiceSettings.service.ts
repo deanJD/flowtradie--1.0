@@ -1,45 +1,68 @@
 // server/src/services/invoiceSettings.service.ts
-import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+import { GraphQLContext } from "../context.js";
 
-// ✅ Always return the first and only settings row
-export async function getInvoiceSettings() {
-  return prisma.invoiceSettings.findFirst();
-}
+// server/src/services/invoiceSettings.service.ts
 
-// ✅ Always update the one-and-only settings row
-export async function updateInvoiceSettings(input: any) {
-  let settings = await prisma.invoiceSettings.findFirst();
-
-  if (!settings) {
-    settings = await prisma.invoiceSettings.create({
-      data: {},
-    });
+export async function getInvoiceSettings(ctx: GraphQLContext) {
+  // 🔥 TEMP FIX FOR PLAYGROUND TESTING
+  if (!ctx.user?.businessId) {
+    const fallbackBusiness = await ctx.prisma.business.findFirst();
+    if (!fallbackBusiness) throw new Error("No business found.");
+    ctx.user = { id: "TEST", role: "OWNER", businessId: fallbackBusiness.id };
   }
 
-  return prisma.invoiceSettings.update({
-    where: { id: settings.id },
-    data: {
+  return ctx.prisma.invoiceSettings.findUnique({
+    where: { businessId: ctx.user.businessId },
+  });
+}
+
+
+export async function updateInvoiceSettings(input: any, ctx: GraphQLContext) {
+  if (!ctx.user?.businessId) throw new Error("Unauthorized");
+  const businessId = ctx.user.businessId;
+
+  return ctx.prisma.invoiceSettings.upsert({
+    where: { businessId },
+    create: {
+      businessId,
       businessName: input.businessName,
       abn: input.abn,
-      addressLine1: input.addressLine1,
-      addressLine2: input.addressLine2,
-      city: input.city,
-      state: input.state,
-      postcode: input.postcode,
-      country: input.country,
-
       phone: input.phone,
       email: input.email,
       website: input.website,
       logoUrl: input.logoUrl,
       bankDetails: input.bankDetails,
-
       invoicePrefix: input.invoicePrefix,
       startingNumber: input.startingNumber,
       defaultDueDays: input.defaultDueDays,
-      gstRate: input.gstRate,
+
+      // 🔥 TAX SYSTEM — correct naming
+      taxRate: input.taxRate,      // NOT gstRate
+      taxLabel: input.taxLabel,    // NEW
+
+      smtpHost: input.smtpHost,
+      smtpPort: input.smtpPort,
+      smtpUser: input.smtpUser,
+      smtpPassword: input.smtpPassword,
+      fromEmail: input.fromEmail,
+      fromName: input.fromName,
+    },
+
+    update: {
+      businessName: input.businessName,
+      abn: input.abn,
+      phone: input.phone,
+      email: input.email,
+      website: input.website,
+      logoUrl: input.logoUrl,
+      bankDetails: input.bankDetails,
+      invoicePrefix: input.invoicePrefix,
+      startingNumber: input.startingNumber,
+      defaultDueDays: input.defaultDueDays,
+
+      taxRate: input.taxRate,
+      taxLabel: input.taxLabel,
 
       smtpHost: input.smtpHost,
       smtpPort: input.smtpPort,

@@ -1,10 +1,14 @@
 // server/src/services/project.service.ts
 export const projectService = {
-    // Find all projects, including their client
+    /** --------------------------------------
+     *  🔍 Get ALL projects for THIS business
+     *  -------------------------------------- */
     getAll: (clientId, ctx) => {
-        // Build the "where" clause to only find non-deleted projects
+        if (!ctx.user?.businessId)
+            throw new Error("Unauthorized");
         const where = {
-            deletedAt: null, // <-- THIS IS THE FIX
+            deletedAt: null,
+            businessId: ctx.user.businessId, // 🔥 MUST FILTER BY BUSINESS
         };
         if (clientId) {
             where.clientId = clientId;
@@ -15,24 +19,36 @@ export const projectService = {
             include: { client: true },
         });
     },
-    // Find a single non-deleted project by its ID
+    /** --------------------------------------
+     *  🔎 Get ONE project by ID
+     *  -------------------------------------- */
     getById: (id, ctx) => {
+        if (!ctx.user?.businessId)
+            throw new Error("Unauthorized");
         return ctx.prisma.project.findFirst({
             where: {
                 id,
                 deletedAt: null,
+                businessId: ctx.user.businessId, // 🔥 Security filter
             },
             include: {
                 client: true,
                 tasks: true,
                 quotes: true,
                 invoices: true,
+                timeLogs: true,
+                expenses: true,
             },
         });
     },
-    // Create a new project
+    /** --------------------------------------
+     *  🆕 Create a project
+     *  -------------------------------------- */
     create: (input, ctx) => {
+        if (!ctx.user?.businessId)
+            throw new Error("Unauthorized");
         const data = {
+            business: { connect: { id: ctx.user.businessId } }, // 🔥 SIMPLE & CORRECT
             title: input.title,
             description: input.description ?? undefined,
             location: input.location ?? undefined,
@@ -40,15 +56,21 @@ export const projectService = {
             startDate: input.startDate ?? undefined,
             endDate: input.endDate ?? undefined,
             client: { connect: { id: input.clientId } },
-            manager: input.managerId ? { connect: { id: input.managerId } } : undefined,
+            manager: input.managerId
+                ? { connect: { id: input.managerId } }
+                : undefined,
         };
         return ctx.prisma.project.create({
             data,
             include: { client: true },
         });
     },
-    // Update a project
+    /** --------------------------------------
+     *  🔄 Update a project
+     *  -------------------------------------- */
     update: (id, input, ctx) => {
+        if (!ctx.user?.businessId)
+            throw new Error("Unauthorized");
         const data = {
             title: input.title ?? undefined,
             description: input.description ?? undefined,
@@ -69,13 +91,15 @@ export const projectService = {
             include: { client: true },
         });
     },
-    // "Delete" a project (now a soft delete)
+    /** --------------------------------------
+     *  🗑️ SOFT DELETE a project
+     *  -------------------------------------- */
     delete: (id, ctx) => {
+        if (!ctx.user?.businessId)
+            throw new Error("Unauthorized");
         return ctx.prisma.project.update({
             where: { id },
-            data: {
-                deletedAt: new Date(),
-            },
+            data: { deletedAt: new Date() },
         });
     },
 };

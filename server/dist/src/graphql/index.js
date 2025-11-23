@@ -4,7 +4,7 @@ import { mergeTypeDefs, mergeResolvers } from "@graphql-tools/merge";
 import path from "path";
 import { fileURLToPath } from "url";
 // vvvv IMPORT OUR NEW RESOLVER vvvv
-import { billableItemResolvers } from "./resolvers/billable_item.js";
+import billableItemResolvers from "./resolvers/billable_item.js";
 // ^^^^ END OF IMPORT ^^^^
 import { clientResolvers } from "./resolvers/client.js";
 import { projectResolvers } from "./resolvers/project.js";

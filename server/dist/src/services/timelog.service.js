@@ -1,57 +1,48 @@
-// server/src/services/timelog.service.ts
-// Define the 'include' object once to keep our code DRY
-const timeLogInclude = {
-    project: true,
-    user: true,
-};
-export const timeLogService = {
-    getAllByProject: (projectId, ctx) => {
-        return ctx.prisma.timeLog.findMany({
-            where: {
-                projectId,
-                deletedAt: null, // <-- CHANGED
-            },
-            orderBy: { date: "desc" },
-            include: timeLogInclude,
-        });
-    },
-    getAllByUser: (userId, ctx) => {
-        return ctx.prisma.timeLog.findMany({
-            where: {
-                userId,
-                deletedAt: null, // <-- CHANGED
-            },
-            orderBy: { date: "desc" },
-            include: timeLogInclude,
-        });
-    },
-    create: (input, ctx) => {
-        return ctx.prisma.timeLog.create({
-            data: input,
-            include: timeLogInclude,
-        });
-    },
-    update: (id, input, ctx) => {
-        // Manually build the data object to handle nulls
-        const data = {
-            date: input.date ?? undefined,
-            hoursWorked: input.hoursWorked ?? undefined,
-            notes: input.notes ?? undefined,
-        };
-        return ctx.prisma.timeLog.update({
-            where: { id },
-            data: data,
-            include: timeLogInclude,
-        });
-    },
-    delete: (id, ctx) => {
-        // CHANGED: This is now a soft delete
-        return ctx.prisma.timeLog.update({
-            where: { id },
-            data: {
-                deletedAt: new Date(),
-            },
-        });
-    },
-};
+export async function getAll(ctx) {
+    const result = await ctx.prisma.timeLog.findMany({
+        where: { businessId: ctx.businessId },
+        include: { project: true, user: true },
+    });
+    return result.map((log) => ({
+        ...log,
+        hoursWorked: log.hoursWorked.toNumber(), // 🔥 FIX
+    }));
+}
+export async function getById(id, ctx) {
+    const log = await ctx.prisma.timeLog.findUnique({
+        where: { id },
+        include: { project: true, user: true },
+    });
+    return log ? { ...log, hoursWorked: log.hoursWorked.toNumber() } : null;
+}
+export async function create(input, ctx) {
+    const log = await ctx.prisma.timeLog.create({
+        data: { ...input, businessId: ctx.businessId },
+        include: { project: true, user: true },
+    });
+    return { ...log, hoursWorked: log.hoursWorked.toNumber() };
+}
+export async function update(id, input, ctx) {
+    const { hoursWorked, ...rest } = input;
+    const updateData = {
+        ...rest,
+        ...(hoursWorked !== null && hoursWorked !== undefined ? { hoursWorked } : {}),
+    };
+    const log = await ctx.prisma.timeLog.update({
+        where: { id },
+        data: updateData,
+        include: { project: true, user: true },
+    });
+    return { ...log, hoursWorked: log.hoursWorked.toNumber() };
+}
+export async function remove(id, ctx) {
+    const log = await ctx.prisma.timeLog.findUnique({
+        where: { id },
+        include: { project: true, user: true },
+    });
+    if (!log)
+        return null;
+    await ctx.prisma.timeLog.delete({ where: { id } });
+    return { ...log, hoursWorked: log.hoursWorked.toNumber() }; // 🔥 Return full previous version
+}
 //# sourceMappingURL=timelog.service.js.map

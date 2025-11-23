@@ -23,10 +23,10 @@ export const billableItemService = {
         return ctx.prisma.billableItem.create({
             data: {
                 ...(() => {
-                    const { businessId, rate, ...rest } = input;
+                    const { businessId, unitPrice, ...rest } = input;
                     return {
                         ...rest,
-                        unitPrice: rate, // Map rate to unitPrice if that's the intended mapping
+                        unitPrice, // Directly use unitPrice from input
                     };
                 })(),
                 business: { connect: { id: businessId } },
@@ -55,4 +55,9 @@ export const billableItemService = {
         });
     },
 };
+const billableItemResolvers = {
+    Query: { /* ... */},
+    Mutation: { /* ... */},
+};
+export default billableItemResolvers;
 //# sourceMappingURL=billable_item.js.map

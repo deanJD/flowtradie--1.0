@@ -4,9 +4,10 @@ import { GraphQLContext } from "../context.js";
 import {
   CreateClientInput,
   UpdateClientInput,
+  Client as GQLClient, // TS return type for resolvers
 } from "@/__generated__/graphql.js";
 
-/** Local type for address creation (GraphQL types do not export it directly) */
+/** Local type for address creation */
 type CreateAddressInputLocal = {
   addressType?: string | null;
   line1: string;
@@ -23,38 +24,44 @@ export const clientService = {
      Get All Clients by Business
   ---------------------------- */
   getAll: async (businessId: string, ctx: GraphQLContext) => {
-    return ctx.prisma.client.findMany({
+    const clients = await ctx.prisma.client.findMany({
       where: { businessId, deletedAt: null },
       orderBy: { createdAt: "desc" },
       include: { addresses: true, projects: true },
     });
+
+    return clients as unknown as GQLClient[];
   },
 
   /* ----------------------------
      Get Single Client by ID
   ---------------------------- */
   getById: async (id: string, ctx: GraphQLContext) => {
-    return ctx.prisma.client.findFirst({
+    const client = await ctx.prisma.client.findFirst({
       where: { id, deletedAt: null },
       include: { addresses: true, projects: true },
     });
+
+    return client as unknown as GQLClient | null;
   },
 
   /* ----------------------------
      Create Client
   ---------------------------- */
   create: async (input: CreateClientInput, ctx: GraphQLContext) => {
-    const { addresses, businessId, ...rest } = input;
+    const { addresses, businessId, type, ...rest } = input;
 
     return ctx.prisma.client.create({
       data: {
-        ...rest,
+        ...rest, // name, phone, email, notes, etc.
+        type: type ?? undefined, // Prisma hates null for enums
         business: { connect: { id: businessId } },
+
         ...(Array.isArray(addresses) && addresses.length > 0
           ? {
               addresses: {
                 create: addresses.map((addr: CreateAddressInputLocal) => ({
-                  addressType: addr.addressType as any, // enum safe cast
+                  addressType: addr.addressType as any,
                   line1: addr.line1,
                   line2: addr.line2 ?? null,
                   city: addr.city,
@@ -67,36 +74,37 @@ export const clientService = {
             }
           : {}),
       },
-      include: { addresses: true },
-    });
+      include: { addresses: true, projects: true },
+    }) as unknown as Promise<GQLClient>;
   },
 
   /* ----------------------------
      Update Client (FULL REPLACE addresses)
   ---------------------------- */
   update: async (id: string, input: UpdateClientInput, ctx: GraphQLContext) => {
-    const { addresses, ...rest } = input;
+    const { addresses, type, ...rest } = input;
 
-    // Remove nulls → Prisma hates null values if field is optional
+    // Filter out nulls for optional fields
     const filteredInput = Object.fromEntries(
       Object.entries(rest).filter(([_, v]) => v !== null)
     );
 
     return ctx.prisma.$transaction(async (tx) => {
-      // 1️⃣ update basic fields
+      // 1️⃣ update basic fields (ensure enum is correct)
       await tx.client.update({
         where: { id },
-        data: filteredInput,
+        data: {
+          ...filteredInput,
+          type: type ?? undefined,
+        },
       });
 
-      // 2️⃣ replace addresses ONLY if provided
+      // 2️⃣ Replace addresses if provided
       if (Array.isArray(addresses)) {
-        // delete existing
         await tx.address.deleteMany({
           where: { clients: { some: { id } } },
         });
 
-        // create new ones
         if (addresses.length > 0) {
           await tx.address.createMany({
             data: addresses.map((addr: CreateAddressInputLocal) => ({
@@ -113,11 +121,13 @@ export const clientService = {
         }
       }
 
-      // 3️⃣ return updated client
-      return tx.client.findUnique({
+      // 3️⃣ return final updated client
+      const updated = await tx.client.findUnique({
         where: { id },
         include: { addresses: true, projects: true },
       });
+
+      return updated as unknown as GQLClient;
     });
   },
 

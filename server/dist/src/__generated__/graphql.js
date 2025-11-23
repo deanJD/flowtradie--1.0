@@ -1,9 +1,17 @@
 export var AddressType;
 (function (AddressType) {
-    AddressType["BusinessHq"] = "BUSINESS_HQ";
+    AddressType["Business"] = "BUSINESS";
     AddressType["ClientBusiness"] = "CLIENT_BUSINESS";
-    AddressType["ClientContact"] = "CLIENT_CONTACT";
+    AddressType["ClientSite"] = "CLIENT_SITE";
+    AddressType["Other"] = "OTHER";
+    AddressType["Site"] = "SITE";
 })(AddressType || (AddressType = {}));
+export var ClientType;
+(function (ClientType) {
+    ClientType["Commercial"] = "COMMERCIAL";
+    ClientType["Other"] = "OTHER";
+    ClientType["Residential"] = "RESIDENTIAL";
+})(ClientType || (ClientType = {}));
 export var InvoiceStatus;
 (function (InvoiceStatus) {
     InvoiceStatus["Draft"] = "DRAFT";

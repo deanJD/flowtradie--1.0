@@ -19,6 +19,7 @@ type Invoice {
 
   createdAt: DateTime!
   updatedAt: DateTime!
+  deletedAt: DateTime
 
   # Relations
   project: Project!

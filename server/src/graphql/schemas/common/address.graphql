@@ -1,11 +1,13 @@
-# ==============================
-#   ADDRESS TYPE ENUM
-# ==============================
+# server/src/graphql/schemas/common/address.graphql
+
 enum AddressType {
+  BUSINESS        # Billing / Registered
+  SITE            # Job location
   CLIENT_BUSINESS
-  CLIENT_CONTACT
-  BUSINESS_HQ
+  CLIENT_SITE
+  OTHER
 }
+
 type Address {
   id: ID!
   line1: String!
@@ -16,6 +18,7 @@ type Address {
   country: String
   countryCode: String
   addressType: AddressType!
+  
   createdAt: DateTime!
   updatedAt: DateTime!
   deletedAt: DateTime

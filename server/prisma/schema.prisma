@@ -308,12 +308,15 @@ model InvoiceSettings {
   website      String?
   logoUrl      String?
   bankDetails  String?
+  
 
   invoicePrefix  String?  @default("INV-")
   startingNumber Int?     @default(1000)
   defaultDueDays Int?     @default(14)
   taxRate        Decimal  @db.Decimal(5, 2) @default(0.10)
+  taxLabel     String?     // GST / VAT / Sales Tax
 
+  
   smtpHost     String?
   smtpPort     Int?
   smtpUser     String?

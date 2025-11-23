@@ -1,36 +1,39 @@
 // server/src/graphql/resolvers/invoiceSettings.ts
 
+import {
+  Resolvers,
+  MutationUpdateInvoiceSettingsArgs,
+} from "@/__generated__/graphql.js";
 import { GraphQLContext } from "../../context.js";
 import {
   getInvoiceSettings,
   updateInvoiceSettings,
 } from "../../services/invoiceSettings.service.js";
 
-// 👉 Import types from generated file
-import {
-  Resolvers,
-  MutationUpdateInvoiceSettingsArgs,
-} from "../../__generated__/graphql.js";
+function decimalToNumber(val: any): number | null {
+  if (val === null || val === undefined) return null;
+  return typeof val === "number" ? val : val.toNumber?.() ?? null;
+}
 
-// 👉 Correct resolver structure using generated type
 export const invoiceSettingsResolvers: Resolvers = {
   Query: {
-    invoiceSettings: async (
-      _parent,
-      _args,
-      _ctx: GraphQLContext
-    ) => {
-      return getInvoiceSettings();
+    invoiceSettings: async (_p, _args, ctx: GraphQLContext) => {
+      const result = await getInvoiceSettings(ctx);
+      return result ? { ...result, taxRate: decimalToNumber(result.taxRate) } : null;
     },
   },
 
   Mutation: {
     updateInvoiceSettings: async (
-      _parent,
+      _parent: unknown,
       { input }: MutationUpdateInvoiceSettingsArgs,
-      _ctx: GraphQLContext
+      ctx: GraphQLContext
     ) => {
-      return updateInvoiceSettings(input);
+      const result = await updateInvoiceSettings(input, ctx);
+      return {
+        ...result,
+        taxRate: decimalToNumber(result.taxRate),
+      };
     },
   },
 };

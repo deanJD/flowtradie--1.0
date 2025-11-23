@@ -2,15 +2,9 @@
 
 type InvoiceSettings {
   id: ID!
+  businessId: ID!         # 🔥 NEW - required
   businessName: String
   abn: String
-
-  addressLine1: String
-  addressLine2: String
-  city: String
-  state: String
-  postcode: String
-  country: String
 
   phone: String
   email: String
@@ -21,8 +15,12 @@ type InvoiceSettings {
   invoicePrefix: String
   startingNumber: Int
   defaultDueDays: Int
-  gstRate: Float
 
+  # 🔥 Updated tax system
+  taxRate: Float
+  taxLabel: String        # e.g., "GST" / "VAT" / "Sales Tax"
+
+  # SMTP (email integration)
   smtpHost: String
   smtpPort: Int
   smtpUser: String
@@ -34,16 +32,10 @@ type InvoiceSettings {
   updatedAt: DateTime!
 }
 
+# Input type used for UPDATE only
 input InvoiceSettingsInput {
   businessName: String
   abn: String
-
-  addressLine1: String
-  addressLine2: String
-  city: String
-  state: String
-  postcode: String
-  country: String
 
   phone: String
   email: String
@@ -54,7 +46,9 @@ input InvoiceSettingsInput {
   invoicePrefix: String
   startingNumber: Int
   defaultDueDays: Int
-  gstRate: Float
+
+  taxRate: Float
+  taxLabel: String
 
   smtpHost: String
   smtpPort: Int
@@ -63,7 +57,6 @@ input InvoiceSettingsInput {
   fromEmail: String
   fromName: String
 }
-
 
 extend type Query {
   invoiceSettings: InvoiceSettings

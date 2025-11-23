@@ -7,6 +7,7 @@ const prisma = new PrismaClient();
 
 // 🔥 Add businessId to user
 export interface GraphQLContext {
+  businessId: any;
   prisma: PrismaClient;
   user?: {
     id: string;
@@ -20,6 +21,7 @@ export function buildContext({ req }: { req: IncomingMessage }): GraphQLContext 
   const decoded = token ? decodeToken(token) : null;
 
   return {
+    businessId: decoded?.businessId ?? null,
     prisma,
     user: decoded
       ? {

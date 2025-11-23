@@ -36,9 +36,11 @@ export type Address = {
 };
 
 export enum AddressType {
-  BusinessHq = 'BUSINESS_HQ',
+  Business = 'BUSINESS',
   ClientBusiness = 'CLIENT_BUSINESS',
-  ClientContact = 'CLIENT_CONTACT'
+  ClientSite = 'CLIENT_SITE',
+  Other = 'OTHER',
+  Site = 'SITE'
 }
 
 export type AuthPayload = {
@@ -55,7 +57,7 @@ export type BillableItem = {
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
-  rate: Scalars['Float']['output'];
+  unitPrice: Scalars['Float']['output'];
   updatedAt: Scalars['DateTime']['output'];
 };
 
@@ -79,41 +81,28 @@ export type Business = {
 
 export type Client = {
   __typename?: 'Client';
-  address?: Maybe<Scalars['String']['output']>;
+  addresses: Array<Address>;
+  businessId: Scalars['ID']['output'];
+  businessName?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['DateTime']['output'];
-  email: Scalars['String']['output'];
+  deletedAt?: Maybe<Scalars['DateTime']['output']>;
+  email?: Maybe<Scalars['String']['output']>;
+  firstName: Scalars['String']['output'];
   id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
+  invoices: Array<Invoice>;
+  lastName: Scalars['String']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
   phone?: Maybe<Scalars['String']['output']>;
   projects: Array<Project>;
+  type: ClientType;
   updatedAt: Scalars['DateTime']['output'];
 };
 
-export type CompanySettings = {
-  __typename?: 'CompanySettings';
-  abn?: Maybe<Scalars['String']['output']>;
-  address?: Maybe<Scalars['String']['output']>;
-  bankDetails?: Maybe<Scalars['String']['output']>;
-  businessName: Scalars['String']['output'];
-  createdAt: Scalars['DateTime']['output'];
-  email?: Maybe<Scalars['String']['output']>;
-  id: Scalars['ID']['output'];
-  logoUrl?: Maybe<Scalars['String']['output']>;
-  phone?: Maybe<Scalars['String']['output']>;
-  updatedAt: Scalars['DateTime']['output'];
-  website?: Maybe<Scalars['String']['output']>;
-};
-
-export type CompanySettingsInput = {
-  abn?: InputMaybe<Scalars['String']['input']>;
-  address?: InputMaybe<Scalars['String']['input']>;
-  bankDetails?: InputMaybe<Scalars['String']['input']>;
-  businessName: Scalars['String']['input'];
-  email?: InputMaybe<Scalars['String']['input']>;
-  logoUrl?: InputMaybe<Scalars['String']['input']>;
-  phone?: InputMaybe<Scalars['String']['input']>;
-  website?: InputMaybe<Scalars['String']['input']>;
-};
+export enum ClientType {
+  Commercial = 'COMMERCIAL',
+  Other = 'OTHER',
+  Residential = 'RESIDENTIAL'
+}
 
 export type CreateAddressInput = {
   addressType?: InputMaybe<AddressType>;
@@ -130,7 +119,7 @@ export type CreateBillableItemInput = {
   businessId: Scalars['ID']['input'];
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
-  rate: Scalars['Float']['input'];
+  unitPrice: Scalars['Float']['input'];
 };
 
 export type CreateBusinessInput = {
@@ -151,14 +140,15 @@ export type CreateBusinessInput = {
 };
 
 export type CreateClientInput = {
-  address?: InputMaybe<Scalars['String']['input']>;
   addresses?: InputMaybe<Array<CreateAddressInput>>;
   businessId: Scalars['ID']['input'];
-  email: Scalars['String']['input'];
+  businessName?: InputMaybe<Scalars['String']['input']>;
+  email?: InputMaybe<Scalars['String']['input']>;
   firstName: Scalars['String']['input'];
   lastName: Scalars['String']['input'];
-  name: Scalars['String']['input'];
+  notes?: InputMaybe<Scalars['String']['input']>;
   phone?: InputMaybe<Scalars['String']['input']>;
+  type?: InputMaybe<ClientType>;
 };
 
 export type CreateExpenseInput = {
@@ -200,6 +190,7 @@ export type CreatePaymentInput = {
 };
 
 export type CreateProjectInput = {
+  businessId: Scalars['ID']['input'];
   clientId: Scalars['ID']['input'];
   description?: InputMaybe<Scalars['String']['input']>;
   endDate?: InputMaybe<Scalars['DateTime']['input']>;
@@ -227,6 +218,7 @@ export type CreateQuoteItemInput = {
 
 export type CreateTaskInput = {
   assignedToId?: InputMaybe<Scalars['ID']['input']>;
+  businessId: Scalars['ID']['input'];
   description?: InputMaybe<Scalars['String']['input']>;
   dueDate?: InputMaybe<Scalars['DateTime']['input']>;
   projectId: Scalars['ID']['input'];
@@ -263,6 +255,7 @@ export type Invoice = {
   clientSnapshot: Scalars['JSON']['output'];
   createdAt: Scalars['DateTime']['output'];
   currencyCode: Scalars['String']['output'];
+  deletedAt?: Maybe<Scalars['DateTime']['output']>;
   dueDate: Scalars['DateTime']['output'];
   id: Scalars['ID']['output'];
   invoiceNumber: Scalars['String']['output'];
@@ -295,56 +288,47 @@ export type InvoiceItem = {
 export type InvoiceSettings = {
   __typename?: 'InvoiceSettings';
   abn?: Maybe<Scalars['String']['output']>;
-  addressLine1?: Maybe<Scalars['String']['output']>;
-  addressLine2?: Maybe<Scalars['String']['output']>;
   bankDetails?: Maybe<Scalars['String']['output']>;
+  businessId: Scalars['ID']['output'];
   businessName?: Maybe<Scalars['String']['output']>;
-  city?: Maybe<Scalars['String']['output']>;
-  country?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['DateTime']['output'];
   defaultDueDays?: Maybe<Scalars['Int']['output']>;
   email?: Maybe<Scalars['String']['output']>;
   fromEmail?: Maybe<Scalars['String']['output']>;
   fromName?: Maybe<Scalars['String']['output']>;
-  gstRate?: Maybe<Scalars['Float']['output']>;
   id: Scalars['ID']['output'];
   invoicePrefix?: Maybe<Scalars['String']['output']>;
   logoUrl?: Maybe<Scalars['String']['output']>;
   phone?: Maybe<Scalars['String']['output']>;
-  postcode?: Maybe<Scalars['String']['output']>;
   smtpHost?: Maybe<Scalars['String']['output']>;
   smtpPassword?: Maybe<Scalars['String']['output']>;
   smtpPort?: Maybe<Scalars['Int']['output']>;
   smtpUser?: Maybe<Scalars['String']['output']>;
   startingNumber?: Maybe<Scalars['Int']['output']>;
-  state?: Maybe<Scalars['String']['output']>;
+  taxLabel?: Maybe<Scalars['String']['output']>;
+  taxRate?: Maybe<Scalars['Float']['output']>;
   updatedAt: Scalars['DateTime']['output'];
   website?: Maybe<Scalars['String']['output']>;
 };
 
 export type InvoiceSettingsInput = {
   abn?: InputMaybe<Scalars['String']['input']>;
-  addressLine1?: InputMaybe<Scalars['String']['input']>;
-  addressLine2?: InputMaybe<Scalars['String']['input']>;
   bankDetails?: InputMaybe<Scalars['String']['input']>;
   businessName?: InputMaybe<Scalars['String']['input']>;
-  city?: InputMaybe<Scalars['String']['input']>;
-  country?: InputMaybe<Scalars['String']['input']>;
   defaultDueDays?: InputMaybe<Scalars['Int']['input']>;
   email?: InputMaybe<Scalars['String']['input']>;
   fromEmail?: InputMaybe<Scalars['String']['input']>;
   fromName?: InputMaybe<Scalars['String']['input']>;
-  gstRate?: InputMaybe<Scalars['Float']['input']>;
   invoicePrefix?: InputMaybe<Scalars['String']['input']>;
   logoUrl?: InputMaybe<Scalars['String']['input']>;
   phone?: InputMaybe<Scalars['String']['input']>;
-  postcode?: InputMaybe<Scalars['String']['input']>;
   smtpHost?: InputMaybe<Scalars['String']['input']>;
   smtpPassword?: InputMaybe<Scalars['String']['input']>;
   smtpPort?: InputMaybe<Scalars['Int']['input']>;
   smtpUser?: InputMaybe<Scalars['String']['input']>;
   startingNumber?: InputMaybe<Scalars['Int']['input']>;
-  state?: InputMaybe<Scalars['String']['input']>;
+  taxLabel?: InputMaybe<Scalars['String']['input']>;
+  taxRate?: InputMaybe<Scalars['Float']['input']>;
   website?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -391,7 +375,6 @@ export type Mutation = {
   updateBillableItem: BillableItem;
   updateBusiness: Business;
   updateClient: Client;
-  updateCompanySettings: CompanySettings;
   updateInvoice: Invoice;
   updateInvoiceSettings: InvoiceSettings;
   updatePayment: Payment;
@@ -541,11 +524,6 @@ export type MutationUpdateClientArgs = {
 };
 
 
-export type MutationUpdateCompanySettingsArgs = {
-  input: CompanySettingsInput;
-};
-
-
 export type MutationUpdateInvoiceArgs = {
   id: Scalars['ID']['input'];
   input: UpdateInvoiceInput;
@@ -607,8 +585,10 @@ export type Payment = {
 export type Project = {
   __typename?: 'Project';
   budgetedAmount?: Maybe<Scalars['Float']['output']>;
+  businessId: Scalars['ID']['output'];
   client: Client;
   createdAt: Scalars['DateTime']['output'];
+  deletedAt?: Maybe<Scalars['DateTime']['output']>;
   description?: Maybe<Scalars['String']['output']>;
   endDate?: Maybe<Scalars['DateTime']['output']>;
   expenses: Array<ProjectExpense>;
@@ -661,7 +641,6 @@ export type Query = {
   businesses: Array<Business>;
   client?: Maybe<Client>;
   clients: Array<Client>;
-  companySettings?: Maybe<CompanySettings>;
   expenses: Array<ProjectExpense>;
   getDashboardSummary: DashboardSummary;
   invoice?: Maybe<Invoice>;
@@ -676,8 +655,8 @@ export type Query = {
   quotesByProject: Array<Quote>;
   task?: Maybe<Task>;
   tasks: Array<Task>;
-  timeLogsForProject: Array<TimeLog>;
-  timeLogsForUser: Array<TimeLog>;
+  timeLog?: Maybe<TimeLog>;
+  timeLogs: Array<TimeLog>;
   user?: Maybe<User>;
   users: Array<User>;
 };
@@ -733,11 +712,6 @@ export type QueryProjectProfitabilityArgs = {
 };
 
 
-export type QueryProjectsArgs = {
-  clientId?: InputMaybe<Scalars['ID']['input']>;
-};
-
-
 export type QueryQuoteArgs = {
   id: Scalars['ID']['input'];
 };
@@ -753,18 +727,8 @@ export type QueryTaskArgs = {
 };
 
 
-export type QueryTasksArgs = {
-  projectId: Scalars['ID']['input'];
-};
-
-
-export type QueryTimeLogsForProjectArgs = {
-  projectId: Scalars['ID']['input'];
-};
-
-
-export type QueryTimeLogsForUserArgs = {
-  userId: Scalars['ID']['input'];
+export type QueryTimeLogArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -826,30 +790,36 @@ export type RegisterInput = {
 export type Task = {
   __typename?: 'Task';
   assignedTo?: Maybe<User>;
+  assignedToId?: Maybe<Scalars['ID']['output']>;
+  businessId: Scalars['ID']['output'];
   createdAt: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
   dueDate?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
   isCompleted: Scalars['Boolean']['output'];
   project: Project;
+  projectId: Scalars['ID']['output'];
   title: Scalars['String']['output'];
   updatedAt: Scalars['DateTime']['output'];
 };
 
 export type TimeLog = {
   __typename?: 'TimeLog';
+  businessId: Scalars['ID']['output'];
   date: Scalars['DateTime']['output'];
   hoursWorked: Scalars['Float']['output'];
   id: Scalars['ID']['output'];
   notes?: Maybe<Scalars['String']['output']>;
   project: Project;
+  projectId: Scalars['ID']['output'];
   user: User;
+  userId: Scalars['ID']['output'];
 };
 
 export type UpdateBillableItemInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
-  rate?: InputMaybe<Scalars['Float']['input']>;
+  unitPrice: Scalars['Float']['input'];
 };
 
 export type UpdateBusinessInput = {
@@ -869,13 +839,14 @@ export type UpdateBusinessInput = {
 };
 
 export type UpdateClientInput = {
-  address?: InputMaybe<Scalars['String']['input']>;
   addresses?: InputMaybe<Array<CreateAddressInput>>;
+  businessName?: InputMaybe<Scalars['String']['input']>;
   email?: InputMaybe<Scalars['String']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
+  notes?: InputMaybe<Scalars['String']['input']>;
   phone?: InputMaybe<Scalars['String']['input']>;
+  type?: InputMaybe<ClientType>;
 };
 
 export type UpdateInvoiceInput = {
@@ -1041,8 +1012,7 @@ export type ResolversTypes = ResolversObject<{
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   Business: ResolverTypeWrapper<Business>;
   Client: ResolverTypeWrapper<Client>;
-  CompanySettings: ResolverTypeWrapper<CompanySettings>;
-  CompanySettingsInput: CompanySettingsInput;
+  ClientType: ClientType;
   CreateAddressInput: CreateAddressInput;
   CreateBillableItemInput: CreateBillableItemInput;
   CreateBusinessInput: CreateBusinessInput;
@@ -1106,8 +1076,6 @@ export type ResolversParentTypes = ResolversObject<{
   Boolean: Scalars['Boolean']['output'];
   Business: Business;
   Client: Client;
-  CompanySettings: CompanySettings;
-  CompanySettingsInput: CompanySettingsInput;
   CreateAddressInput: CreateAddressInput;
   CreateBillableItemInput: CreateBillableItemInput;
   CreateBusinessInput: CreateBusinessInput;
@@ -1186,7 +1154,7 @@ export type BillableItemResolvers<ContextType = GraphQLContext, ParentType exten
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  rate?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  unitPrice?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
 }>;
 
@@ -1208,28 +1176,21 @@ export type BusinessResolvers<ContextType = GraphQLContext, ParentType extends R
 }>;
 
 export type ClientResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Client'] = ResolversParentTypes['Client']> = ResolversObject<{
-  address?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  addresses?: Resolver<Array<ResolversTypes['Address']>, ParentType, ContextType>;
+  businessId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  businessName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
-  email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  deletedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
+  email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  firstName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  invoices?: Resolver<Array<ResolversTypes['Invoice']>, ParentType, ContextType>;
+  lastName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  notes?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   phone?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   projects?: Resolver<Array<ResolversTypes['Project']>, ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['ClientType'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
-}>;
-
-export type CompanySettingsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CompanySettings'] = ResolversParentTypes['CompanySettings']> = ResolversObject<{
-  abn?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  address?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  bankDetails?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  businessName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
-  email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  logoUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  phone?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
-  website?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
 }>;
 
 export type DashboardSummaryResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DashboardSummary'] = ResolversParentTypes['DashboardSummary']> = ResolversObject<{
@@ -1248,6 +1209,7 @@ export type InvoiceResolvers<ContextType = GraphQLContext, ParentType extends Re
   clientSnapshot?: Resolver<ResolversTypes['JSON'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   currencyCode?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  deletedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   dueDate?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   invoiceNumber?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -1278,29 +1240,25 @@ export type InvoiceItemResolvers<ContextType = GraphQLContext, ParentType extend
 
 export type InvoiceSettingsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['InvoiceSettings'] = ResolversParentTypes['InvoiceSettings']> = ResolversObject<{
   abn?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  addressLine1?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  addressLine2?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   bankDetails?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  businessId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   businessName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  city?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  country?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   defaultDueDays?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   fromEmail?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   fromName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  gstRate?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   invoicePrefix?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   logoUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   phone?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  postcode?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   smtpHost?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   smtpPassword?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   smtpPort?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   smtpUser?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   startingNumber?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  state?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  taxLabel?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  taxRate?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   website?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
 }>;
@@ -1338,7 +1296,6 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   updateBillableItem?: Resolver<ResolversTypes['BillableItem'], ParentType, ContextType, RequireFields<MutationUpdateBillableItemArgs, 'id' | 'input'>>;
   updateBusiness?: Resolver<ResolversTypes['Business'], ParentType, ContextType, RequireFields<MutationUpdateBusinessArgs, 'id' | 'input'>>;
   updateClient?: Resolver<ResolversTypes['Client'], ParentType, ContextType, RequireFields<MutationUpdateClientArgs, 'id' | 'input'>>;
-  updateCompanySettings?: Resolver<ResolversTypes['CompanySettings'], ParentType, ContextType, RequireFields<MutationUpdateCompanySettingsArgs, 'input'>>;
   updateInvoice?: Resolver<ResolversTypes['Invoice'], ParentType, ContextType, RequireFields<MutationUpdateInvoiceArgs, 'id' | 'input'>>;
   updateInvoiceSettings?: Resolver<ResolversTypes['InvoiceSettings'], ParentType, ContextType, RequireFields<MutationUpdateInvoiceSettingsArgs, 'input'>>;
   updatePayment?: Resolver<ResolversTypes['Payment'], ParentType, ContextType, RequireFields<MutationUpdatePaymentArgs, 'id' | 'input'>>;
@@ -1362,8 +1319,10 @@ export type PaymentResolvers<ContextType = GraphQLContext, ParentType extends Re
 
 export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Project'] = ResolversParentTypes['Project']> = ResolversObject<{
   budgetedAmount?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  businessId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   client?: Resolver<ResolversTypes['Client'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  deletedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   endDate?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   expenses?: Resolver<Array<ResolversTypes['ProjectExpense']>, ParentType, ContextType>;
@@ -1406,7 +1365,6 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   businesses?: Resolver<Array<ResolversTypes['Business']>, ParentType, ContextType>;
   client?: Resolver<Maybe<ResolversTypes['Client']>, ParentType, ContextType, RequireFields<QueryClientArgs, 'id'>>;
   clients?: Resolver<Array<ResolversTypes['Client']>, ParentType, ContextType, RequireFields<QueryClientsArgs, 'businessId'>>;
-  companySettings?: Resolver<Maybe<ResolversTypes['CompanySettings']>, ParentType, ContextType>;
   expenses?: Resolver<Array<ResolversTypes['ProjectExpense']>, ParentType, ContextType, RequireFields<QueryExpensesArgs, 'projectId'>>;
   getDashboardSummary?: Resolver<ResolversTypes['DashboardSummary'], ParentType, ContextType>;
   invoice?: Resolver<Maybe<ResolversTypes['Invoice']>, ParentType, ContextType, RequireFields<QueryInvoiceArgs, 'id'>>;
@@ -1416,13 +1374,13 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   payments?: Resolver<Array<ResolversTypes['Payment']>, ParentType, ContextType, RequireFields<QueryPaymentsArgs, 'invoiceId'>>;
   project?: Resolver<Maybe<ResolversTypes['Project']>, ParentType, ContextType, RequireFields<QueryProjectArgs, 'id'>>;
   projectProfitability?: Resolver<ResolversTypes['ProjectProfitability'], ParentType, ContextType, RequireFields<QueryProjectProfitabilityArgs, 'projectId'>>;
-  projects?: Resolver<Array<ResolversTypes['Project']>, ParentType, ContextType, Partial<QueryProjectsArgs>>;
+  projects?: Resolver<Array<ResolversTypes['Project']>, ParentType, ContextType>;
   quote?: Resolver<Maybe<ResolversTypes['Quote']>, ParentType, ContextType, RequireFields<QueryQuoteArgs, 'id'>>;
   quotesByProject?: Resolver<Array<ResolversTypes['Quote']>, ParentType, ContextType, RequireFields<QueryQuotesByProjectArgs, 'projectId'>>;
   task?: Resolver<Maybe<ResolversTypes['Task']>, ParentType, ContextType, RequireFields<QueryTaskArgs, 'id'>>;
-  tasks?: Resolver<Array<ResolversTypes['Task']>, ParentType, ContextType, RequireFields<QueryTasksArgs, 'projectId'>>;
-  timeLogsForProject?: Resolver<Array<ResolversTypes['TimeLog']>, ParentType, ContextType, RequireFields<QueryTimeLogsForProjectArgs, 'projectId'>>;
-  timeLogsForUser?: Resolver<Array<ResolversTypes['TimeLog']>, ParentType, ContextType, RequireFields<QueryTimeLogsForUserArgs, 'userId'>>;
+  tasks?: Resolver<Array<ResolversTypes['Task']>, ParentType, ContextType>;
+  timeLog?: Resolver<Maybe<ResolversTypes['TimeLog']>, ParentType, ContextType, RequireFields<QueryTimeLogArgs, 'id'>>;
+  timeLogs?: Resolver<Array<ResolversTypes['TimeLog']>, ParentType, ContextType>;
   user?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType, RequireFields<QueryUserArgs, 'id'>>;
   users?: Resolver<Array<ResolversTypes['User']>, ParentType, ContextType>;
 }>;
@@ -1464,23 +1422,29 @@ export type RegionResolvers<ContextType = GraphQLContext, ParentType extends Res
 
 export type TaskResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Task'] = ResolversParentTypes['Task']> = ResolversObject<{
   assignedTo?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
+  assignedToId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  businessId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   dueDate?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   isCompleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   project?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
+  projectId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
 }>;
 
 export type TimeLogResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TimeLog'] = ResolversParentTypes['TimeLog']> = ResolversObject<{
+  businessId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   date?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   hoursWorked?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   notes?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   project?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
+  projectId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   user?: Resolver<ResolversTypes['User'], ParentType, ContextType>;
+  userId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
 }>;
 
 export type UserResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = ResolversObject<{
@@ -1501,7 +1465,6 @@ export type Resolvers<ContextType = GraphQLContext> = ResolversObject<{
   BillableItem?: BillableItemResolvers<ContextType>;
   Business?: BusinessResolvers<ContextType>;
   Client?: ClientResolvers<ContextType>;
-  CompanySettings?: CompanySettingsResolvers<ContextType>;
   DashboardSummary?: DashboardSummaryResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
   Invoice?: InvoiceResolvers<ContextType>;

@@ -1,33 +1,37 @@
 // server/src/graphql/resolvers/task.ts
+
 import { GraphQLContext } from "../../context.js";
+import {
+  Resolvers,
+  QueryTaskArgs,
+  MutationCreateTaskArgs,
+  MutationUpdateTaskArgs,
+} from "@/__generated__/graphql.js";
 import { taskService } from "../../services/task.service.js";
-import { CreateTaskInput, UpdateTaskInput } from "@/__generated__/graphql.js";
 
-export const taskResolvers = {
+export const taskResolvers: Resolvers = {
   Query: {
-    tasks: (_p: unknown, { projectId }: { projectId: string }, ctx: GraphQLContext) =>
-      taskService.getAllByProject(projectId, ctx),
+    // ⛳ NO ARGUMENTS ANYMORE
+    tasks: async (_p, _args: unknown, ctx: GraphQLContext) => {
+      return (await taskService.getAll(ctx)) as any;  // get all tasks for business
+    },
 
-    task: (_p: unknown, { id }: { id: string }, ctx: GraphQLContext) =>
-      taskService.getById(id, ctx),
+    task: async (_p, args: QueryTaskArgs, ctx: GraphQLContext) => {
+      return (await taskService.getById(args.id, ctx)) as any;
+    },
   },
 
   Mutation: {
-    createTask: (_p: unknown, { input }: { input: CreateTaskInput }, ctx: GraphQLContext) =>
-      taskService.create(input, ctx),
+    createTask: async (_p, { input }: MutationCreateTaskArgs, ctx: GraphQLContext) => {
+      return (await taskService.create(input, ctx)) as any;
+    },
 
-    updateTask: (
-      _p: unknown,
-      { id, input }: { id: string; input: UpdateTaskInput },
-      ctx: GraphQLContext
-    ) => taskService.update(id, input, ctx),
+    updateTask: async (_p, { id, input }: MutationUpdateTaskArgs, ctx: GraphQLContext) => {
+      return (await taskService.update(id, input, ctx)) as any;
+    },
 
-    deleteTask: (_p: unknown, { id }: { id: string }, ctx: GraphQLContext) =>
-      taskService.delete(id, ctx),
+    deleteTask: async (_p, { id }: { id: string }, ctx: GraphQLContext) => {
+      return (await taskService.delete(id, ctx)) as any;
+    },
   },
-  
-  // Note: The extra relational resolvers for `Project.tasks`, `Task.assignedTo`,
-  // and `Task.project` are no longer needed! Because our service functions now use `include`,
-  // GraphQL's default resolver is smart enough to find the `project` and `assignedTo`
-  // properties on the parent Task object automatically.
 };

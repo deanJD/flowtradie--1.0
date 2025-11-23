@@ -1,67 +1,64 @@
-// server/src/services/timelog.service.ts
-
+// src/services/timelog.service.ts
 import { GraphQLContext } from "../context.js";
-import { Prisma } from "@prisma/client";
-import { CreateTimeLogInput, UpdateTimeLogInput } from "@/__generated__/graphql.js";
+import {
+  CreateTimeLogInput,
+  UpdateTimeLogInput,
+} from "@/__generated__/graphql.js";
 
-// Define the 'include' object once to keep our code DRY
-const timeLogInclude = {
-  project: true,
-  user: true,
-};
+export async function getAll(ctx: GraphQLContext) {
+  const result = await ctx.prisma.timeLog.findMany({
+    where: { businessId: ctx.businessId },
+    include: { project: true, user: true },
+  });
 
-export const timeLogService = {
-  getAllByProject: (projectId: string, ctx: GraphQLContext) => {
-    return ctx.prisma.timeLog.findMany({
-      where: {
-        projectId,
-        deletedAt: null, // <-- CHANGED
-      },
-      orderBy: { date: "desc" },
-      include: timeLogInclude,
-    });
-  },
+  return result.map((log) => ({
+    ...log,
+    hoursWorked: log.hoursWorked.toNumber(), // 🔥 FIX
+  }));
+}
 
-  getAllByUser: (userId: string, ctx: GraphQLContext) => {
-    return ctx.prisma.timeLog.findMany({
-      where: {
-        userId,
-        deletedAt: null, // <-- CHANGED
-      },
-      orderBy: { date: "desc" },
-      include: timeLogInclude,
-    });
-  },
+export async function getById(id: string, ctx: GraphQLContext) {
+  const log = await ctx.prisma.timeLog.findUnique({
+    where: { id },
+    include: { project: true, user: true },
+  });
 
-  create: (input: CreateTimeLogInput, ctx: GraphQLContext) => {
-    return ctx.prisma.timeLog.create({
-      data: input,
-      include: timeLogInclude,
-    });
-  },
+  return log ? { ...log, hoursWorked: log.hoursWorked.toNumber() } : null;
+}
 
-  update: (id: string, input: UpdateTimeLogInput, ctx: GraphQLContext) => {
-    // Manually build the data object to handle nulls
-    const data: Prisma.TimeLogUpdateInput = {
-      date: input.date ?? undefined,
-      hoursWorked: input.hoursWorked ?? undefined,
-      notes: input.notes ?? undefined,
-    };
+export async function create(input: CreateTimeLogInput, ctx: GraphQLContext) {
+  const log = await ctx.prisma.timeLog.create({
+    data: { ...input, businessId: ctx.businessId },
+    include: { project: true, user: true },
+  });
 
-    return ctx.prisma.timeLog.update({
-      where: { id },
-      data: data,
-      include: timeLogInclude,
-    });
-  },
+  return { ...log, hoursWorked: log.hoursWorked.toNumber() };
+}
 
-  delete: (id: string, ctx: GraphQLContext) => {
-    // CHANGED: This is now a soft delete
-    return ctx.prisma.timeLog.update({
-      where: { id },
-      data: {
-        deletedAt: new Date(),
-      },
-    });
-  },
-};
+export async function update(id: string, input: UpdateTimeLogInput, ctx: GraphQLContext) {
+  const { hoursWorked, ...rest } = input;
+  const updateData = {
+    ...rest,
+    ...(hoursWorked !== null && hoursWorked !== undefined ? { hoursWorked } : {}),
+  };
+
+  const log = await ctx.prisma.timeLog.update({
+    where: { id },
+    data: updateData,
+    include: { project: true, user: true },
+  });
+
+  return { ...log, hoursWorked: log.hoursWorked.toNumber() };
+}
+
+export async function remove(id: string, ctx: GraphQLContext) {
+  const log = await ctx.prisma.timeLog.findUnique({
+    where: { id },
+    include: { project: true, user: true },
+  });
+
+  if (!log) return null;
+
+  await ctx.prisma.timeLog.delete({ where: { id } });
+  return { ...log, hoursWorked: log.hoursWorked.toNumber() }; // 🔥 Return full previous version
+}

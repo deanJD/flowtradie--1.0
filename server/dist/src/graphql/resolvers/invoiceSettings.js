@@ -1,15 +1,24 @@
 // server/src/graphql/resolvers/invoiceSettings.ts
 import { getInvoiceSettings, updateInvoiceSettings, } from "../../services/invoiceSettings.service.js";
-// 👉 Correct resolver structure using generated type
+function decimalToNumber(val) {
+    if (val === null || val === undefined)
+        return null;
+    return typeof val === "number" ? val : val.toNumber?.() ?? null;
+}
 export const invoiceSettingsResolvers = {
     Query: {
-        invoiceSettings: async (_parent, _args, _ctx) => {
-            return getInvoiceSettings();
+        invoiceSettings: async (_p, _args, ctx) => {
+            const result = await getInvoiceSettings(ctx);
+            return result ? { ...result, taxRate: decimalToNumber(result.taxRate) } : null;
         },
     },
     Mutation: {
-        updateInvoiceSettings: async (_parent, { input }, _ctx) => {
-            return updateInvoiceSettings(input);
+        updateInvoiceSettings: async (_parent, { input }, ctx) => {
+            const result = await updateInvoiceSettings(input, ctx);
+            return {
+                ...result,
+                taxRate: decimalToNumber(result.taxRate),
+            };
         },
     },
 };

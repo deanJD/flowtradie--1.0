@@ -1,152 +1,71 @@
-import { Prisma } from "@prisma/client";
-// Define the 'include' object once to keep our code DRY
-const taskInclude = {
-    assignedTo: true,
-    project: true,
-};
+// server/src/services/task.service.ts
 export const taskService = {
-    getAllByProject: (projectId, ctx) => {
+    /* ------------------------------------------
+       Get all tasks for a specific project
+    ------------------------------------------- */
+    // NEW FUNCTION – get ALL tasks for business
+    getAll: async (ctx) => {
+        if (!ctx.user?.businessId)
+            throw new Error("Unauthorized");
         return ctx.prisma.task.findMany({
-            where: {
-                projectId,
-                deletedAt: null, // <-- CHANGED
-            },
+            where: { businessId: ctx.user.businessId, deletedAt: null },
             orderBy: { createdAt: "desc" },
-            include: taskInclude,
         });
     },
-    getById: (id, ctx) => {
-        // CHANGED: Use findFirst to ensure we don't fetch a deleted task
+    /* ------------------------------------------
+       Get a single task
+    ------------------------------------------- */
+    getById: async (id, ctx) => {
+        if (!ctx.user?.businessId)
+            throw new Error("Unauthorized");
+        const businessId = ctx.user.businessId;
         return ctx.prisma.task.findFirst({
-            where: {
-                id,
-                deletedAt: null,
-            },
-            include: taskInclude,
+            where: { id, businessId, deletedAt: null },
+            include: { project: true, assignedTo: true },
         });
     },
+    /* ------------------------------------------
+       Create task
+    ------------------------------------------- */
     create: async (input, ctx) => {
-        try {
-            return await ctx.prisma.task.create({
-                data: input,
-                include: taskInclude,
-            });
-        }
-        catch (error) {
-            // Keep your excellent error handling for invalid foreign keys
-            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
-                throw new Error("Invalid projectId or assignedToId. The Project or User does not exist.");
-            }
-            throw error;
-        }
-    },
-    update: (id, input, ctx) => {
-        // Manually build the data object to handle nulls and relations
-        const data = {
-            title: input.title ?? undefined,
-            description: input.description ?? undefined,
-            isCompleted: input.isCompleted ?? undefined,
-            dueDate: input.dueDate ?? undefined,
-            assignedTo: input.assignedToId === null
-                ? { disconnect: true }
-                : input.assignedToId
-                    ? { connect: { id: input.assignedToId } }
-                    : undefined,
-        };
-        return ctx.prisma.task.update({
-            where: { id },
-            data: data,
-            include: taskInclude,
+        if (!ctx.user?.businessId)
+            throw new Error("Unauthorized");
+        const businessId = ctx.user.businessId;
+        return ctx.prisma.task.create({
+            data: {
+                ...input, // title, description, assignedToId, etc.
+                businessId, // REQUIRED by Prisma
+            },
         });
     },
-    delete: (id, ctx) => {
-        // CHANGED: This is now a soft delete
+    /* ------------------------------------------
+       Update task
+    ------------------------------------------- */
+    // server/src/services/task.service.ts (UPDATE METHOD ONLY)
+    update: async (id, input, ctx) => {
+        if (!ctx.user?.businessId)
+            throw new Error("Unauthorized");
+        const businessId = ctx.user.businessId;
+        // ❗ FIX: Strip out null values (Prisma hates them during update)
+        const filteredInput = Object.fromEntries(Object.entries(input).filter(([_, v]) => v !== null));
         return ctx.prisma.task.update({
-            where: { id },
-            data: {
-                deletedAt: new Date(),
-            },
+            where: { id, businessId },
+            data: filteredInput, // 🧼 CLEAN INPUT
+            include: { project: true, assignedTo: true },
+        });
+    },
+    /* ------------------------------------------
+       Soft delete
+    ------------------------------------------- */
+    delete: async (id, ctx) => {
+        if (!ctx.user?.businessId)
+            throw new Error("Unauthorized");
+        const businessId = ctx.user.businessId;
+        return ctx.prisma.task.update({
+            where: { id, businessId },
+            data: { deletedAt: new Date() },
+            select: { id: true },
         });
     },
 };
-export const clientService = {
-    getAll: async (businessId, ctx) => {
-        return ctx.prisma.client.findMany({
-            where: { businessId, deletedAt: null },
-            orderBy: { createdAt: "desc" },
-            include: { addresses: true, projects: true },
-        });
-    },
-    getById: async (id, ctx) => {
-        return ctx.prisma.client.findFirst({
-            where: { id, deletedAt: null },
-            include: { addresses: true, projects: true },
-        });
-    },
-    // --------------------- CREATE CLIENT ---------------------
-    create: async (input, ctx) => {
-        const { addresses, businessId, ...rest } = input;
-        return ctx.prisma.client.create({
-            data: {
-                ...rest,
-                business: { connect: { id: businessId } },
-                ...(addresses && addresses.length > 0
-                    ? {
-                        addresses: {
-                            create: addresses.map((addr) => ({
-                                ...addr,
-                                addressType: addr.addressType, // 👈 FIX: enum safely converted
-                            })),
-                        },
-                    }
-                    : {}),
-            },
-            include: { addresses: true },
-        });
-    },
-    /* ----------------------------
-       Update Client
-    ---------------------------- */
-    /* ----------------------------
-       Update Client
-    ---------------------------- */
-    update: async (id, input, ctx) => {
-        const { addresses, ...rest } = input;
-        // 🟢 Filter out null fields safely
-        const filteredInput = Object.fromEntries(Object.entries(rest).filter(([_, v]) => v !== null));
-        return ctx.prisma.$transaction(async (tx) => {
-            // 1️⃣ Update base client fields
-            await tx.client.update({
-                where: { id },
-                data: filteredInput,
-            });
-            // 2️⃣ If addresses were provided → replace them fully
-            if (addresses != null) { // ✔ null-safe check
-                // Delete all existing linked addresses
-                await tx.address.deleteMany({
-                    where: { clients: { some: { id } } },
-                });
-                if (addresses.length > 0) {
-                    await tx.address.createMany({
-                        data: addresses.map((addr) => ({
-                            addressType: addr.addressType, // ENUM FIX
-                            line1: addr.line1,
-                            line2: addr.line2 ?? null,
-                            city: addr.city,
-                            state: addr.state ?? null,
-                            postcode: addr.postcode,
-                            country: addr.country ?? null,
-                            countryCode: addr.countryCode ?? null,
-                        })),
-                    });
-                }
-            }
-            // 3️⃣ Return the client with new addresses
-            return tx.client.findUnique({
-                where: { id },
-                include: { addresses: true },
-            });
-        }); // closes $transaction
-    },
-}; // closes update method
 //# sourceMappingURL=task.service.js.map

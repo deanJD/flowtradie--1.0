@@ -1,172 +1,86 @@
 // server/src/services/task.service.ts
-import { GraphQLContext } from "../context.js";
-import { Prisma } from "@prisma/client";
-import { CreateClientInput, CreateTaskInput, UpdateClientInput, UpdateTaskInput } from "@/__generated__/graphql.js";
 
-// Define the 'include' object once to keep our code DRY
-const taskInclude = {
-  assignedTo: true,
-  project: true,
-};
+import { GraphQLContext } from "../context.js";
+import {
+  CreateTaskInput,
+  UpdateTaskInput,
+} from "@/__generated__/graphql.js";
 
 export const taskService = {
-  getAllByProject: (projectId: string, ctx: GraphQLContext) => {
-    return ctx.prisma.task.findMany({
-      where: {
-        projectId,
-        deletedAt: null, // <-- CHANGED
-      },
-      orderBy: { createdAt: "desc" },
-      include: taskInclude,
-    });
-  },
+  /* ------------------------------------------
+     Get all tasks for a specific project
+  ------------------------------------------- */
+ // NEW FUNCTION – get ALL tasks for business
+getAll: async (ctx: GraphQLContext) => {
+  if (!ctx.user?.businessId) throw new Error("Unauthorized");
 
-  getById: (id: string, ctx: GraphQLContext) => {
-    // CHANGED: Use findFirst to ensure we don't fetch a deleted task
+  return ctx.prisma.task.findMany({
+    where: { businessId: ctx.user.businessId, deletedAt: null },
+    orderBy: { createdAt: "desc" },
+  });
+},
+
+
+  /* ------------------------------------------
+     Get a single task
+  ------------------------------------------- */
+  getById: async (id: string, ctx: GraphQLContext) => {
+    if (!ctx.user?.businessId) throw new Error("Unauthorized");
+    const businessId = ctx.user.businessId;
+
     return ctx.prisma.task.findFirst({
-      where: {
-        id,
-        deletedAt: null,
-      },
-      include: taskInclude,
+      where: { id, businessId, deletedAt: null },
+      include: { project: true, assignedTo: true },
     });
   },
 
+  /* ------------------------------------------
+     Create task
+  ------------------------------------------- */
   create: async (input: CreateTaskInput, ctx: GraphQLContext) => {
-    try {
-      return await ctx.prisma.task.create({
-        data: input,
-        include: taskInclude,
-      });
-    } catch (error: any) {
-      // Keep your excellent error handling for invalid foreign keys
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
-        throw new Error("Invalid projectId or assignedToId. The Project or User does not exist.");
-      }
-      throw error;
-    }
-  },
+    if (!ctx.user?.businessId) throw new Error("Unauthorized");
+    const businessId = ctx.user.businessId;
 
-  update: (id: string, input: UpdateTaskInput, ctx: GraphQLContext) => {
-    // Manually build the data object to handle nulls and relations
-    const data: Prisma.TaskUpdateInput = {
-      title: input.title ?? undefined,
-      description: input.description ?? undefined,
-      isCompleted: input.isCompleted ?? undefined,
-      dueDate: input.dueDate ?? undefined,
-      assignedTo:
-        input.assignedToId === null
-          ? { disconnect: true }
-          : input.assignedToId
-          ? { connect: { id: input.assignedToId } }
-          : undefined,
-    };
-    return ctx.prisma.task.update({
-      where: { id },
-      data: data,
-      include: taskInclude,
+    return ctx.prisma.task.create({
+      data: {
+        ...input,      // title, description, assignedToId, etc.
+        businessId,    // REQUIRED by Prisma
+      },
     });
   },
 
-  delete: (id: string, ctx: GraphQLContext) => {
-    // CHANGED: This is now a soft delete
+  /* ------------------------------------------
+     Update task
+  ------------------------------------------- */
+  // server/src/services/task.service.ts (UPDATE METHOD ONLY)
+
+update: async (id: string, input: UpdateTaskInput, ctx: GraphQLContext) => {
+  if (!ctx.user?.businessId) throw new Error("Unauthorized");
+  const businessId = ctx.user.businessId;
+
+  // ❗ FIX: Strip out null values (Prisma hates them during update)
+  const filteredInput = Object.fromEntries(
+    Object.entries(input).filter(([_, v]) => v !== null)
+  );
+
+  return ctx.prisma.task.update({
+    where: { id, businessId },
+    data: filteredInput,  // 🧼 CLEAN INPUT
+    include: { project: true, assignedTo: true },
+  });
+},
+
+  /* ------------------------------------------
+     Soft delete
+  ------------------------------------------- */
+  delete: async (id: string, ctx: GraphQLContext) => {
+    if (!ctx.user?.businessId) throw new Error("Unauthorized");
+    const businessId = ctx.user.businessId;
+
     return ctx.prisma.task.update({
-      where: { id },
-      data: {
-        deletedAt: new Date(),
-      },
+      where: { id, businessId },
+      data: { deletedAt: new Date() },
+      select: { id: true },
     });
   },
 };
-export const clientService = {
-  getAll: async (businessId: string, ctx: GraphQLContext) => {
-    return ctx.prisma.client.findMany({
-      where: { businessId, deletedAt: null },
-      orderBy: { createdAt: "desc" },
-      include: { addresses: true, projects: true },
-    });
-  },
-
-  getById: async (id: string, ctx: GraphQLContext) => {
-    return ctx.prisma.client.findFirst({
-      where: { id, deletedAt: null },
-      include: { addresses: true, projects: true },
-    });
-  },
-
-  // --------------------- CREATE CLIENT ---------------------
-  create: async (input: CreateClientInput, ctx: GraphQLContext) => {
-    const { addresses, businessId, ...rest } = input;
-
-    return ctx.prisma.client.create({
-      data: {
-        ...rest,
-        business: { connect: { id: businessId } },
-        ...(addresses && addresses.length > 0
-          ? {
-            addresses: {
-              create: addresses.map((addr) => ({
-                ...addr,
-                addressType: addr.addressType as any, // 👈 FIX: enum safely converted
-              })),
-            },
-          }
-          : {}),
-      },
-      include: { addresses: true },
-    });
-  },
-
-  /* ----------------------------
-     Update Client
-  ---------------------------- */
-  /* ----------------------------
-     Update Client
-  ---------------------------- */
-  update: async (id: string, input: UpdateClientInput, ctx: GraphQLContext) => {
-    const { addresses, ...rest } = input;
-
-    // 🟢 Filter out null fields safely
-    const filteredInput = Object.fromEntries(
-      Object.entries(rest).filter(([_, v]) => v !== null)
-    );
-
-    return ctx.prisma.$transaction(async (tx) => {
-      // 1️⃣ Update base client fields
-      await tx.client.update({
-        where: { id },
-        data: filteredInput,
-      });
-
-      // 2️⃣ If addresses were provided → replace them fully
-      if (addresses != null) { // ✔ null-safe check
-        // Delete all existing linked addresses
-        await tx.address.deleteMany({
-          where: { clients: { some: { id } } },
-        });
-
-        if (addresses.length > 0) {
-          await tx.address.createMany({
-            data: addresses.map((addr) => ({
-              addressType: addr.addressType as any, // ENUM FIX
-              line1: addr.line1,
-              line2: addr.line2 ?? null,
-              city: addr.city,
-              state: addr.state ?? null,
-              postcode: addr.postcode,
-              country: addr.country ?? null,
-              countryCode: addr.countryCode ?? null,
-            })),
-          });
-        }
-      }
-
-
-      // 3️⃣ Return the client with new addresses
-      return tx.client.findUnique({
-        where: { id },
-        include: { addresses: true },
-      });
-    }); // closes $transaction
-  },
-}; // closes update method

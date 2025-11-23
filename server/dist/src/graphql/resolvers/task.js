@@ -1,17 +1,25 @@
+// server/src/graphql/resolvers/task.ts
 import { taskService } from "../../services/task.service.js";
 export const taskResolvers = {
     Query: {
-        tasks: (_p, { projectId }, ctx) => taskService.getAllByProject(projectId, ctx),
-        task: (_p, { id }, ctx) => taskService.getById(id, ctx),
+        // ⛳ NO ARGUMENTS ANYMORE
+        tasks: async (_p, _args, ctx) => {
+            return (await taskService.getAll(ctx)); // get all tasks for business
+        },
+        task: async (_p, args, ctx) => {
+            return (await taskService.getById(args.id, ctx));
+        },
     },
     Mutation: {
-        createTask: (_p, { input }, ctx) => taskService.create(input, ctx),
-        updateTask: (_p, { id, input }, ctx) => taskService.update(id, input, ctx),
-        deleteTask: (_p, { id }, ctx) => taskService.delete(id, ctx),
+        createTask: async (_p, { input }, ctx) => {
+            return (await taskService.create(input, ctx));
+        },
+        updateTask: async (_p, { id, input }, ctx) => {
+            return (await taskService.update(id, input, ctx));
+        },
+        deleteTask: async (_p, { id }, ctx) => {
+            return (await taskService.delete(id, ctx));
+        },
     },
-    // Note: The extra relational resolvers for `Project.tasks`, `Task.assignedTo`,
-    // and `Task.project` are no longer needed! Because our service functions now use `include`,
-    // GraphQL's default resolver is smart enough to find the `project` and `assignedTo`
-    // properties on the parent Task object automatically.
 };
 //# sourceMappingURL=task.js.map
