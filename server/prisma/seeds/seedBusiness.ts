@@ -1,24 +1,24 @@
 // prisma/seeds/seedBusiness.ts
-import { PrismaClient, AddressType } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export default async function seedBusiness() {
   console.log("🌱 Seeding Business...");
 
-  // 🔹 1) Get AU region
-  const region = await prisma.region.findUnique({
+  // 1) Find Region FIRST — MUST EXIST
+  const region = await prisma.region.findFirst({
     where: { code: "AU" },
   });
 
   if (!region) {
-    console.error("❌ Region AU not found. Run seedRegion first.");
+    console.error("❌ Region AU not found.");
     return;
   }
 
-  // 🔹 2) Create Business Address
+  // 2) Create Address SAFELY — NO ENUM import, USE STRING!
   const address = await prisma.address.create({
     data: {
-      addressType: AddressType.BUSINESS,
+      addressType: "BUSINESS",   // 🔥 FIXED (no enum import)
       line1: "123 Demo Street",
       city: "Perth",
       state: "WA",
@@ -28,7 +28,7 @@ export default async function seedBusiness() {
     },
   });
 
-  // 🔹 3) Create Business
+  // 3) Create Business
   const business = await prisma.business.create({
     data: {
       name: "FlowTradie Pty Ltd",
@@ -38,16 +38,39 @@ export default async function seedBusiness() {
       phone: "0400 000 000",
       website: "https://flowtradie.com",
 
-      region: { connect: { id: region.id } },
-      address: { connect: { id: address.id } },
+      // Relations
+      regionId: region.id,
+      addressId: address.id,
     },
-    include: { region: true, address: true },
   });
 
-  console.log("   ➤ Business seeded:", business.id);
-}
+  // 4) Automatically Create Invoice Settings Snapshot
+  await prisma.invoiceSettings.create({
+    data: {
+      businessId: business.id,
+      businessName: business.name,
+      abn: business.registrationNumber,
+      phone: business.phone,
+      email: business.email,
+      website: business.website,
 
-// 🧼 IMPORTANT — disconnect to avoid hanging
-seedBusiness()
-  .catch((err) => console.error(err))
-  .finally(async () => await prisma.$disconnect());
+      addressSnapshot: {
+        line1: address.line1,
+        city: address.city,
+        state: address.state,
+        postcode: address.postcode,
+        country: address.country,
+        countryCode: address.countryCode,
+      },
+
+      // Defaults
+      invoicePrefix: "INV-",
+      startingNumber: 1000,
+      defaultDueDays: 14,
+      taxRate: 0.10,
+      bankDetails: "Bank of Perth - BSB 000-000 / ACC 12345678",
+    },
+  });
+
+  console.log("   ➤ Business + Settings seeded:", business.id);
+}

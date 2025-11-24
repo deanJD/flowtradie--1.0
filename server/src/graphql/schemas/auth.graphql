@@ -1,20 +1,21 @@
-type AuthPayload {
-  token: String!
-  user: User!
-}
-
-extend type Mutation {
-  register(input: RegisterInput!): AuthPayload!
-  login(input: LoginInput!): AuthPayload!
-}
-
-input RegisterInput {
-  name: String!
-  email: String!
-  password: String!
-}
-
 input LoginInput {
   email: String!
   password: String!
+}
+
+input RegisterInput {
+  email: String!
+  password: String!
+  name: String!
+   regionCode: String! 
+}
+
+extend type Mutation {
+  login(input: LoginInput!): AuthPayload!
+  register(input: RegisterInput!): AuthPayload!
+}
+
+type AuthPayload {
+  token: String!
+  user: User!
 }

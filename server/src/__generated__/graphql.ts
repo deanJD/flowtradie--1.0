@@ -190,7 +190,6 @@ export type CreatePaymentInput = {
 };
 
 export type CreateProjectInput = {
-  businessId: Scalars['ID']['input'];
   clientId: Scalars['ID']['input'];
   description?: InputMaybe<Scalars['String']['input']>;
   endDate?: InputMaybe<Scalars['DateTime']['input']>;
@@ -785,6 +784,7 @@ export type RegisterInput = {
   email: Scalars['String']['input'];
   name: Scalars['String']['input'];
   password: Scalars['String']['input'];
+  regionCode: Scalars['String']['input'];
 };
 
 export type Task = {
@@ -911,6 +911,8 @@ export type UpdateUserInput = {
 
 export type User = {
   __typename?: 'User';
+  business?: Maybe<Business>;
+  businessId?: Maybe<Scalars['ID']['output']>;
   createdAt: Scalars['DateTime']['output'];
   email: Scalars['String']['output'];
   hourlyRate?: Maybe<Scalars['Float']['output']>;
@@ -1448,6 +1450,8 @@ export type TimeLogResolvers<ContextType = GraphQLContext, ParentType extends Re
 }>;
 
 export type UserResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = ResolversObject<{
+  business?: Resolver<Maybe<ResolversTypes['Business']>, ParentType, ContextType>;
+  businessId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   hourlyRate?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;

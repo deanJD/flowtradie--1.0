@@ -6,6 +6,8 @@ type User {
   role: UserRole!
   phone: String
   hourlyRate: Float
+  businessId: ID      # 🔥 ADD THIS!
+  business: Business  # (optional) add this later if needed
   createdAt: DateTime!  # <-- Changed from String!
   updatedAt: DateTime!  # <-- Changed from String!
   tasks: [Task!]!

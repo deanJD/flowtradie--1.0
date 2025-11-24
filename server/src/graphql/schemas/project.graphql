@@ -26,7 +26,6 @@ type Project {
 
 # --- Input Types ---
 input CreateProjectInput {
-  businessId: ID!  # 🔥 MUST ADD THIS
   title: String!
   clientId: ID!
   managerId: ID

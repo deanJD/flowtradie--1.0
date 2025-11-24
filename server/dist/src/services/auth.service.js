@@ -1,49 +1,58 @@
-// server/src/services/auth.service.ts
-import { hashPassword, verifyPassword } from "../utils/password.js";
-import { signToken } from "../utils/jwt.js";
-import { UserRole } from "@prisma/client";
+// src/services/auth.service.ts
+import { PrismaClient } from "@prisma/client";
+import { encodeToken } from "../utils/jwt.js"; // 🔥 make sure this exports encodeToken
+import bcrypt from "bcryptjs";
+const prisma = new PrismaClient();
 export const authService = {
-    // 🔹 Register → user becomes OWNER immediately
-    async register(input, ctx) {
-        const { name, email, password } = input;
-        // Check if email already exists
-        const existing = await ctx.prisma.user.findFirst({
-            where: { email, deletedAt: null },
+    // ---------------- SIGN-UP ----------------
+    async register(input) {
+        const { name, email, password, regionCode } = input;
+        // 1) Find Region
+        const region = await prisma.region.findUnique({
+            where: { code: regionCode },
         });
-        if (existing) {
-            throw new Error("Email already in use.");
-        }
-        const hashedPassword = await hashPassword(password);
-        // Create user as OWNER — but NO business yet
-        const user = await ctx.prisma.user.create({
+        if (!region)
+            throw new Error(`Invalid region: ${regionCode}`);
+        // 2) Create Business FIRST (belongs to region)
+        const business = await prisma.business.create({
             data: {
                 name,
                 email,
-                password: hashedPassword,
-                role: UserRole.OWNER, // 🔥 OWNER immediately
-                businessId: null, // creates business after signup
+                legalName: name,
+                region: { connect: { id: region.id } },
             },
         });
-        return user; // return only user – token comes AFTER business is added
+        // 3) Create OWNER USER
+        const hashed = await bcrypt.hash(password, 10);
+        const user = await prisma.user.create({
+            data: {
+                email,
+                password: hashed,
+                name,
+                role: "OWNER",
+                businessId: business.id,
+            },
+        });
+        // 4) Payload + Token
+        const token = encodeToken({
+            id: user.id,
+            role: user.role,
+            businessId: user.businessId,
+        });
+        return { token, user };
     },
-    // 🔹 Login
-    async login(input, ctx) {
+    // ---------------- SIGN-IN ----------------
+    async login(input) {
         const { email, password } = input;
-        // Find active user
-        const user = await ctx.prisma.user.findFirst({
-            where: { email, deletedAt: null },
+        const user = await prisma.user.findUnique({
+            where: { email },
         });
         if (!user)
             throw new Error("Invalid credentials");
-        const valid = await verifyPassword(password, user.password);
-        if (!valid)
+        const ok = await bcrypt.compare(password, user.password);
+        if (!ok)
             throw new Error("Invalid credentials");
-        // 🚨 Business is REQUIRED for full access (payments/invoices)
-        if (!user.businessId) {
-            throw new Error("No business linked to user. Please create a business first.");
-        }
-        // 🔐 Token now includes businessId
-        const token = signToken({
+        const token = encodeToken({
             id: user.id,
             role: user.role,
             businessId: user.businessId,

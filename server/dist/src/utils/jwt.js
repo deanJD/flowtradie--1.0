@@ -1,14 +1,12 @@
+// src/utils/jwt.ts
 import jwt from "jsonwebtoken";
-const SECRET = process.env.JWT_SECRET || "super-secret-key";
-export function signToken(payload) {
-    return jwt.sign(payload, SECRET, { expiresIn: "7d" });
-}
+const JWT_SECRET = process.env.JWT_SECRET || "secret_key"; // CHANGE LATER
+// ---- Decode Token ----
 export function decodeToken(token) {
-    try {
-        return jwt.verify(token, SECRET);
-    }
-    catch {
-        return null;
-    }
+    return jwt.verify(token, JWT_SECRET);
+}
+// ---- Encode Token ----
+export function encodeToken(payload) {
+    return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
 }
 //# sourceMappingURL=jwt.js.map

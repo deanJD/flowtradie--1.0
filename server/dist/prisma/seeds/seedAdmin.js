@@ -1,29 +1,27 @@
 // prisma/seeds/seedAdmin.ts
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs"; // <-- ADD THIS!
 const prisma = new PrismaClient();
 export default async function seedAdmin() {
     console.log("🌱 Seeding Owner User...");
-    // 1) Find Business
-    const business = await prisma.business.findFirst({
-        where: { email: "contact@flowtradie.com" },
-    });
+    // 1) Get THE business (first one)
+    const business = await prisma.business.findFirst();
     if (!business) {
-        console.error("❌ Business not found. Run seedBusiness first.");
+        console.error("❌ No business found — run seedBusiness first");
         return;
     }
-    // 2) Create or update the admin user
+    // 2) HASH PASSWORD BEFORE SEEDING
+    const hashedPassword = await bcrypt.hash("password123", 10); // <--- IMPORTANT
+    // 3) Create / update ADMIN
     const owner = await prisma.user.upsert({
         where: { email: "owner@flowtradie.com" },
         update: {},
         create: {
-            businessId: business.id,
             email: "owner@flowtradie.com",
-            // ⚠ Password is plain text for now — you will hash later.
-            password: "password123",
+            password: hashedPassword, // <--- USE HASHED HERE
             name: "Dean (Owner)",
             role: "OWNER",
-            phone: "0400 000 000",
-            hourlyRate: 0,
+            business: { connect: { id: business.id } }, // <--- WORKS
         },
     });
     console.log("   ➤ Owner user seeded:", owner.id);

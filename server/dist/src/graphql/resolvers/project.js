@@ -1,41 +1,38 @@
 // server/src/graphql/resolvers/project.ts
-import { projectService } from "../../services/project.service.js"; // Import our new service
+import { projectService } from "../../services/project.service.js";
 export const projectResolvers = {
     Query: {
-        projects: (_p, { clientId }, ctx) => {
-            return projectService.getAll(clientId, ctx);
+        projects: async (_p, _args, ctx) => {
+            const result = await projectService.getAll(undefined, ctx);
+            return result; // ⬅ FIX: CAST
         },
-        project: (_p, { id }, ctx) => {
-            return projectService.getById(id, ctx);
+        project: async (_p, { id }, ctx) => {
+            const result = await projectService.getById(id, ctx);
+            return result; // ⬅ FIX: CAST
         },
     },
     Mutation: {
-        createProject: (_p, { input }, ctx) => {
-            return projectService.create(input, ctx);
+        createProject: async (_p, { input }, ctx) => {
+            const result = await projectService.create(input, ctx);
+            return result; // ⬅ FIX: CAST
         },
         updateProject: async (_p, { id, input }, ctx) => {
-            // vvvvvvvvvv AUTHORIZATION LOGIC vvvvvvvvvv
             const { user } = ctx;
-            if (!user) {
+            if (!user)
                 throw new Error("You must be logged in to update a project.");
+            // Role-guard for budget
+            if (input.budgetedAmount !== undefined &&
+                user.role !== "OWNER" &&
+                user.role !== "ADMIN") {
+                throw new Error("You are not authorized to edit the project budget.");
             }
-            // Check if the user is trying to update the protected budget field
-            if (input.budgetedAmount !== undefined && input.budgetedAmount !== null) {
-                // If they are, check if their role is authorized
-                const isAuthorized = user.role === "OWNER" || user.role === "ADMIN";
-                if (!isAuthorized) {
-                    throw new Error("You are not authorized to edit the project budget.");
-                }
-            }
-            // ^^^^^^^^^^ AUTHORIZATION LOGIC ^^^^^^^^^^
-            // If all checks pass, proceed with the update
-            return projectService.update(id, input, ctx);
+            const result = await projectService.update(id, input, ctx);
+            return result; // ⬅ FIX: CAST
         },
-        deleteProject: (_p, { id }, ctx) => {
-            return projectService.delete(id, ctx);
+        deleteProject: async (_p, { id }, ctx) => {
+            const result = await projectService.delete(id, ctx);
+            return result; // ⬅ FIX: CAST
         },
     },
-    // The relational resolver is no longer needed because our service
-    // now includes the client data automatically! We can delete it.
 };
 //# sourceMappingURL=project.js.map

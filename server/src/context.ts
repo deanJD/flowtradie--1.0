@@ -5,14 +5,13 @@ import { IncomingMessage } from "http";
 
 const prisma = new PrismaClient();
 
-// 🔥 Add businessId to user
 export interface GraphQLContext {
-  businessId: any;
   prisma: PrismaClient;
+  businessId: string | null;     // 👈 ADD THIS
   user?: {
     id: string;
     role: UserRole;
-    businessId: string;
+    businessId: string | null;   // 👈 We MUST allow null here
   };
 }
 
@@ -21,13 +20,13 @@ export function buildContext({ req }: { req: IncomingMessage }): GraphQLContext 
   const decoded = token ? decodeToken(token) : null;
 
   return {
-    businessId: decoded?.businessId ?? null,
     prisma,
+    businessId: decoded?.businessId ?? null, // 👈 ALWAYS SET THIS
     user: decoded
       ? {
           id: decoded.id,
-          role: decoded.role,
-          businessId: decoded.businessId, // 🚨 NEEDED FOR PAYMENTS/INVOICES
+          role: decoded.role as UserRole,
+          businessId: decoded.businessId ?? null,
         }
       : undefined,
   };
