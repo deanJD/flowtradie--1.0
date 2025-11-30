@@ -5,17 +5,25 @@ import { GraphQLContext } from "../context.js";
 // server/src/services/invoiceSettings.service.ts
 
 export async function getInvoiceSettings(ctx: GraphQLContext) {
-  // 🔥 TEMP FIX FOR PLAYGROUND TESTING
   if (!ctx.user?.businessId) {
     const fallbackBusiness = await ctx.prisma.business.findFirst();
     if (!fallbackBusiness) throw new Error("No business found.");
-    ctx.user = { id: "TEST", role: "OWNER", businessId: fallbackBusiness.id };
+
+    // 🔥 FIX – MUST INCLUDE `email`
+    ctx.user = {
+      id: "TEST",
+      email: "test@flowtradie.com", // 👈 ADD THIS
+      role: "OWNER",
+      businessId: fallbackBusiness.id,
+    };
   }
 
+  if (!ctx.user?.businessId) throw new Error("No businessId found for user.");
   return ctx.prisma.invoiceSettings.findUnique({
     where: { businessId: ctx.user.businessId },
   });
 }
+
 
 
 export async function updateInvoiceSettings(input: any, ctx: GraphQLContext) {
@@ -44,6 +52,7 @@ export async function updateInvoiceSettings(input: any, ctx: GraphQLContext) {
       smtpHost: input.smtpHost,
       smtpPort: input.smtpPort,
       smtpUser: input.smtpUser,
+      
       smtpPassword: input.smtpPassword,
       fromEmail: input.fromEmail,
       fromName: input.fromName,

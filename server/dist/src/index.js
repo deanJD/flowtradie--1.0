@@ -11,19 +11,24 @@ import { buildContext } from "./context.js";
 async function startServer() {
     const app = express();
     const httpServer = http.createServer(app);
-    const typesArray = loadFilesSync("src/graphql/schemas/**/*.graphql");
+    const typesArray = loadFilesSync("src/**/*.graphql");
     const typeDefs = mergeTypeDefs(typesArray);
     const server = new ApolloServer({
         typeDefs,
-        resolvers: resolvers,
+        resolvers: resolvers, // 🛠 fixes type error
+        csrfPrevention: false, // 🧠 disable CSRF BLOCK
     });
     await server.start();
-    app.use("/", cors(), express.json(), // This line is essential and must be here
+    app.use("/graphql", cors(), // 🛡 allow frontend
+    express.json({ limit: "10mb" }), // MUST come before Apollo
     expressMiddleware(server, {
-        context: async ({ req }) => buildContext({ req }),
+        // 🧠 fix context type:
+        context: async ({ req }) => {
+            return buildContext({ req });
+        },
     }));
     await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve));
-    console.log(`🚀 Server ready at http://localhost:4000/`);
+    console.log(`🚀 FlowTradie GraphQL ready at http://localhost:4000/graphql`);
 }
 startServer();
 //# sourceMappingURL=index.js.map

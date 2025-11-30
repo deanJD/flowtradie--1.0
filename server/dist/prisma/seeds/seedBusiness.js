@@ -11,10 +11,10 @@ export default async function seedBusiness() {
         console.error("❌ Region AU not found.");
         return;
     }
-    // 2) Create Address SAFELY — NO ENUM import, USE STRING!
+    // 2) Create Address
     const address = await prisma.address.create({
         data: {
-            addressType: "BUSINESS", // 🔥 FIXED (no enum import)
+            addressType: "BUSINESS",
             line1: "123 Demo Street",
             city: "Perth",
             state: "WA",
@@ -32,12 +32,11 @@ export default async function seedBusiness() {
             email: "contact@flowtradie.com",
             phone: "0400 000 000",
             website: "https://flowtradie.com",
-            // Relations
             regionId: region.id,
             addressId: address.id,
         },
     });
-    // 4) Automatically Create Invoice Settings Snapshot
+    // 4) Create Invoice Settings — NOW DYNAMIC BASED ON REGION!
     await prisma.invoiceSettings.create({
         data: {
             businessId: business.id,
@@ -54,11 +53,12 @@ export default async function seedBusiness() {
                 country: address.country,
                 countryCode: address.countryCode,
             },
-            // Defaults
             invoicePrefix: "INV-",
             startingNumber: 1000,
             defaultDueDays: 14,
-            taxRate: 0.10,
+            // 🔥 Auto pulled from Region model
+            taxLabel: region.taxLabel,
+            taxRate: region.defaultTaxRate,
             bankDetails: "Bank of Perth - BSB 000-000 / ACC 12345678",
         },
     });

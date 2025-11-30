@@ -1,36 +1,59 @@
 // prisma/seeds/seedClient.ts
-import { PrismaClient, ClientType } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export default async function seedClient() {
-  console.log("🌱 Seeding Client...");
+  const businessId = "cmid2gv1h000395r8qg9c6ulq"; // 🔥 YOUR business ID
 
-  const business = await prisma.business.findFirst({
-    where: { email: "contact@flowtradie.com" },
-  });
-  if (!business) {
-    console.error("❌ No business found — run seedBusiness first.");
-    return;
-  }
-
-  // 👇 FIND FIRST (no unique constraint required)
-  let client = await prisma.client.findFirst({
-    where: { businessId: business.id, firstName: "Seed", lastName: "Client" },
-  });
-
-  // 👇 If not found → CREATE
-  if (!client) {
-    client = await prisma.client.create({
-      data: {
-        businessId: business.id,
-        firstName: "Seed",
-        lastName: "Client",
-        email: "seedclient@flowtradie.com",
-        type: ClientType.RESIDENTIAL,
+  await prisma.client.createMany({
+    data: [
+      {
+        businessId,
+        firstName: "John",
+        lastName: "Builder",
+        businessName: "JB Carpentry",
+        email: "john@jbcarpentry.com",
+        phone: "0400 123 456",
+        type: "COMMERCIAL",
       },
-    });
-  }
+      {
+        businessId,
+        firstName: "Sarah",
+        lastName: "Sparks",
+        businessName: "Sparks Electrical",
+        email: "sarah@sparks.com",
+        phone: "0401 987 654",
+        type: "COMMERCIAL",
+      },
+      {
+        businessId,
+        firstName: "Michael",
+        lastName: "Plumb",
+        businessName: "MP Plumbing Co.",
+        email: "michael@mpplumbing.com",
+        phone: "0407 654 321",
+        type: "RESIDENTIAL",
+      },
+      {
+        businessId,
+        firstName: "Lisa",
+        lastName: "Painter",
+        businessName: "Perfect Paint",
+        email: "lisa@perfectpaint.com",
+        phone: "0402 888 999",
+        type: "RESIDENTIAL",
+      },
+      {
+        businessId,
+        firstName: "Dave",
+        lastName: "Concrete",
+        businessName: "DC Concreting",
+        email: "dave@dcconcrete.com",
+        phone: "0412 456 789",
+        type: "COMMERCIAL",
+      },
+    ],
+  });
 
-  console.log("👤 Seed Client:", client.id);
-  return client;
+  console.log("🔥 Seeded 5 clients successfully!");
 }

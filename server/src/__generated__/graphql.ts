@@ -225,6 +225,7 @@ export type CreateTaskInput = {
 };
 
 export type CreateTimeLogInput = {
+  businessId: Scalars['ID']['input'];
   date: Scalars['DateTime']['input'];
   hoursWorked: Scalars['Float']['input'];
   notes?: InputMaybe<Scalars['String']['input']>;

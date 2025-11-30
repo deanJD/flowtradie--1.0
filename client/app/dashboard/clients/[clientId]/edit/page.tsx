@@ -1,3 +1,4 @@
+// client/app/dashboard/clients/[clientId]/edit/page.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -24,15 +25,12 @@ export default function EditClientPage() {
 
   // --- State ---
   const [form, setForm] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
+    businessName: '',
     email: '',
     phone: '',
-    addressLine1: '',
-    addressLine2: '',
-    city: '',
-    state: '',
-    postcode: '',
-    country: '',
+    notes: '',
   });
 
   const [updateClient, { loading: saving }] = useMutation(UPDATE_CLIENT_MUTATION, {
@@ -45,21 +43,18 @@ export default function EditClientPage() {
     if (data?.client) {
       const c = data.client;
       setForm({
-        name: c.name ?? '',
+        firstName: c.firstName ?? '',
+        lastName: c.lastName ?? '',
+        businessName: c.businessName ?? '',
         email: c.email ?? '',
         phone: c.phone ?? '',
-        addressLine1: c.addressLine1 ?? '',
-        addressLine2: c.addressLine2 ?? '',
-        city: c.city ?? '',
-        state: c.state ?? '',
-        postcode: c.postcode ?? '',
-        country: c.country ?? '',
+        notes: c.notes ?? '',
       });
     }
   }, [data]);
 
   // --- Change Handler ---
-  const set = (key: string) => (e: any) =>
+  const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
   // --- Submit Handler ---
@@ -69,12 +64,12 @@ export default function EditClientPage() {
     try {
       await updateClient({
         variables: {
-          updateClientId: clientId,
-          input: { ...form },
+          id: clientId,               // 👈 must match mutation definition
+          input: { ...form },         // 👈 matches UpdateClientInput
         },
       });
 
-      router.push('/dashboard/clients');
+      router.push(`/dashboard/clients/${clientId}`);
     } catch (err) {
       console.error('Update client error:', err);
       alert('Failed to update client.');
@@ -91,19 +86,55 @@ export default function EditClientPage() {
       <form className={styles.form} onSubmit={handleSubmit}>
         <h1 className={styles.title}>Edit Client</h1>
 
-        <Input label="Client Name" id="name" type="text" value={form.name} onChange={set("name")} required />
-        <Input label="Email" id="email" type="email" value={form.email} onChange={set("email")} required />
-        <Input label="Phone" id="phone" type="text" value={form.phone} onChange={set("phone")} />
+        <Input
+          label="First Name"
+          id="firstName"
+          type="text"
+          value={form.firstName}
+          onChange={set('firstName')}
+          required
+        />
+        <Input
+          label="Last Name"
+          id="lastName"
+          type="text"
+          value={form.lastName}
+          onChange={set('lastName')}
+          required
+        />
+        <Input
+          label="Business Name"
+          id="businessName"
+          type="text"
+          value={form.businessName}
+          onChange={set('businessName')}
+        />
+        <Input
+          label="Email"
+          id="email"
+          type="email"
+          value={form.email}
+          onChange={set('email')}
+        />
+        <Input
+          label="Phone"
+          id="phone"
+          type="text"
+          value={form.phone}
+          onChange={set('phone')}
+        />
 
-        <Input label="Address Line 1" id="addressLine1" type="text" value={form.addressLine1} onChange={set("addressLine1")} />
-        <Input label="Address Line 2" id="addressLine2" type="text" value={form.addressLine2} onChange={set("addressLine2")} />
-        <Input label="City" id="city" type="text" value={form.city} onChange={set("city")} />
-        <Input label="State" id="state" type="text" value={form.state} onChange={set("state")} />
-        <Input label="Postcode" id="postcode" type="text" value={form.postcode} onChange={set("postcode")} />
-        <Input label="Country" id="country" type="text" value={form.country} onChange={set("country")} />
+        {/* If your Input supports textarea mode, or replace this with a <textarea> */}
+        <Input
+          label="Notes"
+          id="notes"
+          type="text"
+          value={form.notes}
+          onChange={set('notes')}
+        />
 
         <div className={styles.buttonGroup}>
-          <Button href="/dashboard/clients" variant="secondary" type="button">
+          <Button href={`/dashboard/clients/${clientId}`} variant="secondary" type="button">
             Cancel
           </Button>
 

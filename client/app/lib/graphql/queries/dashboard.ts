@@ -2,12 +2,12 @@
 import { gql } from '@apollo/client';
 
 export const GET_DASHBOARD_SUMMARY_QUERY = gql`
-  query GetDashboardSummary {
-    getDashboardSummary {
-      totalOpenProjects
-      invoicesDueSoon
-      tasksDueToday
-      totalRevenueYTD
+  query DashboardProjects($businessId: ID!) {
+    projects(businessId: $businessId) {
+      id
+      status
+      amount   # if exists
+      createdAt
     }
   }
 `;

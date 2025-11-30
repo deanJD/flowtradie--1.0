@@ -1,4 +1,3 @@
-// client/app/lib/graphql/queries/me.ts
 import { gql } from '@apollo/client';
 
 export const ME_QUERY = gql`
@@ -8,6 +7,7 @@ export const ME_QUERY = gql`
       name
       email
       role
+      businessId   # 🔥 THIS MUST BE HERE
     }
   }
 `;

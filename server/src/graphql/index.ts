@@ -7,7 +7,7 @@ import { fileURLToPath } from "url";
 // vvvv IMPORT OUR NEW RESOLVER vvvv
 import  billableItemResolvers  from "./resolvers/billable_item.js";
 // ^^^^ END OF IMPORT ^^^^
-
+  
 import { clientResolvers } from "./resolvers/client.js";
 import { projectResolvers } from "./resolvers/project.js";
 import { quoteResolvers } from "./resolvers/quote.js";
@@ -17,12 +17,14 @@ import { expenseResolvers } from "./resolvers/expense.js";
 import { timeLogResolvers } from "./resolvers/timelog.js";
 import { reportingResolvers } from "./resolvers/reporting.js";
 import { paymentResolvers } from "./resolvers/payment.js";
+import { meResolvers } from "./resolvers/me.js";
+
 import { authResolvers } from "./resolvers/auth.js";
 import { userResolvers } from "./resolvers/user.js";
 import { dateTimeScalar } from "./scalars/dateTime.js";
 import { invoiceSettingsResolvers } from "./resolvers/invoiceSettings.js";
 import { businessResolvers } from "./resolvers/business.js";
-import { GraphQLJSON } from "graphql-type-json";// ... (file path logic is the same) ...
+import { GraphQLJSON } from "graphql-type-json";   // 👈 JSON scalar
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,6 +35,8 @@ export const typeDefs = mergeTypeDefs(typesArray);
 
 const resolverModules = [
   { DateTime: dateTimeScalar },
+    { JSON: GraphQLJSON },   
+  meResolvers,
   authResolvers,
   userResolvers,
   clientResolvers,
@@ -46,7 +50,9 @@ const resolverModules = [
   reportingResolvers,
   billableItemResolvers,
   invoiceSettingsResolvers,
-  businessResolvers, // <-- ADD THE NEW RESOLVER TO THE ARRAY
+  businessResolvers,
+  
+   // <-- ADD THE NEW RESOLVER TO THE ARRAY
 ];
 
 export const resolvers = mergeResolvers(resolverModules.filter(Boolean));

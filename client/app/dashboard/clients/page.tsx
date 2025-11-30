@@ -1,59 +1,75 @@
 // client/app/dashboard/clients/page.tsx
-'use client';
+"use client";
 
-import React from 'react';
-import { useQuery } from '@apollo/client';
-import { GET_CLIENTS_QUERY } from '@/app/lib/graphql/queries/clients';
-import Link from 'next/link';
-import DataTable from '@/components/DataTable/DataTable';
-import ListPageLayout from '@/components/ListPageLayout/ListPageLayout';
-import tableStyles from '@/components/DataTable/DataTable.module.css';
+import React, { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useQuery } from "@apollo/client";
+import { useAuth } from "@/app/context/AuthContext";
+import { GET_CLIENTS_QUERY } from "@/app/lib/graphql/queries/clients";
+import Button from "@/components/Button/Button";
+import styles from "./ClientsPage.module.css";
 
 export default function ClientsPage() {
-  const { data, loading, error } = useQuery(GET_CLIENTS_QUERY);
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
 
-  // Define the "blueprint" for our Clients table
-  const clientColumns = [
-    {
-      header: 'Name',
-      accessor: 'name',
-      render: (row: any) => (
-        <Link href={`/dashboard/clients/${row.id}`} className={tableStyles.tableLink}>
-          {row.name}
-        </Link>
-      )
-    },
-    {
-      header: 'Email',
-      accessor: 'email'
-    },
-    {
-      header: 'Phone',
-      accessor: 'phone',
-      render: (row: any) => row.phone || 'N/A' // Handle cases where phone is null
-    },
-    {
-      header: 'Actions',
-      accessor: 'id',
-      className: tableStyles.actionsCell, // Apply our right-alignment class
-      render: (row: any) => (
-        <Link href={`/dashboard/clients/${row.id}/edit`} className={tableStyles.tableLink}>
-          Edit
-        </Link>
-      )
+  // 🔐 Protect route
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/login");
     }
-  ];
+  }, [authLoading, user, router]);
 
-  if (loading) return <p>Loading clients...</p>;
-  if (error) return <p>Error: {error.message}</p>;
+  // 🧠 Fetch clients ONLY IF businessId is ready
+  const { data, loading, error } = useQuery(GET_CLIENTS_QUERY, {
+    variables: { businessId: user?.businessId },
+    skip: !user?.businessId,
+    fetchPolicy: "network-only",
+  });
+
+  if (authLoading || loading) return <p>Loading clients...</p>;
+  if (error) return <p>Error loading clients: {error.message}</p>;
+
+  const clients = data?.clients ?? [];
 
   return (
-    <ListPageLayout
-      title="Clients"
-      newButtonText="+ New Client"
-      newButtonLink="/dashboard/clients/new"
-    >
-      <DataTable columns={clientColumns} data={data?.clients} />
-    </ListPageLayout>
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <h1>Clients</h1>
+        <Button href="/dashboard/clients/new">+ Add Client</Button>
+      </div>
+
+      {clients.length === 0 ? (
+        <p>No clients found yet.</p>
+      ) : (
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>Client Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Business</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {clients.map((c: any) => (
+              <tr key={c.id}>
+                <td>{c.firstName} {c.lastName}</td>
+                <td>{c.email || "—"}</td>
+                <td>{c.phone || "—"}</td>
+                <td>{c.businessName || "—"}</td>
+                <td>
+                  <Link href={`/dashboard/clients/${c.id}`} className={styles.viewLink}>
+                    View →
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
   );
 }

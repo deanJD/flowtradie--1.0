@@ -7,7 +7,7 @@ import {
 
 export async function getAll(ctx: GraphQLContext) {
   const result = await ctx.prisma.timeLog.findMany({
-    where: { businessId: ctx.businessId },
+    where: ctx.businessId ? { businessId: ctx.businessId } : {},
     include: { project: true, user: true },
   });
 
@@ -28,7 +28,10 @@ export async function getById(id: string, ctx: GraphQLContext) {
 
 export async function create(input: CreateTimeLogInput, ctx: GraphQLContext) {
   const log = await ctx.prisma.timeLog.create({
-    data: { ...input, businessId: ctx.businessId },
+    data: {
+      ...input,
+      ...(ctx.businessId !== null ? { businessId: ctx.businessId } : {}),
+    },
     include: { project: true, user: true },
   });
 

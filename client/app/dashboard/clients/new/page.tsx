@@ -3,98 +3,118 @@
 import React, { useState } from 'react';
 import { useMutation } from '@apollo/client';
 import { useRouter } from 'next/navigation';
+
+import { useAuth } from '@/app/context/AuthContext';
 import { CREATE_CLIENT_MUTATION } from '@/app/lib/graphql/mutations/client';
 import { GET_CLIENTS_QUERY } from '@/app/lib/graphql/queries/clients';
-import styles from './NewClientPage.module.css';
-import Button from '@/components/Button/Button';
+
 import Input from '@/components/Input/Input';
+import Button from '@/components/Button/Button';
+import styles from './NewClientPage.module.css';
 
 export default function NewClientPage() {
+  const { user } = useAuth();
   const router = useRouter();
 
-  // -------------------------
-  // NEW structured address fields
-  // -------------------------
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  // --- Form State ---
+  const [form, setForm] = useState({
+    firstName: '',
+    lastName: '',
+    businessName: '',
+    email: '',
+    phone: '',
+    type: 'RESIDENTIAL',
 
-  const [addressLine1, setAddressLine1] = useState('');
-  const [addressLine2, setAddressLine2] = useState('');
-  const [city, setCity] = useState('');
-  const [state, setStateField] = useState('');
-  const [postcode, setPostcode] = useState('');
-  const [country, setCountry] = useState('');
-
-  const [createClient, { loading, error }] = useMutation(CREATE_CLIENT_MUTATION, {
-    update(cache, { data: { createClient: newClient } }) {
-      const existing = cache.readQuery<{ clients: any[] }>({ query: GET_CLIENTS_QUERY });
-
-      if (existing?.clients) {
-        cache.writeQuery({
-          query: GET_CLIENTS_QUERY,
-          data: { clients: [newClient, ...existing.clients] },
-        });
-      }
-    },
-    onCompleted: () => router.push('/dashboard/clients'),
+    // --- Address Form ---
+    line1: '',
+    line2: '',
+    city: '',
+    state: '',
+    postcode: '',
+    country: 'Australia', // default 🇦🇺
   });
 
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
+  const set = (k: string) => (e: any) =>
+    setForm((f) => ({ ...f, [k]: e.target.value }));
 
-    createClient({
-      variables: {
-        input: {
-          name,
-          email,
-          phone,
-          addressLine1,
-          addressLine2,
-          city,
-          state,
-          postcode,
-          country,
+  // --- GraphQL Mutation Setup ---
+  const [createClient, { loading }] = useMutation(CREATE_CLIENT_MUTATION, {
+    refetchQueries: [
+      { query: GET_CLIENTS_QUERY, variables: { businessId: user?.businessId } },
+    ],
+    awaitRefetchQueries: true,
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.businessId) return alert('No business ID found!');
+
+    try {
+      await createClient({
+        variables: {
+          input: {
+            businessId: user.businessId,
+            firstName: form.firstName,
+            lastName: form.lastName,
+            businessName: form.businessName,
+            email: form.email,
+            phone: form.phone,
+            type: form.type,
+
+            addresses: [
+              {
+                line1: form.line1,
+                line2: form.line2,
+                city: form.city,
+                state: form.state,
+                postcode: form.postcode,
+                country: form.country,
+              }
+            ],
+          },
         },
-      },
-    });
+      });
+
+      router.push('/dashboard/clients');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to create client.');
+    }
   };
 
+  // --- Render Form ---
   return (
     <div className={styles.container}>
       <form className={styles.form} onSubmit={handleSubmit}>
-        <h1 className={styles.title}>Create a New Client</h1>
+        <h1>Add New Client</h1>
 
-        <Input label="Client Name" id="name" value={name} onChange={(e) => setName(e.target.value)} required />
+        {/* --- Basic Info --- */}
+        <Input label="First Name" value={form.firstName} onChange={set('firstName')} required />
+        <Input label="Last Name" value={form.lastName} onChange={set('lastName')} required />
+        <Input label="Business Name" value={form.businessName} onChange={set('businessName')} />
+        <Input label="Email" type="email" value={form.email} onChange={set('email')} />
+        <Input label="Phone" value={form.phone} onChange={set('phone')} />
 
-        <Input label="Email" id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        {/* --- Address Section --- */}
+        <h2 className={styles.subtitle}>Address</h2>
+        <Input label="Address Line 1" value={form.line1} onChange={set('line1')} required />
+        <Input label="Address Line 2" value={form.line2} onChange={set('line2')} />
+        <Input label="City" value={form.city} onChange={set('city')} required />
+        <Input label="State" value={form.state} onChange={set('state')} />
+        <Input label="Postcode" value={form.postcode} onChange={set('postcode')} required />
+        <Input label="Country" value={form.country} onChange={set('country')} />
 
-        <Input label="Phone" id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+        {/* --- Client Type --- */}
+        <select className={styles.select} value={form.type} onChange={set('type')}>
+          <option value="RESIDENTIAL">Residential</option>
+          <option value="COMMERCIAL">Commercial</option>
+        </select>
 
-        <h3 className={styles.subTitle}>Client Address</h3>
-
-        <Input label="Address Line 1" id="addressLine1" value={addressLine1} onChange={(e) => setAddressLine1(e.target.value)} />
-
-        <Input label="Address Line 2" id="addressLine2" value={addressLine2} onChange={(e) => setAddressLine2(e.target.value)} />
-
-        <Input label="Postcode" id="postcode" value={postcode} onChange={(e) => setPostcode(e.target.value)} />
-
-
-        <Input label="City" id="city" value={city} onChange={(e) => setCity(e.target.value)} />
-
-        <Input label="State" id="state" value={state} onChange={(e) => setStateField(e.target.value)} />
-
-        
-        <Input label="Country" id="country" value={country} onChange={(e) => setCountry(e.target.value)} />
-
-        {error && <p style={{ color: 'red' }}>Error: {error.message}</p>}
-
+        {/* --- Buttons --- */}
         <div className={styles.buttonGroup}>
+          <Button href="/dashboard/clients" variant="secondary" type="button">Cancel</Button>
           <Button type="submit" disabled={loading}>
-            {loading ? 'Creating...' : 'Create Client'}
-          </Button>
-          <Button href="/dashboard/clients" variant="secondary">
-            Cancel
+            {loading ? 'Saving…' : 'Save Client'}
           </Button>
         </div>
       </form>

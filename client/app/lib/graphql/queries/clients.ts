@@ -1,20 +1,16 @@
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
 export const GET_CLIENTS_QUERY = gql`
-  query GetClients {
-    clients {
+  query GetClients($businessId: ID!) {
+    clients(businessId: $businessId) {
       id
-      name
+      firstName
+      lastName
+      businessName
       email
       phone
-      addressLine1
-      addressLine2
-      city
-      state
-      postcode
-      country
+      type
       createdAt
-      updatedAt
     }
   }
 `;

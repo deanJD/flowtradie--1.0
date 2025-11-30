@@ -14,23 +14,26 @@ async function startServer() {
   const app = express();
   const httpServer = http.createServer(app);
 
-  const typesArray = loadFilesSync("src/graphql/schemas/**/*.graphql");
+  const typesArray = loadFilesSync("src/**/*.graphql");
   const typeDefs = mergeTypeDefs(typesArray);
 
   const server = new ApolloServer({
     typeDefs,
-    resolvers: resolvers as any,
+    resolvers: resolvers as any, // 🛠 fixes type error
+    csrfPrevention: false,       // 🧠 disable CSRF BLOCK
   });
 
   await server.start();
 
   app.use(
-    "/",
-    cors<cors.CorsRequest>(),
-    express.json(), // This line is essential and must be here
-    
+    "/graphql",
+    cors(),                                 // 🛡 allow frontend
+    express.json({ limit: "10mb" }),        // MUST come before Apollo
     expressMiddleware(server, {
-      context: async ({ req }: { req: any }) => buildContext({ req }),
+      // 🧠 fix context type:
+      context: async ({ req }) => {
+        return buildContext({ req }) as any;
+      },
     })
   );
 
@@ -38,7 +41,8 @@ async function startServer() {
     httpServer.listen({ port: 4000 }, resolve)
   );
 
-  console.log(`🚀 Server ready at http://localhost:4000/`);
+  console.log(`🚀 FlowTradie GraphQL ready at http://localhost:4000/graphql`);
 }
 
 startServer();
+export {};

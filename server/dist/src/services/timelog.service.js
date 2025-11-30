@@ -1,6 +1,6 @@
 export async function getAll(ctx) {
     const result = await ctx.prisma.timeLog.findMany({
-        where: { businessId: ctx.businessId },
+        where: ctx.businessId ? { businessId: ctx.businessId } : {},
         include: { project: true, user: true },
     });
     return result.map((log) => ({
@@ -17,7 +17,10 @@ export async function getById(id, ctx) {
 }
 export async function create(input, ctx) {
     const log = await ctx.prisma.timeLog.create({
-        data: { ...input, businessId: ctx.businessId },
+        data: {
+            ...input,
+            ...(ctx.businessId !== null ? { businessId: ctx.businessId } : {}),
+        },
         include: { project: true, user: true },
     });
     return { ...log, hoursWorked: log.hoursWorked.toNumber() };

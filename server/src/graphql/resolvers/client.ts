@@ -25,7 +25,7 @@ export const clientResolvers: Resolvers = {
 
   Mutation: {
     createClient: async (_p, args: MutationCreateClientArgs, ctx: GraphQLContext) => {
-      return clientService.create(args.input, ctx) as Promise<GQLClient>;
+      return clientService.create(args.input, ctx) as unknown as Promise<GQLClient>;
     },
 
     updateClient: async (_p, args: MutationUpdateClientArgs, ctx: GraphQLContext) => {

@@ -3,28 +3,25 @@
 
 import React, { useState } from 'react';
 import { useMutation } from '@apollo/client';
-import { useRouter } from 'next/navigation'; // <-- 1. Import the router for redirects
-import { useAuth } from '../context/AuthContext'; // <-- 2. Import our new useAuth hook
+import { useAuth } from '../context/AuthContext';
 import { LOGIN_MUTATION } from '../lib/graphql/mutations/login';
 import styles from './LoginPage.module.css';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const router = useRouter();
-  const { login: authLogin } = useAuth(); // <-- 3. Get the login function from our context
+  const { login: authLogin } = useAuth();
 
-  // 4. Add an 'onCompleted' callback to useMutation.
-  // This function will automatically run when the login is successful.
   const [login, { loading, error }] = useMutation(LOGIN_MUTATION, {
     onCompleted: (data) => {
       console.log('Login successful!', data);
-      // Get the token and user from the response
       const { token, user } = data.login;
-      // Call the login function from our AuthContext to save the state
+
+      // Save token to context + localStorage
       authLogin(token, user);
-      // Redirect the user to their dashboard
-      router.push('/dashboard');
+
+      // ❗⛔ TEMPORARILY DISABLE REDIRECT – STAY ON LOGIN PAGE
+      console.log("🚫 Redirect temporarily disabled — for TOKEN TEST");
     },
   });
 
@@ -33,10 +30,7 @@ export default function LoginPage() {
     try {
       await login({
         variables: {
-          input: {
-            email,
-            password,
-          },
+          input: { email, password },
         },
       });
     } catch (e) {
@@ -78,9 +72,30 @@ export default function LoginPage() {
         </button>
 
         {error && <p style={{ color: 'red', marginTop: '1rem' }}>Error: {error.message}</p>}
-        
-        {/* We no longer need to display the raw data here */}
       </form>
+
+      {/* 🔍 BUTTON FOR DIRECT TOKEN TEST */}
+      <button
+        type="button"
+        onClick={() => {
+          fetch("http://localhost:4000/graphql", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`, // 👈 DIRECT SEND
+            },
+            body: JSON.stringify({
+              query: `query { me { id email role businessId } }`,
+            }),
+          })
+            .then((res) => res.json())
+            .then((data) => console.log("🔍 DIRECT FETCH RESULT:", data))
+            .catch((err) => console.error("❌ FETCH ERROR:", err));
+        }}
+        style={{ marginTop: "1rem" }}
+      >
+        🔍 Test Token (Debug Only)
+      </button>
     </div>
   );
 }

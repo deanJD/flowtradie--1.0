@@ -9,9 +9,11 @@ const selectSafeUser = {
   name: true,
   role: true,
   phone: true,
+  businessId: true,
   hourlyRate: true,
   createdAt: true,
   updatedAt: true,
+  
 };
 
 export const userService = {
@@ -35,18 +37,14 @@ export const userService = {
   },
 
   getMe: (ctx: GraphQLContext) => {
-    if (!ctx.user) {
-      return null;
-    }
-    // CHANGED: Use findFirst to ensure the logged-in user hasn't been soft-deleted
-    return ctx.prisma.user.findFirst({
-      where: {
-        id: ctx.user.id,
-        deletedAt: null,
-      },
-      select: selectSafeUser,
-    });
-  },
+  if (!ctx.user) return null;
+
+  return ctx.prisma.user.findFirst({
+    where: { id: ctx.user.id, deletedAt: null },
+    select: selectSafeUser, // ← NOW includes businessId
+  });
+},
+
 
   // vvvvvvvv NEW DELETE FUNCTION ADDED vvvvvvvv
   delete: (id: string, ctx: GraphQLContext) => {

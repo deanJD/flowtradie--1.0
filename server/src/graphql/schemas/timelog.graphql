@@ -22,6 +22,9 @@ input CreateTimeLogInput {
   projectId: ID!
   userId: ID!
   notes: String
+
+  # 🔥 ADDED — REQUIRED BY PRISMA MODEL:
+  businessId: ID!
 }
 
 input UpdateTimeLogInput {
