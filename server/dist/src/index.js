@@ -15,16 +15,14 @@ async function startServer() {
     const typeDefs = mergeTypeDefs(typesArray);
     const server = new ApolloServer({
         typeDefs,
-        resolvers: resolvers, // 🛠 fixes type error
-        csrfPrevention: false, // 🧠 disable CSRF BLOCK
+        resolvers: resolvers,
+        csrfPrevention: false,
     });
     await server.start();
-    app.use("/graphql", cors(), // 🛡 allow frontend
-    express.json({ limit: "10mb" }), // MUST come before Apollo
-    expressMiddleware(server, {
-        // 🧠 fix context type:
+    app.use("/graphql", cors(), express.json({ limit: "10mb" }), expressMiddleware(server, {
+        // 🔥 FIX — buildContext is async → MUST await
         context: async ({ req }) => {
-            return buildContext({ req });
+            return await buildContext({ req });
         },
     }));
     await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve));

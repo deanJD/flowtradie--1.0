@@ -23,24 +23,22 @@ export async function buildContext({ req }: { req: IncomingMessage }): Promise<G
       ? authHeader.replace("Bearer ", "")
       : null;
 
-  console.log("🧾 RAW TOKEN:", token);
-
   let decoded: any = null;
   let dbUser: any = null;
 
   if (token) {
     try {
       decoded = decodeToken(token);
-      console.log("🧠 Decoded user:", decoded);
 
-      // 🔥 FETCH REAL USER FROM DATABASE
       dbUser = await prisma.user.findUnique({
         where: { id: decoded.id },
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          businessId: true,   // ⚡ REQUIRED FOR PROJECTS / INVOICES / ALL
+        },
       });
-
-      if (!dbUser) {
-        console.log("❌ No user found in DB.");
-      }
     } catch (e) {
       console.error("❌ Invalid JWT:", e);
     }
@@ -48,14 +46,7 @@ export async function buildContext({ req }: { req: IncomingMessage }): Promise<G
 
   return {
     prisma,
-    businessId: decoded?.businessId ?? null,
-    user: dbUser
-      ? {
-          id: dbUser.id,
-          email: dbUser.email,
-          role: dbUser.role,
-          businessId: dbUser.businessId,
-        }
-      : null,  // 🧠 MUST BE NULL if NOT LOGGED IN!
+    businessId: dbUser?.businessId ?? null, // ✔ NOW CONTEXT HAS IT
+    user: dbUser,
   };
 }

@@ -2,74 +2,163 @@
 
 import { GraphQLContext } from "../../context.js";
 import { projectService } from "../../services/project.service.js";
-
 import {
   QueryProjectArgs,
   MutationCreateProjectArgs,
   MutationUpdateProjectArgs,
   MutationDeleteProjectArgs,
-  Project as GQLProject,
 } from "@/__generated__/graphql.js";
 
 export const projectResolvers = {
+  // -----------------------
+  // 🔍 QUERY
+  // -----------------------
   Query: {
     projects: async (
-      _p: unknown,
+      _parent: unknown,
       _args: unknown,
       ctx: GraphQLContext
-    ): Promise<GQLProject[]> => {
-      const result = await projectService.getAll(undefined, ctx);
-      return result as unknown as GQLProject[];  // ⬅ FIX: CAST
+    ): Promise<any[]> => {
+      return projectService.getAll(undefined, ctx);
     },
 
     project: async (
-      _p: unknown,
+      _parent: unknown,
       { id }: QueryProjectArgs,
       ctx: GraphQLContext
-    ): Promise<GQLProject | null> => {
-      const result = await projectService.getById(id, ctx);
-      return result as unknown as GQLProject | null;  // ⬅ FIX: CAST
+    ): Promise<any | null> => {
+      return projectService.getById(id, ctx);
     },
   },
 
+  // -----------------------
+  // 🛠 MUTATION
+  // -----------------------
   Mutation: {
     createProject: async (
-      _p: unknown,
+      _parent: unknown,
       { input }: MutationCreateProjectArgs,
       ctx: GraphQLContext
-    ): Promise<GQLProject> => {
-      const result = await projectService.create(input, ctx);
-      return result as unknown as GQLProject;  // ⬅ FIX: CAST
+    ): Promise<any> => {
+      return projectService.create(input, ctx);
     },
 
     updateProject: async (
-      _p: unknown,
+      _parent: unknown,
       { id, input }: MutationUpdateProjectArgs,
       ctx: GraphQLContext
-    ): Promise<GQLProject> => {
+    ): Promise<any> => {
       const { user } = ctx;
       if (!user) throw new Error("You must be logged in to update a project.");
-
-      // Role-guard for budget
-      if (
-        input.budgetedAmount !== undefined &&
-        user.role !== "OWNER" &&
-        user.role !== "ADMIN"
-      ) {
+      if (input.budgetedAmount !== undefined && !["OWNER", "ADMIN"].includes(user.role)) {
         throw new Error("You are not authorized to edit the project budget.");
       }
-
-      const result = await projectService.update(id, input, ctx);
-      return result as unknown as GQLProject;  // ⬅ FIX: CAST
+      return projectService.update(id, input, ctx);
     },
 
     deleteProject: async (
-      _p: unknown,
+      _parent: unknown,
       { id }: MutationDeleteProjectArgs,
       ctx: GraphQLContext
-    ): Promise<GQLProject> => {
-      const result = await projectService.delete(id, ctx);
-      return result as unknown as GQLProject;  // ⬅ FIX: CAST
+    ): Promise<any> => {
+      return projectService.delete(id, ctx);
+    },
+  },
+
+  // -----------------------
+  // 🔗 RELATIONS
+  // -----------------------
+  Project: {
+    client: (
+      parent: { id: string },
+      _args: unknown,
+      ctx: GraphQLContext
+    ): Promise<any> => {
+      return projectService.getClient(parent.id, ctx);
+    },
+
+    invoices: (
+      parent: { id: string },
+      _args: unknown,
+      ctx: GraphQLContext
+    ): Promise<any[]> => {
+      return projectService.getInvoices(parent.id, ctx);
+    },
+
+    quotes: (
+      parent: { id: string },
+      _args: unknown,
+      ctx: GraphQLContext
+    ): Promise<any[]> => {
+      return projectService.getQuotes(parent.id, ctx);
+    },
+
+    tasks: (
+      parent: { id: string },
+      _args: unknown,
+      ctx: GraphQLContext
+    ): Promise<any[]> => {
+      return projectService.getTasks(parent.id, ctx);
+    },
+
+    expenses: (
+      parent: { id: string },
+      _args: unknown,
+      ctx: GraphQLContext
+    ): Promise<any[]> => {
+      return projectService.getExpenses(parent.id, ctx);
+    },
+
+    timeLogs: (
+      parent: { id: string },
+      _args: unknown,
+      ctx: GraphQLContext
+    ): Promise<any[]> => {
+      return projectService.getTimeLogs(parent.id, ctx);
+    },
+
+    // -----------------------
+    // 🧮 REPORTING (NEW)
+    // -----------------------
+    financialSummary: (
+      parent: { id: string },
+      _args: unknown,
+      ctx: GraphQLContext
+    ): Promise<any> => {
+      return projectService.getFinancialSummary(parent.id, ctx);
+    },
+
+    isOverdue: (
+      parent: { endDate?: string | Date | null }
+    ): boolean => {
+      if (!parent.endDate) return false;
+      return new Date(parent.endDate) < new Date();
+    },
+
+    progress: async (
+      parent: { id: string },
+      _args: unknown,
+      ctx: GraphQLContext
+    ): Promise<number> => {
+      const tasks = await ctx.prisma.task.findMany({
+        where: { projectId: parent.id, deletedAt: null },
+      });
+      if (!tasks.length) return 0;
+      const done = tasks.filter((t) => t.isCompleted).length;
+      return done / tasks.length;
+    },
+
+    totalHoursWorked: async (
+      parent: { id: string },
+      _args: unknown,
+      ctx: GraphQLContext
+    ): Promise<number> => {
+      const result = await ctx.prisma.timeLog.aggregate({
+        where: { projectId: parent.id, deletedAt: null },
+        _sum: { hoursWorked: true },
+      });
+      const hours = result._sum.hoursWorked;
+      return hours ? Number(hours) : 0;
     },
   },
 };

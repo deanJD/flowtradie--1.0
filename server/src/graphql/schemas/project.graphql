@@ -3,7 +3,7 @@
 type Project {
   id: ID!
   title: String!
-  businessId: ID!           # ✅ KEEP THIS
+  businessId: ID!
   description: String
   location: String
   status: ProjectStatus!
@@ -22,6 +22,21 @@ type Project {
   tasks: [Task!]!
   expenses: [ProjectExpense!]!
   timeLogs: [TimeLog!]!
+
+  # --- 💰 Reporting Fields (Computed) ---
+  financialSummary: ProjectFinancialSummary!  # ← NEW
+  isOverdue: Boolean!                         # ← NEW
+  progress: Float!                            # ← NEW
+  totalHoursWorked: Float!                    # ← NEW
+}
+
+# 💰 Project Reporting Model — NEW
+type ProjectFinancialSummary {
+  invoicesTotal: Float!
+  paymentsTotal: Float!
+  expensesTotal: Float!
+  hoursWorked: Float!
+  estimatedProfit: Float!
 }
 
 # --- Input Types ---
@@ -47,11 +62,16 @@ input UpdateProjectInput {
   budgetedAmount: Float
 }
 
+# --- Queries ---
 extend type Query {
-  projects: [Project!]!      # NO ARGS — filter by business in service layer
+  projects: [Project!]!            # No args — filtered by businessId
   project(id: ID!): Project
+
+  # 🔥 Optional: direct report query
+  projectReport(id: ID!): ProjectFinancialSummary!
 }
 
+# --- Mutations ---
 extend type Mutation {
   createProject(input: CreateProjectInput!): Project!
   updateProject(id: ID!, input: UpdateProjectInput!): Project!

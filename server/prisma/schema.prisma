@@ -18,6 +18,7 @@ enum ProjectStatus {
   ACTIVE
   COMPLETED
   CANCELLED
+  DELETED // 🧠 helpful for filtering in UI
 }
 
 enum QuoteStatus {
@@ -25,6 +26,7 @@ enum QuoteStatus {
   SENT
   ACCEPTED
   REJECTED
+  DELETED
 }
 
 enum InvoiceStatus {
@@ -33,6 +35,7 @@ enum InvoiceStatus {
   PAID
   OVERDUE
   PARTIALLY_PAID
+  DELETED
 }
 
 enum UserRole {
@@ -51,8 +54,8 @@ enum ClientType {
 }
 
 enum AddressType {
-  BUSINESS        // Billing / Registered
-  SITE            // Job location
+  BUSINESS
+  SITE
   CLIENT_BUSINESS
   CLIENT_SITE
   OTHER
@@ -62,71 +65,69 @@ enum AddressType {
 //  REGION (FOR TAX & LANGUAGE)
 // ======================
 model Region {
-  id             String   @id @default(cuid())
-  code           String   @unique        // "AU", "UK", "US"
-  name           String                // "Australia"
-  currencyCode   String                // "AUD"
-  currencySymbol String                // "$"
-  taxLabel       String                // "GST", "VAT"
-  defaultTaxRate Decimal  @db.Decimal(5, 2)
-  locale         String                // "en-AU"
+  id             String  @id @default(cuid())
+  code           String  @unique
+  name           String
+  currencyCode   String
+  currencySymbol String
+  taxLabel       String
+  defaultTaxRate Decimal @db.Decimal(5, 2)
+  locale         String
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  deletedAt      DateTime?    // Soft delete
-  
-  businesses     Business[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  businesses Business[]
+
+  @@index([code])
 }
 
 // ======================
 //  ADDRESS
 // ======================
 model Address {
-  id           String       @id @default(cuid())
-  addressType  AddressType  @default(BUSINESS)
+  id          String      @id @default(cuid())
+  addressType AddressType @default(BUSINESS)
 
-  line1        String
-  line2        String?
-  city         String
-  state        String?
-  postcode     String
-  country      String?
-  countryCode  String?
+  line1       String
+  line2       String?
+  city        String
+  state       String?
+  postcode    String
+  country     String?
+  countryCode String?
 
-  deletedAt    DateTime?    // Soft delete
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-
-  // RELATIONS
-  businesses   Business[]   @relation("BusinessAddresses")
-  clients      Client[]     @relation("ClientAddresses")
+  businesses Business[] @relation("BusinessAddresses")
+  clients    Client[]   @relation("ClientAddresses")
 }
 
 // ======================
 //  BUSINESS (TENANT)
 // ======================
 model Business {
-  id                 String   @id @default(cuid())
+  id                 String  @id @default(cuid())
   name               String
   legalName          String?
-  registrationNumber String?  // ABN / company number
+  registrationNumber String?
   email              String
   phone              String?
   website            String?
   logoUrl            String?
 
-  regionId   String
-  region     Region   @relation(fields: [regionId], references: [id])
+  regionId String
+  region   Region @relation(fields: [regionId], references: [id])
 
-  addressId  String?
-  address    Address? @relation(fields: [addressId], references: [id], name: "BusinessAddresses")
+  addressId String?
+  address   Address? @relation(fields: [addressId], references: [id], name: "BusinessAddresses")
 
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-
 
   users           User[]
   clients         Client[]
@@ -140,13 +141,14 @@ model Business {
   timeLogs        TimeLog[]
   payments        Payment[]
 
+  @@index([regionId])
 }
 
 // ======================
 //  USERS / EMPLOYEES
 // ======================
 model User {
-  id         String   @id @default(cuid())
+  id String @id @default(cuid())
 
   businessId String?
   business   Business? @relation(fields: [businessId], references: [id])
@@ -158,51 +160,55 @@ model User {
   phone      String?
   hourlyRate Decimal? @db.Decimal(10, 2)
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  deletedAt  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   tasks           Task[]
   timeLogs        TimeLog[]
   managedProjects Project[] @relation("ProjectManager")
+
+  @@index([businessId])
 }
 
 // ======================
 //  CLIENT
 // ======================
 model Client {
-  id            String      @id @default(cuid())
+  id           String     @id @default(cuid())
+  firstName    String
+  lastName     String
+  businessName String?
+  phone        String?
+  email        String?
+  type         ClientType @default(RESIDENTIAL)
 
-  firstName     String
-  lastName      String
-  businessName  String?
-  phone         String?
-  email         String?
-  type          ClientType  @default(RESIDENTIAL)
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
 
-  businessId    String
-  business      Business     @relation(fields: [businessId], references: [id])
+  addresses Address[] @relation("ClientAddresses")
+  projects  Project[]
+  invoices  Invoice[]
+  payments  Payment[] // 🔥 NEW — Opposite side of Payment.client
+  notes     String?   @db.Text
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-  // Multiple addresses (HQ + sites)
-  addresses     Address[]    @relation("ClientAddresses")
-
-  projects      Project[]
-  invoices      Invoice[]
-
-  notes         String?      @db.Text
-  deletedAt     DateTime?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  @@index([businessId])
 }
 
 // ======================
 //  PROJECT
 // ======================
 model Project {
-  id             String        @id @default(cuid())
+  id String @id @default(cuid())
 
-  businessId     String
-  business       Business      @relation(fields: [businessId], references: [id])
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id])
 
   title          String
   description    String?
@@ -212,79 +218,85 @@ model Project {
   endDate        DateTime?
   budgetedAmount Decimal?      @db.Decimal(10, 2)
 
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  deletedAt      DateTime?
-
-  clientId  String
-  client    Client   @relation(fields: [clientId], references: [id])
-
   managerId String?
-  manager   User?    @relation("ProjectManager", fields: [managerId], references: [id])
+  manager   User?   @relation("ProjectManager", fields: [managerId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   quotes   Quote[]
   invoices Invoice[]
   tasks    Task[]
   expenses ProjectExpense[]
   timeLogs TimeLog[]
+
+  @@index([businessId])
+  @@index([clientId])
+  @@index([managerId])
+  @@index([status])
 }
 
 // ======================
 //  QUOTE
 // ======================
 model Quote {
-  id          String      @id @default(cuid())
+  id String @id @default(cuid())
 
-  businessId  String
-  business    Business    @relation(fields: [businessId], references: [id])
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
 
   quoteNumber String      @unique
   status      QuoteStatus @default(DRAFT)
   issueDate   DateTime    @default(now())
   expiryDate  DateTime?
 
-  subtotal    Decimal     @db.Decimal(10, 2)
-  taxRate     Decimal     @db.Decimal(5, 2) @default(0.00)
-  taxAmount   Decimal     @db.Decimal(10, 2)
-  totalAmount Decimal     @db.Decimal(10, 2)
+  subtotal    Decimal @db.Decimal(10, 2)
+  taxRate     Decimal @default(0.00) @db.Decimal(5, 2)
+  taxAmount   Decimal @db.Decimal(10, 2)
+  totalAmount Decimal @db.Decimal(10, 2)
 
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  deletedAt   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  projectId String
-  project   Project @relation(fields: [projectId], references: [id])
+  items QuoteItem[]
 
-  items     QuoteItem[]
+  @@index([businessId])
+  @@index([projectId])
+  @@index([status])
 }
 
+// Quote Item (NO CHANGE)
 model QuoteItem {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   description String
-  quantity    Int      @default(1)
-  unitPrice   Decimal  @db.Decimal(10, 2)
-  total       Decimal  @db.Decimal(10, 2)
+  quantity    Int     @default(1)
+  unitPrice   Decimal @db.Decimal(10, 2)
+  total       Decimal @db.Decimal(10, 2)
 
-  quoteId     String
-  quote       Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  quoteId String
+  quote   Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 }
 
 // ======================
-//  PRICE BOOK
+//  BILLABLE ITEM (PRICE BOOK)
 // ======================
 model BillableItem {
-  id          String   @id @default(cuid())
-
+  id          String    @id @default(cuid())
   businessId  String
-  business    Business @relation(fields: [businessId], references: [id])
-
-  name        String   @unique
+  business    Business  @relation(fields: [businessId], references: [id])
+  name        String    @unique
   description String?
-  unitPrice   Decimal  @db.Decimal(10, 2)
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  unitPrice   Decimal   @db.Decimal(10, 2)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
+
+  @@index([businessId])
 }
 
 // ======================
@@ -292,31 +304,25 @@ model BillableItem {
 // ======================
 
 model InvoiceSettings {
-  id           String   @id @default(cuid())
+  id         String   @id @default(cuid())
+  businessId String   @unique
+  business   Business @relation(fields: [businessId], references: [id])
 
-  businessId   String   @unique
-  business     Business @relation(fields: [businessId], references: [id])
+  businessName    String?
+  abn             String?
+  addressSnapshot Json?
+  phone           String?
+  email           String?
+  website         String?
+  logoUrl         String?
+  bankDetails     String?
 
-  businessName String?
-  abn          String?
+  invoicePrefix  String? @default("INV-")
+  startingNumber Int?    @default(1000)
+  defaultDueDays Int?    @default(14)
+  taxRate        Decimal @default(0.10) @db.Decimal(5, 2)
+  taxLabel       String?
 
-  // 🧊 NEW — STRUCTURED JSON
-  addressSnapshot Json?   // replaces addressLine1, city, etc.
-
-  phone        String?
-  email        String?
-  website      String?
-  logoUrl      String?
-  bankDetails  String?
-  
-
-  invoicePrefix  String?  @default("INV-")
-  startingNumber Int?     @default(1000)
-  defaultDueDays Int?     @default(14)
-  taxRate        Decimal  @db.Decimal(5, 2) @default(0.10)
-  taxLabel     String?     // GST / VAT / Sales Tax
-
-  
   smtpHost     String?
   smtpPort     Int?
   smtpUser     String?
@@ -324,113 +330,129 @@ model InvoiceSettings {
   fromEmail    String?
   fromName     String?
 
-  ownerId      String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  ownerId   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ======================
 //  INVOICE 
 // ======================
-
 model Invoice {
-  id            String        @id @default(cuid())
+  id String @id @default(cuid())
 
-  businessId    String
-  business      Business      @relation(fields: [businessId], references: [id])
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
 
-  projectId     String
-  project       Project       @relation(fields: [projectId], references: [id])
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
 
-  clientId      String
-  client        Client        @relation(fields: [clientId], references: [id])
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id])
 
-  invoiceNumber    String  @unique
-  invoicePrefix    String
-  invoiceSequence  Int
+  invoiceNumber   String @unique
+  invoicePrefix   String
+  invoiceSequence Int
 
-  status           InvoiceStatus @default(DRAFT)
-  issueDate        DateTime      @default(now())
-  dueDate          DateTime
-  notes            String?
+  status    InvoiceStatus @default(DRAFT)
+  issueDate DateTime      @default(now())
+  dueDate   DateTime
+  notes     String?
 
-  // Money
-  taxRate           Decimal  @db.Decimal(5, 2) @default(0.00)
-  taxLabelSnapshot  String
-  subtotal          Decimal  @db.Decimal(10, 2)
-  taxAmount         Decimal  @db.Decimal(10, 2)
-  totalAmount       Decimal  @db.Decimal(10, 2)
-  currencyCode      String
+  taxRate          Decimal @default(0.00) @db.Decimal(5, 2)
+  taxLabelSnapshot String
+  subtotal         Decimal @db.Decimal(10, 2)
+  taxAmount        Decimal @db.Decimal(10, 2)
+  totalAmount      Decimal @db.Decimal(10, 2)
+  currencyCode     String
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  deletedAt       DateTime?
+  businessSnapshot Json
+  clientSnapshot   Json
 
-  // 🧊 JSON SNAPSHOTS (FROZEN ON CREATION)
-  businessSnapshot Json     // ← pulls from InvoiceSettings OR Business.address
-  clientSnapshot   Json     // ← pulls from Client + Address selection
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  items     InvoiceItem[]
-  payments  Payment[]
+  items    InvoiceItem[]
+  payments Payment[]
+
+  @@index([businessId])
+  @@index([projectId])
+  @@index([clientId])
+  @@index([status])
 }
 
-
-
+// ======================
+//  INVOICE ITEM
+// ======================
 model InvoiceItem {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   description String
-  quantity    Int      @default(1)
-  unitPrice   Decimal  @db.Decimal(10, 2)
-  total       Decimal  @db.Decimal(10, 2)
+  quantity    Int     @default(1)
+  unitPrice   Decimal @db.Decimal(10, 2)
+  total       Decimal @db.Decimal(10, 2)
 
-  invoiceId   String
-  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 }
 
 // ======================
 //  PAYMENTS
 // ======================
 model Payment {
-  id        String   @id @default(cuid())
-  amount    Decimal  @db.Decimal(10, 2)
-  date      DateTime @default(now())
-  method    String
-  notes     String?
+  id String @id @default(cuid())
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
-
-  invoiceId  String
-  invoice    Invoice  @relation(fields: [invoiceId], references: [id])
-
-  // 🔥 ADD THIS:
   businessId String
   business   Business @relation(fields: [businessId], references: [id])
+
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id])
+
+  // NEW — supports reporting by client!
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id])
+
+  amount Decimal  @db.Decimal(10, 2)
+  date   DateTime @default(now())
+  method String
+  notes  String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([businessId])
+  @@index([invoiceId])
+  @@index([clientId])
+  @@index([date])
 }
 
 // ======================
-//  TASKS & EXPENSES & TIMELOGS
+//  TASKS, EXPENSES, TIME LOGS
 // ======================
+
 model Task {
-  id           String   @id @default(cuid())
-  title        String
-  description  String?
-  isCompleted  Boolean  @default(false)
-  dueDate      DateTime?
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  isCompleted Boolean   @default(false)
+  dueDate     DateTime?
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  deletedAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  businessId   String
-  business     Business @relation(fields: [businessId], references: [id])
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
 
-  projectId    String
-  project      Project  @relation(fields: [projectId], references: [id])
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
 
   assignedToId String?
-  assignedTo   User?    @relation(fields: [assignedToId], references: [id])
+  assignedTo   User?   @relation(fields: [assignedToId], references: [id])
+
+  @@index([projectId])
+  @@index([assignedToId])
 }
 
 model ProjectExpense {
@@ -440,15 +462,18 @@ model ProjectExpense {
   date        DateTime @default(now())
   category    String
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  deletedAt   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  businessId  String
-  business    Business @relation(fields: [businessId], references: [id])
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
 
-  projectId   String
-  project     Project  @relation(fields: [projectId], references: [id])
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+  @@index([date])
 }
 
 model TimeLog {
@@ -457,16 +482,20 @@ model TimeLog {
   hoursWorked Decimal  @db.Decimal(5, 2)
   notes       String?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  deletedAt   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  businessId  String
-  business    Business @relation(fields: [businessId], references: [id])
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
 
-  projectId   String
-  project     Project  @relation(fields: [projectId], references: [id])
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
 
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([projectId])
+  @@index([userId])
+  @@index([date])
 }

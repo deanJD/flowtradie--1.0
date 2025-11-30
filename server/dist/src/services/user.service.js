@@ -28,12 +28,13 @@ export const userService = {
             select: selectSafeUser,
         });
     },
-    getMe: (ctx) => {
-        if (!ctx.user)
-            return null;
+    getMe: async (ctx) => {
+        if (!ctx.user?.id) {
+            throw new Error("Unauthorized"); // 🚨 important!
+        }
         return ctx.prisma.user.findFirst({
             where: { id: ctx.user.id, deletedAt: null },
-            select: selectSafeUser, // ← NOW includes businessId
+            select: selectSafeUser,
         });
     },
     // vvvvvvvv NEW DELETE FUNCTION ADDED vvvvvvvv

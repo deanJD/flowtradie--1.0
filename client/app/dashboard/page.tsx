@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/app/context/AuthContext';
 import { useQuery } from '@apollo/client';
 import { GET_PROJECTS_QUERY } from '@/app/lib/graphql/queries/projects';
-import { GET_DASHBOARD_SUMMARY_QUERY } from '@/app/lib/graphql/queries/dashboard';
+import { GET_DASHBOARD_SUMMARY_QUERY } from '@/app/lib/graphql/queries/dashboard'; // 👈 Import this
 import styles from './Dashboard.module.css';
 import StatCard from '@/components/StatCard/StatCard';
 import Button from '@/components/Button/Button';
@@ -22,29 +22,29 @@ export default function DashboardPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
-  // 🔐 If not authenticated, send to /login
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/login');
     }
   }, [authLoading, user, router]);
 
-  // 🔎 Only run these queries once we know who the user is
+  // 1. Fetch Projects List
+  
   const {
-    data: projectsData,
-    loading: loadingProjects,
-    error: errorProjects,
-  } = useQuery(GET_PROJECTS_QUERY, {
-    variables: { businessId: user?.businessId },
-    skip: authLoading || !user?.businessId,
-  });
+  data: projectsData,
+  loading: loadingProjects,
+  error: errorProjects,
+} = useQuery(GET_PROJECTS_QUERY, {
+  variables: { businessId: user?.businessId },  // <-- REQUIRED
+  skip: authLoading || !user?.businessId,
+});
 
+  // 2. Fetch Dashboard Stats (Revenue, Counts, etc.)
   const {
     data: summaryData,
     loading: loadingSummary,
     error: errorSummary,
   } = useQuery(GET_DASHBOARD_SUMMARY_QUERY, {
-    variables: { businessId: user?.businessId },
     skip: authLoading || !user?.businessId,
   });
 
@@ -52,30 +52,25 @@ export default function DashboardPage() {
     return <p>Loading Dashboard...</p>;
   }
 
-  // Redirect effect will handle navigation; avoid flashing content
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   if (errorProjects || errorSummary) {
     return (
-      <p>
-        Error:{' '}
-        {errorProjects?.message ??
-          errorSummary?.message ??
-          'Unknown error'}
-      </p>
+      <p>Error: {errorProjects?.message ?? errorSummary?.message}</p>
     );
   }
 
+  // Projects List
   const projects: Project[] = projectsData?.projects ?? [];
 
-  const totalOpenProjects =
-    projects.filter((p) => p.status === 'OPEN').length ?? 0;
-
-  const invoicesDueSoon = 0;
-  const tasksDueToday = 0;
-  const totalRevenueYTD = 0;
+  // Stats Data from Backend
+  const stats = summaryData?.getDashboardSummary || {};
+  const {
+    totalOpenProjects = 0,
+    invoicesDueSoon = 0,
+    tasksDueToday = 0,
+    totalRevenueYTD = 0,
+  } = stats;
 
   return (
     <div className={styles.container}>
@@ -86,6 +81,7 @@ export default function DashboardPage() {
 
       <p className={styles.roleInfo}>Your role is: {user.role}</p>
 
+      {/* 🔥 REAL DATA PLUGGED IN HERE */}
       <div className={styles.statsGrid}>
         <StatCard title="Active Projects" value={totalOpenProjects} />
         <StatCard title="Invoices Due Soon" value={invoicesDueSoon} />

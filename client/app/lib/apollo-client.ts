@@ -15,7 +15,7 @@ const authLink = setContext((_, { headers }) => {
   }
 
   // 🔥 THIS MUST MATCH AuthContext + LoginPage
-  const token = localStorage.getItem("authToken");
+  const token = localStorage.getItem("token");
 
   return {
     headers: {

@@ -19,20 +19,20 @@ async function startServer() {
 
   const server = new ApolloServer({
     typeDefs,
-    resolvers: resolvers as any, // 🛠 fixes type error
-    csrfPrevention: false,       // 🧠 disable CSRF BLOCK
+    resolvers: resolvers as any,
+    csrfPrevention: false,
   });
 
   await server.start();
 
   app.use(
     "/graphql",
-    cors(),                                 // 🛡 allow frontend
-    express.json({ limit: "10mb" }),        // MUST come before Apollo
+    cors(),
+    express.json({ limit: "10mb" }),
     expressMiddleware(server, {
-      // 🧠 fix context type:
+      // 🔥 FIX — buildContext is async → MUST await
       context: async ({ req }) => {
-        return buildContext({ req }) as any;
+        return await buildContext({ req });
       },
     })
   );
