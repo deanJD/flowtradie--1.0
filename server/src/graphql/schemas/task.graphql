@@ -1,9 +1,18 @@
 # Defines the Task type and its related API operations for project checklists.
 
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
 type Task {
   id: ID!
   title: String!
   description: String
+  status: TaskStatus!   
   isCompleted: Boolean!      # Keep your existing field
   dueDate: DateTime
   createdAt: DateTime!
@@ -20,7 +29,6 @@ type Task {
 # --- Input Types ---
 
 input CreateTaskInput {
-  businessId: ID!  # <-- ADD THIS
   title: String!
   projectId: ID!
   description: String

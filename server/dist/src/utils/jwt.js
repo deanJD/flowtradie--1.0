@@ -1,11 +1,9 @@
-// src/utils/jwt.ts
+// server/src/utils/jwt.ts
 import jwt from "jsonwebtoken";
-const JWT_SECRET = process.env.JWT_SECRET || "secret_key"; // CHANGE LATER
-// ---- Decode Token ----
+const JWT_SECRET = process.env.JWT_SECRET || "secret_key"; // fallback
 export function decodeToken(token) {
     return jwt.verify(token, JWT_SECRET);
 }
-// ---- Encode Token ----
 export function encodeToken(payload) {
     return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
 }

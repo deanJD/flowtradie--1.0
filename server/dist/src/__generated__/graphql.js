@@ -34,6 +34,13 @@ export var QuoteStatus;
     QuoteStatus["Rejected"] = "REJECTED";
     QuoteStatus["Sent"] = "SENT";
 })(QuoteStatus || (QuoteStatus = {}));
+export var TaskStatus;
+(function (TaskStatus) {
+    TaskStatus["Cancelled"] = "CANCELLED";
+    TaskStatus["Completed"] = "COMPLETED";
+    TaskStatus["InProgress"] = "IN_PROGRESS";
+    TaskStatus["Pending"] = "PENDING";
+})(TaskStatus || (TaskStatus = {}));
 export var UserRole;
 (function (UserRole) {
     UserRole["Admin"] = "ADMIN";

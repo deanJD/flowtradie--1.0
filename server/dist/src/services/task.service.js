@@ -10,6 +10,12 @@ export const taskService = {
         return ctx.prisma.task.findMany({
             where: { businessId: ctx.user.businessId, deletedAt: null },
             orderBy: { createdAt: "desc" },
+            include: {
+                project: true,
+                assignedTo: {
+                    select: { id: true, name: true } // 🧠 LIGHT, NO PASSWORD
+                },
+            },
         });
     },
     /* ------------------------------------------
@@ -33,15 +39,22 @@ export const taskService = {
         const businessId = ctx.user.businessId;
         return ctx.prisma.task.create({
             data: {
-                ...input, // title, description, assignedToId, etc.
-                businessId, // REQUIRED by Prisma
+                title: input.title,
+                description: input.description ?? undefined,
+                projectId: input.projectId,
+                businessId,
+                // 🧠 AUTO-ASSIGN IF NOTHING PROVIDED
+                assignedToId: input.assignedToId ?? ctx.user.id ?? null,
+                // 🧠 DEFAULT STATUS
+                status: "PENDING",
+                dueDate: input.dueDate ?? undefined,
+            },
+            include: {
+                assignedTo: { select: { id: true, name: true } },
+                project: { select: { id: true, title: true } },
             },
         });
     },
-    /* ------------------------------------------
-       Update task
-    ------------------------------------------- */
-    // server/src/services/task.service.ts (UPDATE METHOD ONLY)
     update: async (id, input, ctx) => {
         if (!ctx.user?.businessId)
             throw new Error("Unauthorized");

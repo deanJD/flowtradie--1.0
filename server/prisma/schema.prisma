@@ -61,6 +61,14 @@ enum AddressType {
   OTHER
 }
 
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+
 // ======================
 //  REGION (FOR TAX & LANGUAGE)
 // ======================
@@ -432,15 +440,15 @@ model Payment {
 // ======================
 
 model Task {
-  id          String    @id @default(cuid())
+  id          String     @id @default(cuid())
   title       String
   description String?
-  isCompleted Boolean   @default(false)
+  isCompleted Boolean    @default(false)
   dueDate     DateTime?
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  status      TaskStatus @default(PENDING)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  deletedAt   DateTime?
 
   businessId String
   business   Business @relation(fields: [businessId], references: [id])

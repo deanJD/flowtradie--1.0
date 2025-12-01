@@ -217,7 +217,6 @@ export type CreateQuoteItemInput = {
 
 export type CreateTaskInput = {
   assignedToId?: InputMaybe<Scalars['ID']['input']>;
-  businessId: Scalars['ID']['input'];
   description?: InputMaybe<Scalars['String']['input']>;
   dueDate?: InputMaybe<Scalars['DateTime']['input']>;
   projectId: Scalars['ID']['input'];
@@ -592,16 +591,20 @@ export type Project = {
   description?: Maybe<Scalars['String']['output']>;
   endDate?: Maybe<Scalars['DateTime']['output']>;
   expenses: Array<ProjectExpense>;
+  financialSummary: ProjectFinancialSummary;
   id: Scalars['ID']['output'];
   invoices: Array<Invoice>;
+  isOverdue: Scalars['Boolean']['output'];
   location?: Maybe<Scalars['String']['output']>;
   manager?: Maybe<User>;
+  progress: Scalars['Float']['output'];
   quotes: Array<Quote>;
   startDate?: Maybe<Scalars['DateTime']['output']>;
   status: ProjectStatus;
   tasks: Array<Task>;
   timeLogs: Array<TimeLog>;
   title: Scalars['String']['output'];
+  totalHoursWorked: Scalars['Float']['output'];
   updatedAt: Scalars['DateTime']['output'];
 };
 
@@ -615,6 +618,15 @@ export type ProjectExpense = {
   id: Scalars['ID']['output'];
   project: Project;
   updatedAt: Scalars['DateTime']['output'];
+};
+
+export type ProjectFinancialSummary = {
+  __typename?: 'ProjectFinancialSummary';
+  estimatedProfit: Scalars['Float']['output'];
+  expensesTotal: Scalars['Float']['output'];
+  hoursWorked: Scalars['Float']['output'];
+  invoicesTotal: Scalars['Float']['output'];
+  paymentsTotal: Scalars['Float']['output'];
 };
 
 export type ProjectProfitability = {
@@ -650,6 +662,7 @@ export type Query = {
   payments: Array<Payment>;
   project?: Maybe<Project>;
   projectProfitability: ProjectProfitability;
+  projectReport: ProjectFinancialSummary;
   projects: Array<Project>;
   quote?: Maybe<Quote>;
   quotesByProject: Array<Quote>;
@@ -709,6 +722,11 @@ export type QueryProjectArgs = {
 
 export type QueryProjectProfitabilityArgs = {
   projectId: Scalars['ID']['input'];
+};
+
+
+export type QueryProjectReportArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -800,9 +818,17 @@ export type Task = {
   isCompleted: Scalars['Boolean']['output'];
   project: Project;
   projectId: Scalars['ID']['output'];
+  status: TaskStatus;
   title: Scalars['String']['output'];
   updatedAt: Scalars['DateTime']['output'];
 };
+
+export enum TaskStatus {
+  Cancelled = 'CANCELLED',
+  Completed = 'COMPLETED',
+  InProgress = 'IN_PROGRESS',
+  Pending = 'PENDING'
+}
 
 export type TimeLog = {
   __typename?: 'TimeLog';
@@ -1046,6 +1072,7 @@ export type ResolversTypes = ResolversObject<{
   Payment: ResolverTypeWrapper<Payment>;
   Project: ResolverTypeWrapper<Project>;
   ProjectExpense: ResolverTypeWrapper<ProjectExpense>;
+  ProjectFinancialSummary: ResolverTypeWrapper<ProjectFinancialSummary>;
   ProjectProfitability: ResolverTypeWrapper<ProjectProfitability>;
   ProjectStatus: ProjectStatus;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
@@ -1056,6 +1083,7 @@ export type ResolversTypes = ResolversObject<{
   RegisterInput: RegisterInput;
   String: ResolverTypeWrapper<Scalars['String']['output']>;
   Task: ResolverTypeWrapper<Task>;
+  TaskStatus: TaskStatus;
   TimeLog: ResolverTypeWrapper<TimeLog>;
   UpdateBillableItemInput: UpdateBillableItemInput;
   UpdateBusinessInput: UpdateBusinessInput;
@@ -1108,6 +1136,7 @@ export type ResolversParentTypes = ResolversObject<{
   Payment: Payment;
   Project: Project;
   ProjectExpense: ProjectExpense;
+  ProjectFinancialSummary: ProjectFinancialSummary;
   ProjectProfitability: ProjectProfitability;
   Query: Record<PropertyKey, never>;
   Quote: Quote;
@@ -1329,16 +1358,20 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   endDate?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   expenses?: Resolver<Array<ResolversTypes['ProjectExpense']>, ParentType, ContextType>;
+  financialSummary?: Resolver<ResolversTypes['ProjectFinancialSummary'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   invoices?: Resolver<Array<ResolversTypes['Invoice']>, ParentType, ContextType>;
+  isOverdue?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   location?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   manager?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
+  progress?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   quotes?: Resolver<Array<ResolversTypes['Quote']>, ParentType, ContextType>;
   startDate?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   status?: Resolver<ResolversTypes['ProjectStatus'], ParentType, ContextType>;
   tasks?: Resolver<Array<ResolversTypes['Task']>, ParentType, ContextType>;
   timeLogs?: Resolver<Array<ResolversTypes['TimeLog']>, ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  totalHoursWorked?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
 }>;
 
@@ -1351,6 +1384,14 @@ export type ProjectExpenseResolvers<ContextType = GraphQLContext, ParentType ext
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   project?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+}>;
+
+export type ProjectFinancialSummaryResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectFinancialSummary'] = ResolversParentTypes['ProjectFinancialSummary']> = ResolversObject<{
+  estimatedProfit?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  expensesTotal?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  hoursWorked?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  invoicesTotal?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  paymentsTotal?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
 }>;
 
 export type ProjectProfitabilityResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectProfitability'] = ResolversParentTypes['ProjectProfitability']> = ResolversObject<{
@@ -1377,6 +1418,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   payments?: Resolver<Array<ResolversTypes['Payment']>, ParentType, ContextType, RequireFields<QueryPaymentsArgs, 'invoiceId'>>;
   project?: Resolver<Maybe<ResolversTypes['Project']>, ParentType, ContextType, RequireFields<QueryProjectArgs, 'id'>>;
   projectProfitability?: Resolver<ResolversTypes['ProjectProfitability'], ParentType, ContextType, RequireFields<QueryProjectProfitabilityArgs, 'projectId'>>;
+  projectReport?: Resolver<ResolversTypes['ProjectFinancialSummary'], ParentType, ContextType, RequireFields<QueryProjectReportArgs, 'id'>>;
   projects?: Resolver<Array<ResolversTypes['Project']>, ParentType, ContextType>;
   quote?: Resolver<Maybe<ResolversTypes['Quote']>, ParentType, ContextType, RequireFields<QueryQuoteArgs, 'id'>>;
   quotesByProject?: Resolver<Array<ResolversTypes['Quote']>, ParentType, ContextType, RequireFields<QueryQuotesByProjectArgs, 'projectId'>>;
@@ -1434,6 +1476,7 @@ export type TaskResolvers<ContextType = GraphQLContext, ParentType extends Resol
   isCompleted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   project?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
   projectId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['TaskStatus'], ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
 }>;
@@ -1480,6 +1523,7 @@ export type Resolvers<ContextType = GraphQLContext> = ResolversObject<{
   Payment?: PaymentResolvers<ContextType>;
   Project?: ProjectResolvers<ContextType>;
   ProjectExpense?: ProjectExpenseResolvers<ContextType>;
+  ProjectFinancialSummary?: ProjectFinancialSummaryResolvers<ContextType>;
   ProjectProfitability?: ProjectProfitabilityResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   Quote?: QuoteResolvers<ContextType>;

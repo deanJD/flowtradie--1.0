@@ -9,24 +9,17 @@ import {
 
 export const projectService = {
   /** ------------------------- 🔍 Get ALL projects ------------------------- */
-  getAll: (clientId: string | undefined, ctx: GraphQLContext) => {
-  console.log("DEBUG getAll ctx.user =", ctx.user, "ctx.businessId =", ctx.businessId);
-
-  if (!ctx.user?.businessId) throw new Error("Unauthorized");
-
-  const where: Prisma.ProjectWhereInput = {
-    deletedAt: null,
-    businessId: ctx.user.businessId, // 🔥 MUST FILTER BY BUSINESS
-  };
-
-  if (clientId) {
-    where.clientId = clientId;
+  getAll: async (_unused: void, ctx: GraphQLContext) => {
+  if (!ctx.user || !ctx.businessId) {
+    throw new Error("Unauthorized");
   }
 
   return ctx.prisma.project.findMany({
-    where,
+    where: {
+      businessId: ctx.businessId,
+      deletedAt: null,
+    },
     orderBy: { createdAt: "desc" },
-    include: { client: true },
   });
 },
 

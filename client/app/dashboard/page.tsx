@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/app/context/AuthContext';
 import { useQuery } from '@apollo/client';
 import { GET_PROJECTS_QUERY } from '@/app/lib/graphql/queries/projects';
-import { GET_DASHBOARD_SUMMARY_QUERY } from '@/app/lib/graphql/queries/dashboard'; // 👈 Import this
+import { GET_DASHBOARD_SUMMARY } from '@/app/lib/graphql/queries/dashboard'; 
 import styles from './Dashboard.module.css';
 import StatCard from '@/components/StatCard/StatCard';
 import Button from '@/components/Button/Button';
@@ -22,30 +22,36 @@ export default function DashboardPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
+  // 🚨 Redirect if no user
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/login');
     }
   }, [authLoading, user, router]);
 
-  // 1. Fetch Projects List
-  
+  /* -------------------------
+     1. FETCH PROJECTS
+  ------------------------- */
   const {
-  data: projectsData,
-  loading: loadingProjects,
-  error: errorProjects,
-} = useQuery(GET_PROJECTS_QUERY, {
-  variables: { businessId: user?.businessId },  // <-- REQUIRED
-  skip: authLoading || !user?.businessId,
-});
+    data: projectsData,
+    loading: loadingProjects,
+    error: errorProjects,
+  } = useQuery(GET_PROJECTS_QUERY, {
+    variables: { businessId: user?.businessId ?? "" }, // 👈 IMPORTANT!
+    skip: authLoading || !user?.businessId,
+    fetchPolicy: 'network-only', // 💡 Prevent stale data on next.js re-render
+  });
 
-  // 2. Fetch Dashboard Stats (Revenue, Counts, etc.)
+  /* -------------------------
+     2. FETCH DASHBOARD STATS
+  ------------------------- */
   const {
     data: summaryData,
     loading: loadingSummary,
     error: errorSummary,
-  } = useQuery(GET_DASHBOARD_SUMMARY_QUERY, {
+  } = useQuery(GET_DASHBOARD_SUMMARY, {
     skip: authLoading || !user?.businessId,
+    fetchPolicy: 'network-only', // ⚡ always fresh!
   });
 
   if (authLoading || loadingProjects || loadingSummary) {
@@ -60,18 +66,21 @@ export default function DashboardPage() {
     );
   }
 
-  // Projects List
+  /* -------------------------
+     FORMAT DATA
+  ------------------------- */
   const projects: Project[] = projectsData?.projects ?? [];
 
-  // Stats Data from Backend
-  const stats = summaryData?.getDashboardSummary || {};
   const {
     totalOpenProjects = 0,
     invoicesDueSoon = 0,
     tasksDueToday = 0,
     totalRevenueYTD = 0,
-  } = stats;
+  } = summaryData?.getDashboardSummary || {};
 
+  /* -------------------------
+     RENDER UI
+  ------------------------- */
   return (
     <div className={styles.container}>
       <div className={styles.pageHeader}>
@@ -81,7 +90,7 @@ export default function DashboardPage() {
 
       <p className={styles.roleInfo}>Your role is: {user.role}</p>
 
-      {/* 🔥 REAL DATA PLUGGED IN HERE */}
+      {/* 🔥 Stats Cards */}
       <div className={styles.statsGrid}>
         <StatCard title="Active Projects" value={totalOpenProjects} />
         <StatCard title="Invoices Due Soon" value={invoicesDueSoon} />
@@ -92,6 +101,7 @@ export default function DashboardPage() {
         />
       </div>
 
+      {/* 🔥 Projects List */}
       <div className={styles.detailsBox}>
         <h3 className={styles.detailsTitle}>Your Projects</h3>
         {projects.length > 0 ? (

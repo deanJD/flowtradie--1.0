@@ -17,6 +17,12 @@ getAll: async (ctx: GraphQLContext) => {
   return ctx.prisma.task.findMany({
     where: { businessId: ctx.user.businessId, deletedAt: null },
     orderBy: { createdAt: "desc" },
+    include: {   // 👇 ADD THIS
+      project: true,
+      assignedTo: {
+        select: { id: true, name: true }  // 🧠 LIGHT, NO PASSWORD
+      },
+    },
   });
 },
 
@@ -38,21 +44,30 @@ getAll: async (ctx: GraphQLContext) => {
      Create task
   ------------------------------------------- */
   create: async (input: CreateTaskInput, ctx: GraphQLContext) => {
-    if (!ctx.user?.businessId) throw new Error("Unauthorized");
-    const businessId = ctx.user.businessId;
+  if (!ctx.user?.businessId) throw new Error("Unauthorized");
+  const businessId = ctx.user.businessId;
 
-    return ctx.prisma.task.create({
-      data: {
-        ...input,      // title, description, assignedToId, etc.
-        businessId,    // REQUIRED by Prisma
-      },
-    });
-  },
+  return ctx.prisma.task.create({
+    data: {
+      title: input.title,
+      description: input.description ?? undefined,
+      projectId: input.projectId,
+      businessId,
 
-  /* ------------------------------------------
-     Update task
-  ------------------------------------------- */
-  // server/src/services/task.service.ts (UPDATE METHOD ONLY)
+      // 🧠 AUTO-ASSIGN IF NOTHING PROVIDED
+      assignedToId: input.assignedToId ?? ctx.user.id ?? null,
+
+      // 🧠 DEFAULT STATUS
+      status: "PENDING",
+
+      dueDate: input.dueDate ?? undefined,
+    },
+    include: {
+      assignedTo: { select: { id: true, name: true } },
+      project: { select: { id: true, title: true } },
+    },
+  });
+},
 
 update: async (id: string, input: UpdateTaskInput, ctx: GraphQLContext) => {
   if (!ctx.user?.businessId) throw new Error("Unauthorized");

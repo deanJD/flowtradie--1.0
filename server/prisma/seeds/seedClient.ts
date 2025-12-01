@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export default async function seedClient() {
-  const businessId = "cmid2gv1h000395r8qg9c6ulq"; // 🔥 YOUR business ID
+  const businessId = "cmilphqmn000395zo5d1pnk2k"; // 🔥 YOUR business ID
 
   await prisma.client.createMany({
     data: [

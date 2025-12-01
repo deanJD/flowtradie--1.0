@@ -29,7 +29,6 @@ export async function buildContext({ req }: { req: IncomingMessage }): Promise<G
   if (token) {
     try {
       decoded = decodeToken(token);
-
       dbUser = await prisma.user.findUnique({
         where: { id: decoded.id },
         select: {

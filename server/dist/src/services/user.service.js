@@ -11,18 +11,27 @@ const selectSafeUser = {
     updatedAt: true,
 };
 export const userService = {
+    // 🔒 SECURED: Only return users from the current business
     getAll: (ctx) => {
+        if (!ctx.businessId)
+            return []; // Safety check
         return ctx.prisma.user.findMany({
-            where: { deletedAt: null }, // <-- CHANGED
+            where: {
+                deletedAt: null,
+                businessId: ctx.businessId, // 🔥 ADDED
+            },
             orderBy: { createdAt: "desc" },
             select: selectSafeUser,
         });
     },
+    // 🔒 SECURED: Only return user if they match the ID AND the Business ID
     getById: (id, ctx) => {
-        // CHANGED: Use findFirst to ensure we don't fetch a deleted user
+        if (!ctx.businessId)
+            return null;
         return ctx.prisma.user.findFirst({
             where: {
                 id,
+                businessId: ctx.businessId, // 🔥 ADDED
                 deletedAt: null,
             },
             select: selectSafeUser,
@@ -30,15 +39,25 @@ export const userService = {
     },
     getMe: async (ctx) => {
         if (!ctx.user?.id) {
-            throw new Error("Unauthorized"); // 🚨 important!
+            throw new Error("Unauthorized");
         }
         return ctx.prisma.user.findFirst({
             where: { id: ctx.user.id, deletedAt: null },
             select: selectSafeUser,
         });
     },
-    // vvvvvvvv NEW DELETE FUNCTION ADDED vvvvvvvv
-    delete: (id, ctx) => {
+    // 🔒 SECURED: Prevent deleting users from other businesses
+    delete: async (id, ctx) => {
+        if (!ctx.businessId)
+            throw new Error("Unauthorized");
+        // 1. Verify user belongs to business before deleting
+        const userToDelete = await ctx.prisma.user.findFirst({
+            where: { id, businessId: ctx.businessId },
+        });
+        if (!userToDelete) {
+            throw new Error("User not found or access denied");
+        }
+        // 2. Perform Soft Delete
         return ctx.prisma.user.update({
             where: { id },
             data: {
@@ -46,6 +65,5 @@ export const userService = {
             },
         });
     },
-    // ^^^^^^^^^^ NEW DELETE FUNCTION ADDED ^^^^^^^^^^
 };
 //# sourceMappingURL=user.service.js.map

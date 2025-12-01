@@ -1,14 +1,11 @@
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
-export const GET_DASHBOARD_SUMMARY_QUERY = gql`
-  # 🔴 REMOVE ARGUMENTS: query GetDashboardSummary($businessId: ID!)
-  # 🟢 USE THIS:
+export const GET_DASHBOARD_SUMMARY = gql`
   query GetDashboardSummary {
     getDashboardSummary {
-      # 🔥 These names MUST match your Service return object exactly
-      totalOpenProjects
-      invoicesDueSoon
       tasksDueToday
+      invoicesDueSoon
+      totalOpenProjects
       totalRevenueYTD
     }
   }
