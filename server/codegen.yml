@@ -8,3 +8,5 @@ generates:
     config:
       useIndexSignature: true
       contextType: "../context#GraphQLContext"
+      enumsAsTypes: true     # ⭐ FIX: Treat enums as string union types
+      avoidOptionals: true   # Optional but recommended

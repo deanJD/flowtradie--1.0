@@ -36,7 +36,7 @@ export const GET_CLIENT_QUERY = gql`
       invoices {        # OPTIONAL — REMOVE IF NOT NEEDED
         id
         status
-        total
+        totalAmount
         dueDate
       }
     }

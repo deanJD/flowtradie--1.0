@@ -11,18 +11,22 @@ import styles from './Dashboard.module.css';
 import StatCard from '@/components/StatCard/StatCard';
 import Button from '@/components/Button/Button';
 
+// 1️⃣ UPDATE TYPE DEFINITION
 type Project = {
   id: string;
   title: string;
   status: string;
-  client?: { name?: string | null } | null;
+  client: {
+    firstName: string;
+    lastName: string;
+    businessName?: string | null;
+  };
 };
 
 export default function DashboardPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
-  // 🚨 Redirect if no user
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/login');
@@ -37,9 +41,9 @@ export default function DashboardPage() {
     loading: loadingProjects,
     error: errorProjects,
   } = useQuery(GET_PROJECTS_QUERY, {
-    variables: { businessId: user?.businessId ?? "" }, // 👈 IMPORTANT!
+    // 2️⃣ REMOVED VARIABLES (Backend gets ID from token automatically)
     skip: authLoading || !user?.businessId,
-    fetchPolicy: 'network-only', // 💡 Prevent stale data on next.js re-render
+    fetchPolicy: 'network-only',
   });
 
   /* -------------------------
@@ -51,7 +55,7 @@ export default function DashboardPage() {
     error: errorSummary,
   } = useQuery(GET_DASHBOARD_SUMMARY, {
     skip: authLoading || !user?.businessId,
-    fetchPolicy: 'network-only', // ⚡ always fresh!
+    fetchPolicy: 'network-only',
   });
 
   if (authLoading || loadingProjects || loadingSummary) {
@@ -90,7 +94,7 @@ export default function DashboardPage() {
 
       <p className={styles.roleInfo}>Your role is: {user.role}</p>
 
-      {/* 🔥 Stats Cards */}
+      {/* Stats Cards */}
       <div className={styles.statsGrid}>
         <StatCard title="Active Projects" value={totalOpenProjects} />
         <StatCard title="Invoices Due Soon" value={invoicesDueSoon} />
@@ -101,7 +105,7 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* 🔥 Projects List */}
+      {/* Projects List */}
       <div className={styles.detailsBox}>
         <h3 className={styles.detailsTitle}>Your Projects</h3>
         {projects.length > 0 ? (
@@ -109,8 +113,9 @@ export default function DashboardPage() {
             {projects.map((project) => (
               <li key={project.id}>
                 <Link href={`/dashboard/projects/${project.id}`}>
+                  {/* 3️⃣ UPDATED DISPLAY LOGIC */}
                   <strong>{project.title}</strong> ({project.status}) - for{' '}
-                  {project.client?.name ?? 'No client'}
+                  {project.client.businessName || `${project.client.firstName} ${project.client.lastName}`}
                 </Link>
               </li>
             ))}

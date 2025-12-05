@@ -2,36 +2,47 @@
 
 import { GraphQLContext } from "../../context.js";
 import {
-  Resolvers,
   QueryTaskArgs,
   MutationCreateTaskArgs,
   MutationUpdateTaskArgs,
 } from "@/__generated__/graphql.js";
 import { taskService } from "../../services/task.service.js";
 
-export const taskResolvers: Resolvers = {
+export const taskResolvers = {
   Query: {
     // ⛳ NO ARGUMENTS ANYMORE
-    tasks: async (_p, _args: unknown, ctx: GraphQLContext) => {
-      return (await taskService.getAll(ctx)) as any;  // get all tasks for business
+    tasks: async (_p: unknown, _args: unknown, ctx: GraphQLContext) => {
+      return taskService.getAll(ctx);  // returns tasks for the logged-in business
     },
 
-    task: async (_p, args: QueryTaskArgs, ctx: GraphQLContext) => {
-      return (await taskService.getById(args.id, ctx)) as any;
+    task: async (_p: unknown, args: QueryTaskArgs, ctx: GraphQLContext) => {
+      return taskService.getById(args.id, ctx);
     },
   },
 
   Mutation: {
-    createTask: async (_p, { input }: MutationCreateTaskArgs, ctx: GraphQLContext) => {
-      return (await taskService.create(input, ctx)) as any;
+    createTask: async (
+      _p: unknown,
+      { input }: MutationCreateTaskArgs,
+      ctx: GraphQLContext
+    ) => {
+      return taskService.create(input, ctx);
     },
 
-    updateTask: async (_p, { id, input }: MutationUpdateTaskArgs, ctx: GraphQLContext) => {
-      return (await taskService.update(id, input, ctx)) as any;
+    updateTask: async (
+      _p: unknown,
+      { id, input }: MutationUpdateTaskArgs,
+      ctx: GraphQLContext
+    ) => {
+      return taskService.update(id, input, ctx);
     },
 
-    deleteTask: async (_p, { id }: { id: string }, ctx: GraphQLContext) => {
-      return (await taskService.delete(id, ctx)) as any;
+    deleteTask: async (
+      _p: unknown,
+      { id }: { id: string },
+      ctx: GraphQLContext
+    ) => {
+      return taskService.delete(id, ctx);
     },
   },
 };

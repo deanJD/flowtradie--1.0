@@ -4,21 +4,21 @@ export const taskResolvers = {
     Query: {
         // ⛳ NO ARGUMENTS ANYMORE
         tasks: async (_p, _args, ctx) => {
-            return (await taskService.getAll(ctx)); // get all tasks for business
+            return taskService.getAll(ctx); // returns tasks for the logged-in business
         },
         task: async (_p, args, ctx) => {
-            return (await taskService.getById(args.id, ctx));
+            return taskService.getById(args.id, ctx);
         },
     },
     Mutation: {
         createTask: async (_p, { input }, ctx) => {
-            return (await taskService.create(input, ctx));
+            return taskService.create(input, ctx);
         },
         updateTask: async (_p, { id, input }, ctx) => {
-            return (await taskService.update(id, input, ctx));
+            return taskService.update(id, input, ctx);
         },
         deleteTask: async (_p, { id }, ctx) => {
-            return (await taskService.delete(id, ctx));
+            return taskService.delete(id, ctx);
         },
     },
 };

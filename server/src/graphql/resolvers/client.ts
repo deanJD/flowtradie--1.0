@@ -5,42 +5,92 @@ import {
   QueryClientArgs,
   MutationCreateClientArgs,
   MutationUpdateClientArgs,
+  MutationDeleteClientArgs,
   Client as GQLClient,
-  Address as GQLAddress,
 } from "@/__generated__/graphql.js";
+
 import { GraphQLContext } from "../../context.js";
 import { clientService } from "../../services/client.service.js";
 
-export const clientResolvers: Resolvers = {
+export const clientResolvers = {
+
+  // ============================================
+  // QUERIES
+  // ============================================
   Query: {
-    clients: async (_p, args: QueryClientsArgs, ctx: GraphQLContext) => {
-      const { businessId } = args;
-      return clientService.getAll(businessId, ctx) as unknown as Promise<GQLClient[]>;
+    clients: async (
+      _p: unknown,
+      args: QueryClientsArgs,
+      ctx: GraphQLContext
+    ) => {
+      // We know this returns a list of Client-shaped objects,
+      // but TS can't match Prisma vs GraphQL types perfectly, so we cast.
+      return clientService.getAll(
+        args.businessId,
+        ctx
+      ) as unknown as Promise<GQLClient[]>;
     },
 
-    client: async (_p, args: QueryClientArgs, ctx: GraphQLContext) => {
-      return clientService.getById(args.id, ctx) as Promise<GQLClient | null>;
+    client: async (
+      _p: unknown,
+      args: QueryClientArgs,
+      ctx: GraphQLContext
+    ) => {
+      return clientService.getById(
+        args.id,
+        ctx
+      ) as unknown as Promise<GQLClient | null>;
     },
   },
 
+  // ============================================
+  // MUTATIONS
+  // ============================================
   Mutation: {
-    createClient: async (_p, args: MutationCreateClientArgs, ctx: GraphQLContext) => {
-      return clientService.create(args.input, ctx) as unknown as Promise<GQLClient>;
+    createClient: async (
+      _p: unknown,
+      args: MutationCreateClientArgs,
+      ctx: GraphQLContext
+    ) => {
+      return clientService.create(
+        args.input,
+        ctx
+      ) as unknown as Promise<GQLClient>;
     },
 
-    updateClient: async (_p, args: MutationUpdateClientArgs, ctx: GraphQLContext) => {
-      return clientService.update(args.id, args.input, ctx) as unknown as Promise<GQLClient>;
+    updateClient: async (
+      _p: unknown,
+      args: MutationUpdateClientArgs,
+      ctx: GraphQLContext
+    ) => {
+      return clientService.update(
+        args.id,
+        args.input,
+        ctx
+      ) as unknown as Promise<GQLClient>;
     },
-  },
 
-  Client: {
-    addresses: async (parent: GQLClient, _args: unknown, ctx: GraphQLContext) => {
-      const dbAddresses = await ctx.prisma.address.findMany({
-        where: { clients: { some: { id: parent.id } } },
+    deleteClient: async (
+      _p: unknown,
+      args: MutationDeleteClientArgs,
+      ctx: GraphQLContext
+    ) => {
+      // Soft delete in DB, then cast to GraphQL Client
+      const deleted = await ctx.prisma.client.update({
+        where: { id: args.id },
+        data: { deletedAt: new Date() },
       });
 
-      // Ensure return type satisfies GraphQL TS typing
-      return dbAddresses as unknown as GQLAddress[];
+      return deleted as unknown as GQLClient;
     },
   },
+
+  // ============================================
+  // CLIENT FIELD RESOLVERS
+  // ============================================
+  // ❗ We don't define Client.addresses / Client.projects / Client.invoices here.
+  // Because:
+  // - clientService.getAll/getById already includes these relations via Prisma `include`
+  // - Default GraphQL resolvers will just read `parent.addresses`, `parent.projects`, `parent.invoices`
+  // - Avoids strict type mismatch on nested Invoice / Project / Address shapes.
 };

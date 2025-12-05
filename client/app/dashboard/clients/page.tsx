@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useQuery } from "@apollo/client";
 import { useAuth } from "@/app/context/AuthContext";
-import { GET_CLIENTS_QUERY } from "@/app/lib/graphql/queries/clients";
+import { GET_CLIENTS } from "@/app/lib/graphql/queries/clients";
+
 import Button from "@/components/Button/Button";
 import styles from "./ClientsPage.module.css";
 
@@ -22,7 +23,7 @@ export default function ClientsPage() {
   }, [authLoading, user, router]);
 
   // 🧠 Fetch clients ONLY IF businessId is ready
-  const { data, loading, error } = useQuery(GET_CLIENTS_QUERY, {
+  const { data, loading, error } = useQuery(GET_CLIENTS, {
     variables: { businessId: user?.businessId },
     skip: !user?.businessId,
     fetchPolicy: "network-only",

@@ -4,10 +4,7 @@ import { mergeTypeDefs, mergeResolvers } from "@graphql-tools/merge";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// vvvv IMPORT OUR NEW RESOLVER vvvv
-import  billableItemResolvers  from "./resolvers/billable_item.js";
-// ^^^^ END OF IMPORT ^^^^
-  
+import billableItemResolvers from "./resolvers/billable_item.js";
 import { clientResolvers } from "./resolvers/client.js";
 import { projectResolvers } from "./resolvers/project.js";
 import { quoteResolvers } from "./resolvers/quote.js";
@@ -18,24 +15,29 @@ import { timeLogResolvers } from "./resolvers/timelog.js";
 import { reportingResolvers } from "./resolvers/reporting.js";
 import { paymentResolvers } from "./resolvers/payment.js";
 import { meResolvers } from "./resolvers/me.js";
-
 import { authResolvers } from "./resolvers/auth.js";
 import { userResolvers } from "./resolvers/user.js";
 import { dateTimeScalar } from "./scalars/dateTime.js";
 import { invoiceSettingsResolvers } from "./resolvers/invoiceSettings.js";
 import { businessResolvers } from "./resolvers/business.js";
-import { GraphQLJSON } from "graphql-type-json";   // 👈 JSON scalar
+import { GraphQLJSON } from "graphql-type-json";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const typesArray = loadFilesSync(path.join(__dirname, "./schemas"), {
   extensions: ["graphql"],
 });
+
 export const typeDefs = mergeTypeDefs(typesArray);
 
+// ✅ FIX: Scalars must be wrapped inside one resolvers object
+const scalarResolvers = {
+  DateTime: dateTimeScalar,
+  JSON: GraphQLJSON,
+};
+
 const resolverModules = [
-  { DateTime: dateTimeScalar },
-    { JSON: GraphQLJSON },   
+  scalarResolvers, // <-- FIX
   meResolvers,
   authResolvers,
   userResolvers,
@@ -51,8 +53,6 @@ const resolverModules = [
   billableItemResolvers,
   invoiceSettingsResolvers,
   businessResolvers,
-  
-   // <-- ADD THE NEW RESOLVER TO THE ARRAY
 ];
 
 export const resolvers = mergeResolvers(resolverModules.filter(Boolean));

@@ -1,22 +1,22 @@
-// server/src/graphql/resolvers/expense.ts
-
-import { GraphQLContext } from "../../context.js";
-import { expenseService } from "../../services/expense.service.js";
+// src/graphql/resolvers/expense.ts
 import {
-  Resolvers,
   QueryExpensesArgs,
   MutationCreateExpenseArgs,
   MutationDeleteExpenseArgs,
 } from "@/__generated__/graphql.js";
+import { GraphQLContext } from "../../context.js";
 
-export const expenseResolvers: Resolvers = {
+export const expenseResolvers = {
   Query: {
     expenses: async (
       _p: unknown,
       { projectId }: QueryExpensesArgs,
       ctx: GraphQLContext
     ) => {
-      return expenseService.getAllByProject(projectId, ctx) as any;
+      return ctx.prisma.projectExpense.findMany({
+        where: { projectId, deletedAt: null },
+        orderBy: { date: "desc" },
+      });
     },
   },
 
@@ -26,7 +26,16 @@ export const expenseResolvers: Resolvers = {
       { input }: MutationCreateExpenseArgs,
       ctx: GraphQLContext
     ) => {
-      return expenseService.create(input, ctx) as any;
+      return ctx.prisma.projectExpense.create({
+        data: {
+          businessId: ctx.user!.businessId!,
+          projectId: input.projectId,
+          description: input.description,
+          amount: input.amount,
+          date: input.date ?? new Date(),
+          category: input.category,
+        },
+      });
     },
 
     deleteExpense: async (
@@ -34,7 +43,10 @@ export const expenseResolvers: Resolvers = {
       { id }: MutationDeleteExpenseArgs,
       ctx: GraphQLContext
     ) => {
-      return expenseService.delete(id, ctx) as any;
+      return ctx.prisma.projectExpense.update({
+        where: { id },
+        data: { deletedAt: new Date() },
+      });
     },
   },
 };

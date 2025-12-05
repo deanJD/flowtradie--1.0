@@ -1,7 +1,7 @@
 import { gql } from "@apollo/client";
 
-export const GET_CLIENTS_QUERY = gql`
-  query GetClients($businessId: ID!) {
+export const GET_CLIENTS = gql`
+  query Clients($businessId: ID!) {
     clients(businessId: $businessId) {
       id
       firstName
@@ -10,7 +10,18 @@ export const GET_CLIENTS_QUERY = gql`
       email
       phone
       type
-      createdAt
+      notes
+      addresses {
+        id
+        addressType
+        line1
+        line2
+        city
+        state
+        postcode
+        country
+        countryCode
+      }
     }
   }
 `;
