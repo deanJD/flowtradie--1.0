@@ -1,154 +1,193 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
-import { useQuery, useMutation } from '@apollo/client';
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useQuery, useMutation } from "@apollo/client";
 
-import { GET_INVOICES_QUERY } from '@/app/lib/graphql/queries/invoices';
-import { DELETE_INVOICE_MUTATION } from '@/app/lib/graphql/mutations/invoice';
+import { useAuth } from "@/app/context/AuthContext";
+import { GET_INVOICES } from "@/app/lib/graphql/queries/invoices";
+import { DELETE_INVOICE_MUTATION } from "@/app/lib/graphql/mutations/invoice";
 
-import DataTable from '@/components/DataTable/DataTable';
-import ListPageLayout from '@/components/ListPageLayout/ListPageLayout';
-import tableStyles from '@/components/DataTable/DataTable.module.css';
-import DeleteConfirmModal from "@/components/DeleteConfirmModal/DeleteConfirmModal";
+import Button from "@/components/Button/Button";
+import styles from "@/app/dashboard/styles/DashboardTable.module.css";
 
-// --- STATUS STYLES ---
-const getStatusClass = (status: string) => {
-  switch (status) {
-    case 'PAID': return tableStyles.statusPaid;
-    case 'SENT': return tableStyles.statusSent;
-    case 'ACTIVE': return tableStyles.statusActive;
-    case 'DRAFT': return tableStyles.statusDraft;
-    case 'PENDING': return tableStyles.statusPending;
-    default: return tableStyles.statusDraft;
-  }
-};
 
 export default function InvoicesPage() {
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
 
-  // ✅ Queries & Mutations
-  const { data, loading, error } = useQuery(GET_INVOICES_QUERY);
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
 
-  const [showDeleteModal, setShowDeleteModal] = React.useState(false);
-  const [deleteTarget, setDeleteTarget] = React.useState<{ id: string; number: string } | null>(null);
+  useEffect(() => {
+    if (!authLoading && !user) router.push("/login");
+  }, [authLoading, user, router]);
+
+  const { data, loading, error, refetch } = useQuery(GET_INVOICES, {
+    variables: { businessId: user?.businessId },
+    skip: !user?.businessId,
+    fetchPolicy: "network-only",
+  });
 
   const [deleteInvoice] = useMutation(DELETE_INVOICE_MUTATION);
 
-
-  // ✅ SAFE CONFIRM DELETE HANDLER
-  const handleConfirmDelete = async () => {
-    if (!deleteTarget) return;
-
-    try {
-      await deleteInvoice({
-        variables: { deleteInvoiceId: deleteTarget.id },
-        update(cache) {
-          cache.modify({
-            fields: {
-              invoices(existing = [], { readField }) {
-                return existing.filter(
-                  (invoiceRef: any) => readField("id", invoiceRef) !== deleteTarget.id
-                );
-              },
-            },
-          });
-        },
-      });
-
-      // ✅ ✅ ✅ THIS FIXES THE MODAL NOT CLOSING
-      setShowDeleteModal(false);
-      setDeleteTarget(null);
-
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-
-  // ✅ Table Columns
-  const invoiceColumns = [
-    {
-      header: 'Invoice #',
-      accessor: 'invoiceNumber',
-      render: (row: any) => (
-        <Link href={`/dashboard/invoices/${row.id}/preview`} className={tableStyles.tableLink}>
-          {row.invoiceNumber}
-        </Link>
-      ),
-    },
-    {
-      header: 'Client',
-      accessor: 'project.client.name',
-    },
-    {
-      header: 'Status',
-      accessor: 'status',
-      render: (row: any) => (
-        <span className={`${tableStyles.status} ${getStatusClass(row.status)}`}>
-          {row.status}
-        </span>
-      ),
-    },
-    {
-      header: 'Total',
-      accessor: 'totalAmount',
-      render: (row: any) => `$${row.totalAmount.toFixed(2)}`,
-    },
-    {
-      header: 'Actions',
-      accessor: 'id',
-      className: tableStyles.actionsCell,
-      render: (row: any) => (
-        <div className={tableStyles.dropdown}>
-          <button className={tableStyles.dropdownButton}>Actions ▾</button>
-
-          <div className={tableStyles.dropdownMenu}>
-            <Link href={`/dashboard/invoices/${row.id}/preview`}>Preview</Link>
-            <Link href={`/dashboard/invoices/${row.id}/edit`}>Edit</Link>
-
-            <button
-              className={tableStyles.deleteBtn}
-              onClick={() => {
-                setDeleteTarget({ id: row.id, number: row.invoiceNumber });
-                setShowDeleteModal(true);
-              }}
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      ),
-    },
-  ];
-
-
-  // ✅ Loading / Error States
-  if (loading) return <p>Loading invoices...</p>;
+  if (authLoading || loading) return <p>Loading invoices...</p>;
   if (error) return <p>Error: {error.message}</p>;
 
+  const invoices = data?.invoices ?? [];
 
-  // ✅ Page Render
+  function renderStatus(status: string) {
+    const normalized = status.toUpperCase();
+    let cls = "";
+
+    switch (normalized) {
+      case "PAID":
+        cls = tableStyles.statusPaid;
+        break;
+      case "SENT":
+        cls = tableStyles.statusSent;
+        break;
+      case "OVERDUE":
+        cls = tableStyles.statusOverdue;
+        break;
+      case "PARTIALLY_PAID":
+        cls = tableStyles.statusPartially;
+        break;
+      case "DRAFT":
+      default:
+        cls = tableStyles.statusDraft;
+        break;
+    }
+
+    return (
+      <span className={`${tableStyles.status} ${cls}`}>
+        {normalized.toLowerCase()}
+      </span>
+    );
+  }
+
+  function formatAmount(value: any) {
+    if (value == null) return "—";
+    const num =
+      typeof value === "number" ? value : parseFloat(String(value) || "0");
+    if (Number.isNaN(num)) return "—";
+    return num.toFixed(2);
+  }
+
+  function formatDate(value: any) {
+    if (!value) return "—";
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return "—";
+    return d.toLocaleDateString();
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    await deleteInvoice({ variables: { id: deleteTarget.id } });
+    setDeleteTarget(null);
+    refetch();
+  }
+
   return (
-    <>
-      <DeleteConfirmModal
-        isOpen={showDeleteModal}
-        invoiceNumber={deleteTarget?.number}
-        onClose={() => setShowDeleteModal(false)}
-        onConfirm={handleConfirmDelete}
-      />
+    <div className={styles.pageContainer}>
+      {/* Header */}
+      <div className={styles.header}>
+        <h1 className={styles.title}>Invoices</h1>
+        <Button href="/dashboard/invoices/new">+ Create Invoice</Button>
+      </div>
 
-      <ListPageLayout
-        title="Invoices"
-        newButtonText="+ New Invoice"
-        newButtonLink="/dashboard/invoices/new"
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-          <h2 style={{ margin: 0 }}>All Invoices</h2>
-          <Link href="/dashboard/settings" className="settingsButton">⚙️ Settings</Link>
+      {/* Table */}
+      <div className={tableStyles.tableContainer}>
+        <table className={tableStyles.table}>
+          <thead>
+            <tr>
+              <th>Invoice #</th>
+              <th>Client</th>
+              <th>Status</th>
+              <th>Total</th>
+              <th>Due Date</th>
+              <th className={tableStyles.actionsHeader}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {invoices.map((inv: any) => (
+              <tr key={inv.id}>
+                <td>{inv.invoiceNumber}</td>
+                <td>
+                  {inv.client
+                    ? `${inv.client.firstName} ${inv.client.lastName}`
+                    : "—"}
+                </td>
+                <td>{renderStatus(inv.status)}</td>
+                <td>${formatAmount(inv.totalAmount)}</td>
+                <td>{formatDate(inv.dueDate)}</td>
+
+                <td className={tableStyles.actionsCell}>
+                  <div className={tableStyles.dropdown}>
+                    <button className={tableStyles.dropdownButton}>⋮</button>
+
+                    <div className={tableStyles.dropdownMenu}>
+                      <button
+                        onClick={() =>
+                          router.push(`/dashboard/invoices/${inv.id}`)
+                        }
+                      >
+                        View
+                      </button>
+
+                      <button
+                        onClick={() =>
+                          router.push(`/dashboard/invoices/${inv.id}/edit`)
+                        }
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        className={tableStyles.deleteBtn}
+                        onClick={() => setDeleteTarget(inv)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {invoices.length === 0 && (
+          <p className={tableStyles.emptyMessage}>No invoices found yet.</p>
+        )}
+      </div>
+
+      {/* Delete Modal */}
+      {deleteTarget && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <h3>Delete Invoice</h3>
+            <p>
+              Are you sure you want to delete invoice{" "}
+              <strong>{deleteTarget.invoiceNumber}</strong>?
+            </p>
+
+            <div className={styles.modalActions}>
+              <button
+                className={styles.cancelBtn}
+                onClick={() => setDeleteTarget(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className={styles.deleteBtn}
+                onClick={confirmDelete}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
-
-        <DataTable columns={invoiceColumns} data={data?.invoices ?? []} />
-      </ListPageLayout>
-    </>
+      )}
+    </div>
   );
 }

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 
 import { useAuth } from '@/app/context/AuthContext';
 import { CREATE_CLIENT_MUTATION } from '@/app/lib/graphql/mutations/client';
-import { GET_CLIENTS_QUERY } from '@/app/lib/graphql/queries/clients';
+import { GET_CLIENTS } from '@/app/lib/graphql/queries/clients';
 
 import Input from '@/components/Input/Input';
 import Button from '@/components/Button/Button';
@@ -40,7 +40,7 @@ export default function NewClientPage() {
   // --- GraphQL Mutation Setup ---
   const [createClient, { loading }] = useMutation(CREATE_CLIENT_MUTATION, {
     refetchQueries: [
-      { query: GET_CLIENTS_QUERY, variables: { businessId: user?.businessId } },
+      { query: GET_CLIENTS, variables: { businessId: user?.businessId } },
     ],
     awaitRefetchQueries: true,
   });

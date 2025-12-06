@@ -1,7 +1,8 @@
-// server/src/services/project.service.ts
 export const projectService = {
-    /** ------------------------- 🔍 Get ALL projects ------------------------- */
-    getAll: async (_unused, ctx) => {
+    /** ------------------------------------------------------------------
+     *  🔍 GET ALL PROJECTS (No args — filtered automatically by tenant)
+     *  ------------------------------------------------------------------ */
+    getAll: async (ctx) => {
         if (!ctx.user || !ctx.businessId) {
             throw new Error("Unauthorized");
         }
@@ -10,15 +11,25 @@ export const projectService = {
                 businessId: ctx.businessId,
                 deletedAt: null,
             },
-            orderBy: { createdAt: "desc" },
+            orderBy: { createdAt: "asc" },
+            // Helpful when listing projects
+            include: {
+                client: true,
+            },
         });
     },
-    /** ------------------------- 🔎 Get ONE project ------------------------- */
+    /** ------------------------------------------------------------------
+     *  🔎 GET ONE PROJECT BY ID
+     *  ------------------------------------------------------------------ */
     getById: (id, ctx) => {
         if (!ctx.user?.businessId)
             throw new Error("Unauthorized");
         return ctx.prisma.project.findFirst({
-            where: { id, deletedAt: null, businessId: ctx.user.businessId },
+            where: {
+                id,
+                deletedAt: null,
+                businessId: ctx.businessId,
+            },
             include: {
                 client: true,
                 tasks: true,
@@ -29,15 +40,19 @@ export const projectService = {
             },
         });
     },
-    /** ------------------------- 🆕 Create project ------------------------- */
+    /** ------------------------------------------------------------------
+     *  🆕 CREATE PROJECT
+     *  ------------------------------------------------------------------ */
     create: (input, ctx) => {
         if (!ctx.user?.businessId)
             throw new Error("Unauthorized");
         return ctx.prisma.project.create({
             data: {
-                business: { connect: { id: ctx.user.businessId } },
+                business: { connect: { id: ctx.businessId } },
                 client: { connect: { id: input.clientId } },
-                manager: input.managerId ? { connect: { id: input.managerId } } : undefined,
+                manager: input.managerId
+                    ? { connect: { id: input.managerId } }
+                    : undefined,
                 title: input.title,
                 description: input.description ?? undefined,
                 location: input.location ?? undefined,
@@ -48,7 +63,9 @@ export const projectService = {
             include: { client: true },
         });
     },
-    /** ------------------------- 🔁 Update project ------------------------- */
+    /** ------------------------------------------------------------------
+     *  🔁 UPDATE PROJECT
+     *  ------------------------------------------------------------------ */
     update: (id, input, ctx) => {
         if (!ctx.user?.businessId)
             throw new Error("Unauthorized");
@@ -71,7 +88,9 @@ export const projectService = {
             include: { client: true },
         });
     },
-    /** ------------------------- 🗑 Soft delete ------------------------- */
+    /** ------------------------------------------------------------------
+     *  🗑 SOFT DELETE PROJECT
+     *  ------------------------------------------------------------------ */
     delete: (id, ctx) => {
         if (!ctx.user?.businessId)
             throw new Error("Unauthorized");
@@ -80,14 +99,30 @@ export const projectService = {
             data: { deletedAt: new Date() },
         });
     },
-    /** ------------------------- 🔗 RELATION FETCHERS ------------------------- */
-    getClient: (projectId, ctx) => ctx.prisma.client.findFirst({ where: { projects: { some: { id: projectId } } } }),
-    getInvoices: (projectId, ctx) => ctx.prisma.invoice.findMany({ where: { projectId, deletedAt: null } }),
-    getQuotes: (projectId, ctx) => ctx.prisma.quote.findMany({ where: { projectId, deletedAt: null } }),
-    getTasks: (projectId, ctx) => ctx.prisma.task.findMany({ where: { projectId, deletedAt: null } }),
-    getExpenses: (projectId, ctx) => ctx.prisma.projectExpense.findMany({ where: { projectId, deletedAt: null } }),
-    getTimeLogs: (projectId, ctx) => ctx.prisma.timeLog.findMany({ where: { projectId, deletedAt: null } }),
-    /** ------------------------- 📊 PROJECT REPORTING ------------------------- */
+    /** ------------------------------------------------------------------
+     *  🔗 RELATION FETCHERS
+     *  ------------------------------------------------------------------ */
+    getClient: (projectId, ctx) => ctx.prisma.client.findFirst({
+        where: { projects: { some: { id: projectId } } },
+    }),
+    getInvoices: (projectId, ctx) => ctx.prisma.invoice.findMany({
+        where: { projectId, deletedAt: null },
+    }),
+    getQuotes: (projectId, ctx) => ctx.prisma.quote.findMany({
+        where: { projectId, deletedAt: null },
+    }),
+    getTasks: (projectId, ctx) => ctx.prisma.task.findMany({
+        where: { projectId, deletedAt: null },
+    }),
+    getExpenses: (projectId, ctx) => ctx.prisma.projectExpense.findMany({
+        where: { projectId, deletedAt: null },
+    }),
+    getTimeLogs: (projectId, ctx) => ctx.prisma.timeLog.findMany({
+        where: { projectId, deletedAt: null },
+    }),
+    /** ------------------------------------------------------------------
+     *  📊 FINANCIAL SUMMARY REPORTING
+     *  ------------------------------------------------------------------ */
     getFinancialSummary: async (projectId, ctx) => {
         if (!ctx.user?.businessId)
             throw new Error("Unauthorized");

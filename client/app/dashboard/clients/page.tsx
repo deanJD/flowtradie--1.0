@@ -1,59 +1,70 @@
-// client/app/dashboard/clients/page.tsx
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { useQuery } from "@apollo/client";
+import { useQuery, useMutation } from "@apollo/client";
+
 import { useAuth } from "@/app/context/AuthContext";
 import { GET_CLIENTS } from "@/app/lib/graphql/queries/clients";
+import { DELETE_CLIENT_MUTATION } from "@/app/lib/graphql/mutations/client";
 
 import Button from "@/components/Button/Button";
-import styles from "./ClientsPage.module.css";
+import tableStyles from "@/app/dashboard/styles/DashboardTable.module.css";
 
 export default function ClientsPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
-  // 🔐 Protect route
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
+
+  // Protect route
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push("/login");
-    }
+    if (!authLoading && !user) router.push("/login");
   }, [authLoading, user, router]);
 
-  // 🧠 Fetch clients ONLY IF businessId is ready
-  const { data, loading, error } = useQuery(GET_CLIENTS, {
+  // Fetch clients
+  const { data, loading, error, refetch } = useQuery(GET_CLIENTS, {
     variables: { businessId: user?.businessId },
     skip: !user?.businessId,
     fetchPolicy: "network-only",
   });
+
+  const [deleteClient] = useMutation(DELETE_CLIENT_MUTATION);
 
   if (authLoading || loading) return <p>Loading clients...</p>;
   if (error) return <p>Error loading clients: {error.message}</p>;
 
   const clients = data?.clients ?? [];
 
+  // Delete handler
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    await deleteClient({ variables: { id: deleteTarget.id } });
+    setDeleteTarget(null);
+    refetch();
+  }
+
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <h1>Clients</h1>
+    <div className={tableStyles.pageContainer}>
+      {/* HEADER */}
+      <div className={tableStyles.header}>
+        <h1 className={tableStyles.title}>Clients</h1>
         <Button href="/dashboard/clients/new">+ Add Client</Button>
       </div>
 
-      {clients.length === 0 ? (
-        <p>No clients found yet.</p>
-      ) : (
-        <table className={styles.table}>
+      {/* TABLE */}
+      <div className={tableStyles.tableContainer}>
+        <table className={tableStyles.table}>
           <thead>
             <tr>
               <th>Client Name</th>
               <th>Email</th>
               <th>Phone</th>
               <th>Business</th>
-              <th></th>
+              <th className={tableStyles.actionsCell}>Actions</th>
             </tr>
           </thead>
+
           <tbody>
             {clients.map((c: any) => (
               <tr key={c.id}>
@@ -61,15 +72,72 @@ export default function ClientsPage() {
                 <td>{c.email || "—"}</td>
                 <td>{c.phone || "—"}</td>
                 <td>{c.businessName || "—"}</td>
-                <td>
-                  <Link href={`/dashboard/clients/${c.id}`} className={styles.viewLink}>
-                    View →
-                  </Link>
+
+                {/* ACTION MENU */}
+                <td className={tableStyles.actionsCell}>
+                  <div className={tableStyles.dropdown}>
+                    <button className={tableStyles.dropdownButton}>•••</button>
+
+                    <div className={tableStyles.dropdownMenu}>
+                      <button onClick={() => router.push(`/dashboard/clients/${c.id}`)}>
+                        View
+                      </button>
+
+                      <button onClick={() => router.push(`/dashboard/clients/${c.id}/edit`)}>
+                        Edit
+                      </button>
+
+                      <button
+                        className={tableStyles.deleteAction}
+                        onClick={() => setDeleteTarget(c)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
                 </td>
               </tr>
             ))}
+
+            {clients.length === 0 && (
+              <tr>
+                <td colSpan={5} style={{ padding: "1.5rem", textAlign: "center" }}>
+                  No clients found.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
+      </div>
+
+      {/* DELETE CONFIRM MODAL */}
+      {deleteTarget && (
+        <div className={tableStyles.modalOverlay}>
+          <div className={tableStyles.modal}>
+            <h3 className={tableStyles.modalTitle}>Delete Client</h3>
+
+            <p className={tableStyles.modalMessage}>
+              Are you sure you want to delete{" "}
+              <strong>{deleteTarget.firstName} {deleteTarget.lastName}</strong>?
+            </p>
+
+            <div className={tableStyles.modalActions}>
+              <button
+                className={tableStyles.cancelBtn}
+                onClick={() => setDeleteTarget(null)}
+              >
+                Cancel
+              </button>
+
+              <button
+                className={tableStyles.deleteBtn}
+                onClick={confirmDelete}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

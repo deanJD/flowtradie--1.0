@@ -1,37 +1,30 @@
-// client/components/DataTable/DataTable.tsx (Golden Copy)
-'use client';
+"use client";
 
-import React from 'react';
-import styles from './DataTable.module.css';
+import React from "react";
+import styles from "./DataTable.module.css";
 
-// This helper function safely gets nested property values (e.g., 'client.name')
 const getNestedValue = (obj: any, path: string) => {
-  return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+  return path.split(".").reduce((acc, part) => acc && acc[part], obj);
 };
 
-// Define the shape of our component's props
+interface ActionItem {
+  label: string;
+  onClick: () => void;
+  destructive?: boolean;
+}
+
 interface DataTableProps {
   columns: Array<{
     header: string;
     accessor: string;
     render?: (row: any) => React.ReactNode;
-    className?: string; // For applying special classes to columns, like our actionsCell
   }>;
-  data: Array<any> | undefined; // The data can be undefined while loading
+  data: any[];
+  actions?: (row: any) => ActionItem[];
 }
 
-export default function DataTable({ columns, data }: DataTableProps) {
-  // Handle the loading state
-  if (data === undefined) {
-    return (
-      <div className={styles.tableContainer}>
-        <p className={styles.emptyMessage}>Loading data...</p>
-      </div>
-    );
-  }
-  
-  // Handle the empty state
-  if (data.length === 0) {
+export default function DataTable({ columns, data, actions }: DataTableProps) {
+  if (!data || data.length === 0) {
     return (
       <div className={styles.tableContainer}>
         <p className={styles.emptyMessage}>No data available.</p>
@@ -47,16 +40,46 @@ export default function DataTable({ columns, data }: DataTableProps) {
             {columns.map((col) => (
               <th key={col.accessor}>{col.header}</th>
             ))}
+
+            {actions && <th className={styles.actionsCell}></th>}
           </tr>
         </thead>
+
         <tbody>
-          {data.map((row) => (
+          {data.map((row: any) => (
             <tr key={row.id}>
               {columns.map((col) => (
-                <td key={col.accessor} className={col.className}>
-                  {col.render ? col.render(row) : getNestedValue(row, col.accessor)}
+                <td key={col.accessor}>
+                  {col.render
+                    ? col.render(row)
+                    : getNestedValue(row, col.accessor)}
                 </td>
               ))}
+
+              {/* ACTIONS DROPDOWN */}
+              {actions && (
+                <td className={styles.actionsCell}>
+                  <div className={styles.dropdown}>
+                    <button className={styles.dropdownButton}>⋮</button>
+
+                    <div className={styles.dropdownMenu}>
+                      {actions(row).map((action, index) => (
+                        <button
+                          key={index}
+                          className={
+                            action.destructive
+                              ? styles.deleteBtn
+                              : undefined
+                          }
+                          onClick={action.onClick}
+                        >
+                          {action.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

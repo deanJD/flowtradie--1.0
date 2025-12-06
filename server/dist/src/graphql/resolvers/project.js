@@ -1,87 +1,58 @@
 // server/src/graphql/resolvers/project.ts
 import { projectService } from "../../services/project.service.js";
 export const projectResolvers = {
-    // -----------------------
-    // 🔍 QUERY
-    // -----------------------
+    /* ============================================================
+       QUERY
+    ============================================================ */
     Query: {
         projects: async (_parent, _args, ctx) => {
-            return projectService.getAll(undefined, ctx);
+            return projectService.getAll(ctx);
         },
-        project: async (_parent, { id }, ctx) => {
-            return projectService.getById(id, ctx);
+        project: async (_parent, args, ctx) => {
+            return projectService.getById(args.id, ctx);
         },
     },
-    // -----------------------
-    // 🛠 MUTATION
-    // -----------------------
+    /* ============================================================
+       MUTATION
+    ============================================================ */
     Mutation: {
-        createProject: async (_parent, { input }, ctx) => {
-            return projectService.create(input, ctx);
-        },
-        updateProject: async (_parent, { id, input }, ctx) => {
-            const { user } = ctx;
-            if (!user)
-                throw new Error("You must be logged in to update a project.");
-            if (input.budgetedAmount !== undefined && !["OWNER", "ADMIN"].includes(user.role)) {
-                throw new Error("You are not authorized to edit the project budget.");
-            }
-            return projectService.update(id, input, ctx);
-        },
-        deleteProject: async (_parent, { id }, ctx) => {
-            return projectService.delete(id, ctx);
-        },
+        createProject: async (_parent, { input }, ctx) => projectService.create(input, ctx),
+        updateProject: async (_parent, { id, input }, ctx) => projectService.update(id, input, ctx),
+        deleteProject: async (_parent, { id }, ctx) => projectService.delete(id, ctx),
     },
-    // -----------------------
-    // 🔗 RELATIONS
-    // -----------------------
+    /* ============================================================
+       FIELD RESOLVERS
+    ============================================================ */
     Project: {
-        client: (parent, _args, ctx) => {
-            return projectService.getClient(parent.id, ctx);
-        },
-        invoices: (parent, _args, ctx) => {
-            return projectService.getInvoices(parent.id, ctx);
-        },
-        quotes: (parent, _args, ctx) => {
-            return projectService.getQuotes(parent.id, ctx);
-        },
-        tasks: (parent, _args, ctx) => {
-            return projectService.getTasks(parent.id, ctx);
-        },
-        expenses: (parent, _args, ctx) => {
-            return projectService.getExpenses(parent.id, ctx);
-        },
-        timeLogs: (parent, _args, ctx) => {
-            return projectService.getTimeLogs(parent.id, ctx);
-        },
-        // -----------------------
-        // 🧮 REPORTING (NEW)
-        // -----------------------
-        financialSummary: (parent, _args, ctx) => {
-            return projectService.getFinancialSummary(parent.id, ctx);
+        client: (parent, _args, ctx) => parent.client ?? projectService.getClient(parent.id, ctx),
+        quotes: (parent, _args, ctx) => projectService.getQuotes(parent.id, ctx),
+        invoices: (parent, _args, ctx) => projectService.getInvoices(parent.id, ctx),
+        tasks: (parent, _args, ctx) => projectService.getTasks(parent.id, ctx),
+        expenses: (parent, _args, ctx) => projectService.getExpenses(parent.id, ctx),
+        timeLogs: (parent, _args, ctx) => projectService.getTimeLogs(parent.id, ctx),
+        financialSummary: async (parent, _args, ctx) => {
+            const summary = await projectService.getFinancialSummary(parent.id, ctx);
+            // Convert Decimal → number to satisfy GraphQL codegen types
+            return {
+                invoicesTotal: Number(summary.invoicesTotal),
+                paymentsTotal: Number(summary.paymentsTotal),
+                expensesTotal: Number(summary.expensesTotal),
+                hoursWorked: Number(summary.hoursWorked),
+                estimatedProfit: Number(summary.estimatedProfit),
+            };
         },
         isOverdue: (parent) => {
             if (!parent.endDate)
                 return false;
             return new Date(parent.endDate) < new Date();
         },
-        progress: async (parent, _args, ctx) => {
-            const tasks = await ctx.prisma.task.findMany({
-                where: { projectId: parent.id, deletedAt: null },
-            });
-            if (!tasks.length)
+        progress: (parent) => {
+            if (!parent.tasks || parent.tasks.length === 0)
                 return 0;
-            const done = tasks.filter((t) => t.isCompleted).length;
-            return done / tasks.length;
+            const completed = parent.tasks.filter(t => t.status === "COMPLETED").length;
+            return (completed / parent.tasks.length) * 100;
         },
-        totalHoursWorked: async (parent, _args, ctx) => {
-            const result = await ctx.prisma.timeLog.aggregate({
-                where: { projectId: parent.id, deletedAt: null },
-                _sum: { hoursWorked: true },
-            });
-            const hours = result._sum.hoursWorked;
-            return hours ? Number(hours) : 0;
-        },
+        totalHoursWorked: (parent) => parent.timeLogs?.reduce((sum, log) => sum + Number(log.hoursWorked), 0) ?? 0,
     },
 };
 //# sourceMappingURL=project.js.map

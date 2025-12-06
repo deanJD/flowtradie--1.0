@@ -1,7 +1,6 @@
-// client/app/lib/graphql/queries/projects.ts
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
-export const GET_PROJECTS_QUERY = gql`
+export const GET_PROJECTS = gql`
   query GetProjects {
     projects {
       id
@@ -11,7 +10,6 @@ export const GET_PROJECTS_QUERY = gql`
         id
         firstName
         lastName
-        businessName
       }
     }
   }

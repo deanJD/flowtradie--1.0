@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/app/context/AuthContext';
 import { useQuery } from '@apollo/client';
-import { GET_PROJECTS_QUERY } from '@/app/lib/graphql/queries/projects';
+import { GET_PROJECTS } from '@/app/lib/graphql/queries/projects';
 import { GET_DASHBOARD_SUMMARY } from '@/app/lib/graphql/queries/dashboard'; 
 import styles from './Dashboard.module.css';
 import StatCard from '@/components/StatCard/StatCard';
@@ -40,7 +40,7 @@ export default function DashboardPage() {
     data: projectsData,
     loading: loadingProjects,
     error: errorProjects,
-  } = useQuery(GET_PROJECTS_QUERY, {
+  } = useQuery(GET_PROJECTS, {
     // 2️⃣ REMOVED VARIABLES (Backend gets ID from token automatically)
     skip: authLoading || !user?.businessId,
     fetchPolicy: 'network-only',

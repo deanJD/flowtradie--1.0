@@ -6,7 +6,7 @@ import { useQuery, useMutation } from '@apollo/client';
 import { useRouter, useParams } from 'next/navigation';
 
 import { GET_CLIENT_QUERY } from '@/app/lib/graphql/queries/client';
-import { GET_CLIENTS_QUERY } from '@/app/lib/graphql/queries/clients';
+import { GET_CLIENTS } from '@/app/lib/graphql/queries/clients';
 import { UPDATE_CLIENT_MUTATION } from '@/app/lib/graphql/mutations/client';
 
 import styles from './EditClientPage.module.css';
@@ -34,7 +34,7 @@ export default function EditClientPage() {
   });
 
   const [updateClient, { loading: saving }] = useMutation(UPDATE_CLIENT_MUTATION, {
-    refetchQueries: [{ query: GET_CLIENTS_QUERY }],
+    refetchQueries: [{ query: GET_CLIENTS }],
     awaitRefetchQueries: true,
   });
 

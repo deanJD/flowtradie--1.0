@@ -62,14 +62,13 @@ input UpdateProjectInput {
   budgetedAmount: Float
 }
 
-# --- Queries ---
 extend type Query {
-  projects: [Project!]!            # No args — filtered by businessId
+  projects(businessId: ID!): [Project!]!
   project(id: ID!): Project
-
-  # 🔥 Optional: direct report query
   projectReport(id: ID!): ProjectFinancialSummary!
 }
+
+  
 
 # --- Mutations ---
 extend type Mutation {
