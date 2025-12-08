@@ -6,11 +6,11 @@ export const CREATE_PROJECT_MUTATION = gql`
     createProject(input: $input) {
       id
       title
-      # ADD THESE FIELDS TO MATCH THE LIST QUERY
       status
       client {
         id
-        name
+        firstName
+        lastName
       }
     }
   }

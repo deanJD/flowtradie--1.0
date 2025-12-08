@@ -63,7 +63,7 @@ input UpdateProjectInput {
 }
 
 extend type Query {
-  projects(businessId: ID!): [Project!]!
+  projects: [Project!]!                 
   project(id: ID!): Project
   projectReport(id: ID!): ProjectFinancialSummary!
 }

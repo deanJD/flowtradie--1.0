@@ -1,6 +1,6 @@
 import { gql } from '@apollo/client';
 
-export const GET_CLIENT_QUERY = gql`
+export const GET_CLIENT = gql`
   query GetClient($id: ID!) {
     client(id: $id) {
       id
@@ -15,7 +15,7 @@ export const GET_CLIENT_QUERY = gql`
       createdAt
       updatedAt
 
-      addresses {      # 👈 MUST NEST ADDRESS FIELDS
+      addresses {
         id
         addressType
         line1
@@ -27,13 +27,13 @@ export const GET_CLIENT_QUERY = gql`
         countryCode
       }
 
-      projects {        # OPTIONAL — REMOVE IF NOT NEEDED
+      projects {
         id
         title
         status
       }
 
-      invoices {        # OPTIONAL — REMOVE IF NOT NEEDED
+      invoices {
         id
         status
         totalAmount

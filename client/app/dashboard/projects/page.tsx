@@ -38,7 +38,12 @@ export default function ProjectsPage() {
   // Confirm delete handler
   async function confirmDelete() {
     if (!deleteTarget) return;
-    await deleteProject({ variables: { id: deleteTarget.id } });
+    
+    // 👇 FIX: Change 'id' to 'deleteProjectId'
+    await deleteProject({ 
+      variables: { deleteProjectId: deleteTarget.id } 
+    });
+    
     setDeleteTarget(null);
     refetch();
   }
@@ -89,7 +94,7 @@ export default function ProjectsPage() {
                 {/* ACTION DROPDOWN */}
                 <td className={tableStyles.actionsCell}>
                   <div className={tableStyles.dropdown}>
-                    <button className={tableStyles.dropdownButton}>•••</button>
+                    <button className={tableStyles.dropdownButton}>Edit</button>
 
                     <div className={tableStyles.dropdownMenu}>
                       <button onClick={() => router.push(`/dashboard/projects/${p.id}`)}>

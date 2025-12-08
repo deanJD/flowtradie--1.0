@@ -1,7 +1,7 @@
 // client/app/lib/graphql/queries/project.ts
 import { gql } from '@apollo/client';
 
-export const GET_PROJECT_QUERY = gql`
+export const GET_PROJECT = gql`
   query GetProject($projectId: ID!) {
     project(id: $projectId) {
       id

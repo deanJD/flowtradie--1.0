@@ -3,7 +3,7 @@
 
 import React, { use } from 'react';
 import { useQuery, useMutation } from '@apollo/client';
-import { GET_PROJECT_QUERY } from '@/app/lib/graphql/queries/project';
+import { GET_PROJECT } from '@/app/lib/graphql/queries/project';
 import { UPDATE_TASK_MUTATION } from '@/app/lib/graphql/mutations/task';
 import Link from 'next/link';
 import styles from './ProjectDetailsPage.module.css';
@@ -11,7 +11,7 @@ import styles from './ProjectDetailsPage.module.css';
 export default function ProjectDetailsPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = use(params);
 
-  const { data, loading, error, refetch } = useQuery(GET_PROJECT_QUERY, {
+  const { data, loading, error, refetch } = useQuery(GET_PROJECT, {
     variables: { projectId },
   });
 

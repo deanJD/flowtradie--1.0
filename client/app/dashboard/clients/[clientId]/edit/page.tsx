@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { useQuery, useMutation } from '@apollo/client';
 import { useRouter, useParams } from 'next/navigation';
 
-import { GET_CLIENT_QUERY } from '@/app/lib/graphql/queries/client';
+import { GET_CLIENT } from '@/app/lib/graphql/queries/client';
 import { GET_CLIENTS } from '@/app/lib/graphql/queries/clients';
 import { UPDATE_CLIENT_MUTATION } from '@/app/lib/graphql/mutations/client';
 
@@ -19,7 +19,7 @@ export default function EditClientPage() {
   const clientId = params.clientId as string;
 
   // --- Load Client Data ---
-  const { data, loading, error } = useQuery(GET_CLIENT_QUERY, {
+  const { data, loading, error } = useQuery(GET_CLIENT, {
     variables: { id: clientId },
   });
 

@@ -7,28 +7,32 @@ export async function buildContext({ req }) {
     const token = authHeader && authHeader.startsWith("Bearer ") && authHeader !== "Bearer null"
         ? authHeader.replace("Bearer ", "")
         : null;
-    let decoded = null;
     let dbUser = null;
     if (token) {
         try {
-            decoded = decodeToken(token);
-            dbUser = await prisma.user.findUnique({
-                where: { id: decoded.id },
-                select: {
-                    id: true,
-                    email: true,
-                    role: true,
-                    businessId: true, // ⚡ REQUIRED FOR PROJECTS / INVOICES / ALL
-                },
-            });
+            // 2️⃣ SAFE CASTING
+            const decoded = decodeToken(token);
+            // Ensure the token actually has an ID before hitting the DB
+            if (decoded && decoded.id) {
+                dbUser = await prisma.user.findUnique({
+                    where: { id: decoded.id },
+                    select: {
+                        id: true,
+                        email: true,
+                        role: true,
+                        businessId: true,
+                    },
+                });
+            }
         }
         catch (e) {
-            console.error("❌ Invalid JWT:", e);
+            // 3️⃣ SILENT FAILURE LOGGING (Don't crash, just warn)
+            console.warn("⚠️ Auth Warning: Invalid or Expired JWT received");
         }
     }
     return {
         prisma,
-        businessId: dbUser?.businessId ?? null, // ✔ NOW CONTEXT HAS IT
+        businessId: dbUser?.businessId ?? null,
         user: dbUser,
     };
 }

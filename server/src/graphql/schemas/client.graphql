@@ -65,7 +65,7 @@ input CreateAddressInput {
 }
 
 extend type Query {
-  clients(businessId: ID!): [Client!]!
+  clients: [Client!]!
   client(id: ID!): Client
 }
 

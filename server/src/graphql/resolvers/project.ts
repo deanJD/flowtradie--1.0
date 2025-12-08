@@ -52,28 +52,28 @@ export const projectResolvers = {
      FIELD RESOLVERS
   ============================================================ */
   Project: {
+    // ⚡️ PERFORMANCE FIX: Check if parent already has the data before fetching
     client: (parent: GqlProject, _args: unknown, ctx: GraphQLContext) =>
       parent.client ?? projectService.getClient(parent.id, ctx),
 
     quotes: (parent: GqlProject, _args: unknown, ctx: GraphQLContext) =>
-      projectService.getQuotes(parent.id, ctx),
+      parent.quotes ?? projectService.getQuotes(parent.id, ctx),
 
     invoices: (parent: GqlProject, _args: unknown, ctx: GraphQLContext) =>
-      projectService.getInvoices(parent.id, ctx),
+      parent.invoices ?? projectService.getInvoices(parent.id, ctx),
 
     tasks: (parent: GqlProject, _args: unknown, ctx: GraphQLContext) =>
-      projectService.getTasks(parent.id, ctx),
+      parent.tasks ?? projectService.getTasks(parent.id, ctx),
 
     expenses: (parent: GqlProject, _args: unknown, ctx: GraphQLContext) =>
-      projectService.getExpenses(parent.id, ctx),
+      parent.expenses ?? projectService.getExpenses(parent.id, ctx),
 
     timeLogs: (parent: GqlProject, _args: unknown, ctx: GraphQLContext) =>
-      projectService.getTimeLogs(parent.id, ctx),
+      parent.timeLogs ?? projectService.getTimeLogs(parent.id, ctx),
 
     financialSummary: async (parent: GqlProject, _args: unknown, ctx: GraphQLContext) => {
       const summary = await projectService.getFinancialSummary(parent.id, ctx);
 
-      // Convert Decimal → number to satisfy GraphQL codegen types
       return {
         invoicesTotal: Number(summary.invoicesTotal),
         paymentsTotal: Number(summary.paymentsTotal),
@@ -90,11 +90,11 @@ export const projectResolvers = {
 
     progress: (parent: GqlProject) => {
       if (!parent.tasks || parent.tasks.length === 0) return 0;
-      const completed = parent.tasks.filter(t => t.status === "COMPLETED").length;
+      const completed = parent.tasks.filter((t: any) => t.status === "COMPLETED" || t.isCompleted).length;
       return (completed / parent.tasks.length) * 100;
     },
 
     totalHoursWorked: (parent: GqlProject) =>
-      parent.timeLogs?.reduce((sum, log) => sum + Number(log.hoursWorked), 0) ?? 0,
+      parent.timeLogs?.reduce((sum: number, log: any) => sum + Number(log.hoursWorked), 0) ?? 0,
   },
 };

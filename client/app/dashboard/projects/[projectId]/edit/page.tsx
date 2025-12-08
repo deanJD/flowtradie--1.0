@@ -4,8 +4,8 @@
 import React, { useState, useEffect, use } from 'react';
 import { useQuery, useMutation } from '@apollo/client';
 import { useRouter } from 'next/navigation';
-import { GET_PROJECT_QUERY } from '@/app/lib/graphql/queries/project';
-import { GET_PROJECTS_QUERY } from '@/app/lib/graphql/queries/projects'; // <-- We need this for the cache update
+import { GET_PROJECT } from '@/app/lib/graphql/queries/project';
+import { GET_PROJECTS } from '@/app/lib/graphql/queries/projects'; // <-- We need this for the cache update
 import { UPDATE_PROJECT_MUTATION, DELETE_PROJECT_MUTATION } from '@/app/lib/graphql/mutations/project';
 import styles from './EditProjectPage.module.css';
 import Button from '@/components/Button/Button';
@@ -17,7 +17,7 @@ export default function EditProjectPage({ params }: { params: Promise<{ projectI
 
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
 
-  const { data: projectData, loading: projectLoading } = useQuery(GET_PROJECT_QUERY, {
+  const { data: projectData, loading: projectLoading } = useQuery(GET_PROJECT, {
     variables: { projectId },
   });
 
@@ -35,14 +35,14 @@ export default function EditProjectPage({ params }: { params: Promise<{ projectI
     onCompleted: () => {
       router.push(`/dashboard/projects/${projectId}`);
     },
-    refetchQueries: [{ query: GET_PROJECT_QUERY, variables: { projectId } }],
+    refetchQueries: [{ query: GET_PROJECT, variables: { projectId } }],
   });
 
   // vvvvvvvvvv THIS IS THE FIX vvvvvvvvvv
   const [deleteProject, { loading: deletingProject, error: deleteError }] = useMutation(DELETE_PROJECT_MUTATION, {
     update(cache, { data: { deleteProject } }) {
       // Read the current projects list from the cache
-      const existingData = cache.readQuery<{ projects: any[] }>({ query: GET_PROJECTS_QUERY });
+      const existingData = cache.readQuery<{ projects: any[] }>({ query: GET_PROJECTS });
 
       if (existingData && deleteProject) {
         // Filter out the project that was just deleted
@@ -51,7 +51,7 @@ export default function EditProjectPage({ params }: { params: Promise<{ projectI
         );
         // Write the new, shorter list back to the cache
         cache.writeQuery({
-          query: GET_PROJECTS_QUERY,
+          query: GET_PROJECTS,
           data: { projects: updatedProjects },
         });
       }
