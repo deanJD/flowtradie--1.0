@@ -1,4 +1,3 @@
-// client/app/lib/graphql/mutations/register.ts
 import { gql } from '@apollo/client';
 
 export const REGISTER_MUTATION = gql`
@@ -9,6 +8,8 @@ export const REGISTER_MUTATION = gql`
         id
         name
         email
+        role
+        businessId
       }
     }
   }

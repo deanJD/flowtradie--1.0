@@ -4,26 +4,36 @@ export const GET_INVOICE_SETTINGS = gql`
   query GetInvoiceSettings {
     invoiceSettings {
       id
+      
+      # ✅ Identity (Merged from Business)
       businessName
       abn
-      addressLine1
-      addressLine2
-      city
-      state
-      postcode
-      country
-
       phone
       email
       website
       logoUrl
-      bankDetails
+      
+      # ✅ Nested Address (Matches your new Schema)
+      address {
+        line1
+        line2
+        city
+        state
+        postcode
+        country
+      }
 
+      # ✅ Configuration
+      bankDetails
       invoicePrefix
       startingNumber
       defaultDueDays
-      gstRate
+      
+      # ✅ Tax (Renamed from gstRate)
+      taxRate
+      taxLabel
 
+      # ✅ Email Settings
       smtpHost
       smtpPort
       smtpUser

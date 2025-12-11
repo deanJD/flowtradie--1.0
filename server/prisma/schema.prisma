@@ -69,27 +69,6 @@ enum TaskStatus {
 }
 
 
-// ======================
-//  REGION (FOR TAX & LANGUAGE)
-// ======================
-model Region {
-  id             String  @id @default(cuid())
-  code           String  @unique
-  name           String
-  currencyCode   String
-  currencySymbol String
-  taxLabel       String
-  defaultTaxRate Decimal @db.Decimal(5, 2)
-  locale         String
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  businesses Business[]
-
-  @@index([code])
-}
 
 // ======================
 //  ADDRESS
@@ -113,6 +92,27 @@ model Address {
   businesses Business[] @relation("BusinessAddresses")
   clients    Client[]   @relation("ClientAddresses")
 }
+// ======================
+//  REGION (FOR TAX & LANGUAGE)
+// ======================
+model Region {
+  id             String  @id @default(cuid())
+  code           String  @unique
+  name           String
+  currencyCode   String
+  currencySymbol String
+  taxLabel       String
+  defaultTaxRate Decimal @db.Decimal(5, 2)
+  locale         String
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  businesses Business[]
+
+  @@index([code])
+}
 
 // ======================
 //  BUSINESS (TENANT)
@@ -126,6 +126,7 @@ model Business {
   phone              String?
   website            String?
   logoUrl            String?
+  
 
   regionId String
   region   Region @relation(fields: [regionId], references: [id])
@@ -151,6 +152,35 @@ model Business {
 
   @@index([regionId])
 }
+
+// ======================
+//  INVOICE SETTINGS
+// ======================
+
+model InvoiceSettings {
+  id         String   @id @default(cuid())
+  businessId String   @unique
+  business   Business @relation(fields: [businessId], references: [id])
+
+  
+  bankDetails    String?
+  invoicePrefix  String? @default("INV-")
+  startingNumber Int?    @default(1000)
+  defaultDueDays Int?    @default(14)
+  taxRate        Decimal @default(0.10) @db.Decimal(5, 2)
+  taxLabel       String?
+  smtpHost     String?
+  smtpPort     Int?
+  smtpUser     String?
+  smtpPassword String?
+  fromEmail    String?
+  fromName     String?
+
+  ownerId   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 
 // ======================
 //  USERS / EMPLOYEES
@@ -307,41 +337,6 @@ model BillableItem {
   @@index([businessId])
 }
 
-// ======================
-//  INVOICE SETTINGS
-// ======================
-
-model InvoiceSettings {
-  id         String   @id @default(cuid())
-  businessId String   @unique
-  business   Business @relation(fields: [businessId], references: [id])
-
-  businessName    String?
-  abn             String?
-  addressSnapshot Json?
-  phone           String?
-  email           String?
-  website         String?
-  logoUrl         String?
-  bankDetails     String?
-
-  invoicePrefix  String? @default("INV-")
-  startingNumber Int?    @default(1000)
-  defaultDueDays Int?    @default(14)
-  taxRate        Decimal @default(0.10) @db.Decimal(5, 2)
-  taxLabel       String?
-
-  smtpHost     String?
-  smtpPort     Int?
-  smtpUser     String?
-  smtpPassword String?
-  fromEmail    String?
-  fromName     String?
-
-  ownerId   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
 
 // ======================
 //  INVOICE 

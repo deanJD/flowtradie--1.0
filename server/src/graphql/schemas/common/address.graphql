@@ -1,8 +1,8 @@
 # server/src/graphql/schemas/common/address.graphql
 
 enum AddressType {
-  BUSINESS        # Billing / Registered
-  SITE            # Job location
+  BUSINESS
+  SITE
   CLIENT_BUSINESS
   CLIENT_SITE
   OTHER
@@ -18,8 +18,19 @@ type Address {
   country: String
   countryCode: String
   addressType: AddressType!
-  
   createdAt: DateTime!
   updatedAt: DateTime!
   deletedAt: DateTime
+}
+
+# 👇 ADD THIS DEFINITION
+input AddressInput {
+  line1: String!
+  line2: String
+  city: String!
+  state: String
+  postcode: String!
+  country: String
+  countryCode: String
+  # addressType is optional or handled by logic
 }

@@ -1,19 +1,15 @@
-// client/app/dashboard/invoices/new/page.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@apollo/client';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-// --- GraphQL Imports ---
-import { GET_CLIENTS_QUERY } from '@/app/lib/graphql/queries/clients';
-import { GET_PROJECTS_QUERY } from '@/app/lib/graphql/queries/projects';
-import { GET_INVOICES_QUERY } from '@/app/lib/graphql/queries/invoices';
+import { GET_CLIENTS } from '@/app/lib/graphql/queries/clients'; // Make sure this query is clean too
+import { GET_PROJECTS } from '@/app/lib/graphql/queries/projects';
+import { GET_INVOICES } from '@/app/lib/graphql/queries/invoices'; // For cache update
 import { CREATE_INVOICE_MUTATION } from '@/app/lib/graphql/mutations/invoice';
 import { GET_INVOICE_SETTINGS } from '@/app/lib/graphql/queries/invoiceSettings';
-import { UPDATE_INVOICE_SETTINGS } from '@/app/lib/graphql/mutations/invoiceSettings';
 
-// --- Component Imports ---
 import styles from '../shared/InvoiceForm.module.css';
 import Button from '@/components/Button/Button';
 
@@ -24,1014 +20,204 @@ interface LineItem {
   unitPrice: number;
 }
 
-// ✅ Updated to match new client address shape
-interface Client {
-  id: string;
-  name: string;
-  addressLine1?: string | null;
-  addressLine2?: string | null;
-  city?: string | null;
-  state?: string | null;
-  postcode?: string | null;
-  phone?: string | null;
-  email?: string | null;
-}
-
-interface Project {
-  id: string;
-  title: string;
-  client: { id: string };
-}
-
-interface FromBusiness {
-  businessName: string;
-  abn: string;
-  addressLine1: string;
-  addressLine2: string;
-  city: string;
-  state: string;
-  postcode: string;
-  country: string;
-  phone: string;
-  email: string;
-  website: string;
-  logoUrl: string;
-  bankDetails: string;
-}
-
-// --- Component ---
 export default function NewInvoicePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Auto-select client if passed in URL (e.g. from Client Profile)
+  const preselectedClientId = searchParams.get('clientId') || '';
 
   // --- State ---
-  const [selectedClientId, setSelectedClientId] = useState('');
+  const [selectedClientId, setSelectedClientId] = useState(preselectedClientId);
   const [selectedProjectId, setSelectedProjectId] = useState('');
-  const [invoiceNumber, setInvoiceNumber] = useState('');
-  const [issueDate, setIssueDate] = useState(
-    new Date().toISOString().split('T')[0]
-  );
+  
+  // We display the next number for UI, but Backend determines the real one
+  const [nextInvoiceNumber, setNextInvoiceNumber] = useState('...'); 
+  
+  const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
   const [terms, setTerms] = useState('14');
   const [dueDate, setDueDate] = useState('');
   const [notes, setNotes] = useState('');
+  
   const [items, setItems] = useState<LineItem[]>([
-    { description: '', quantity: 1, unitPrice: 0 },
+    { description: 'Service Fee', quantity: 1, unitPrice: 0 },
   ]);
 
-  // For display/edit only – single string built from client's structured fields
-  const [clientAddress, setClientAddress] = useState('');
-  const [clientPhone, setClientPhone] = useState('');
-  const [clientEmail, setClientEmail] = useState('');
+  // --- Data Fetching ---
+  const { data: clientsData } = useQuery(GET_CLIENTS);
+  const { data: projectsData } = useQuery(GET_PROJECTS);
+  const { data: settingsData, loading: settingsLoading } = useQuery(GET_INVOICE_SETTINGS);
 
-  const [updateInvoiceSettings] = useMutation(UPDATE_INVOICE_SETTINGS);
-
-  // --- Business info state ---
-  const [fromBusiness, setFromBusiness] = useState<FromBusiness>({
-    businessName: '',
-    abn: '',
-    addressLine1: '',
-    addressLine2: '',
-    city: '',
-    state: '',
-    postcode: '',
-    country: '',
-    phone: '',
-    email: '',
-    website: '',
-    logoUrl: '',
-    bankDetails: '',
+  const [createInvoice, { loading: isCreating }] = useMutation(CREATE_INVOICE_MUTATION, {
+    // Basic cache update to show new invoice in list immediately
+    refetchQueries: [{ query: GET_INVOICES }], 
+    onCompleted: (data) => {
+      router.push(`/dashboard/invoices/${data.createInvoice.id}`);
+    },
   });
 
-  // --- Data Fetching ---
-  const {
-    data: clientsData,
-    loading: clientsLoading,
-    error: clientsError,
-  } = useQuery<{ clients: Client[] }>(GET_CLIENTS_QUERY);
-
-  const {
-    data: projectsData,
-    loading: projectsLoading,
-    error: projectsError,
-  } = useQuery<{ projects: Project[] }>(GET_PROJECTS_QUERY);
-
-  const {
-    data: settingsData,
-    loading: settingsLoading,
-    error: settingsError,
-  } = useQuery(GET_INVOICE_SETTINGS);
-
-  const [createInvoice, { loading: isCreating, error: createError }] =
-    useMutation(CREATE_INVOICE_MUTATION, {
-      update(cache, { data: { createInvoice: newInvoice } }) {
-        const existingData = cache.readQuery<{ invoices: any[] }>({
-          query: GET_INVOICES_QUERY,
-        });
-        if (existingData && newInvoice) {
-          cache.writeQuery({
-            query: GET_INVOICES_QUERY,
-            data: { invoices: [newInvoice, ...existingData.invoices] },
-          });
-        }
-      },
-      onCompleted: (data) => {
-        router.push(`/dashboard/invoices/${data.createInvoice.id}/preview`);
-      },
-    });
-
   // --- Derived Data ---
-  const selectedClient = clientsData?.clients.find(
-    (c) => c.id === selectedClientId
-  );
   const clientProjects = projectsData?.projects.filter(
-    (p) => p.client.id === selectedClientId
-  );
+    (p: any) => p.client.id === selectedClientId
+  ) || [];
 
-  const subtotal = items.reduce(
-    (sum, item) =>
-      sum +
-      (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0),
-    0
-  );
-
-  // GST from settings (decimal, e.g. 0.1 for 10%)
-  const gstRate = settingsData?.invoiceSettings?.gstRate ?? 0;
-  const gstAmount = subtotal * gstRate;
-  const totalAmount = subtotal + gstAmount;
+  const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+  const taxRate = settingsData?.invoiceSettings?.taxRate ?? 0; // ✅ Uses correct field
+  const taxAmount = subtotal * taxRate;
+  const totalAmount = subtotal + taxAmount;
 
   // --- Effects ---
 
-  // ✅ Sync selected client details using new structured fields
-  useEffect(() => {
-    if (selectedClient) {
-      const formattedClientAddress = [
-        selectedClient.addressLine1,
-        selectedClient.addressLine2,
-        [selectedClient.city, selectedClient.state]
-          .filter(Boolean)
-          .join(' '),
-        selectedClient.postcode,
-      ]
-        .filter(Boolean)
-        .join(', ');
-
-      setClientAddress(formattedClientAddress);
-      setClientPhone(selectedClient.phone || '');
-      setClientEmail(selectedClient.email || '');
-    } else {
-      setClientAddress('');
-      setClientPhone('');
-      setClientEmail('');
-    }
-  }, [selectedClient]);
-
-  // ✅ Sync business settings into local state
+  // 1. Auto-fill Defaults from Settings
   useEffect(() => {
     if (settingsData?.invoiceSettings) {
       const s = settingsData.invoiceSettings;
-      setFromBusiness({
-        businessName: s.businessName ?? '',
-        abn: s.abn ?? '',
-        addressLine1: s.addressLine1 ?? '',
-        addressLine2: s.addressLine2 ?? '',
-        city: s.city ?? '',
-        state: s.state ?? '',
-        postcode: s.postcode ?? '',
-        country: s.country ?? '',
-        phone: s.phone ?? '',
-        email: s.email ?? '',
-        website: s.website ?? '',
-        logoUrl: s.logoUrl ?? '',
-        bankDetails: s.bankDetails ?? '',
-      });
+      
+      // Prefix + Number (Visual only)
+      const prefix = s.invoicePrefix || 'INV-';
+      const num = s.startingNumber || 1000;
+      setNextInvoiceNumber(`${prefix}${num}`);
 
-      // Default notes to bank details if empty
-      if (!notes && s.bankDetails) {
-        setNotes(s.bankDetails);
-      }
+      // Terms
+      if (s.defaultDueDays) setTerms(s.defaultDueDays.toString());
+      
+      // Notes (Bank Details)
+      if (!notes && s.bankDetails) setNotes(s.bankDetails);
     }
-  }, [settingsData, notes]);
+  }, [settingsData]);
 
-  // Auto-calc due date from terms
+  // 2. Auto-calc Due Date
   useEffect(() => {
     if (terms !== 'custom' && issueDate) {
-      const parts = issueDate.split('-');
-      const date = new Date(
-        Date.UTC(
-          Number(parts[0]),
-          Number(parts[1]) - 1,
-          Number(parts[2])
-        )
-      );
-      const daysToAdd = parseInt(terms, 10);
-      if (!isNaN(daysToAdd)) {
-        date.setUTCDate(date.getUTCDate() + daysToAdd);
+      const date = new Date(issueDate);
+      const days = parseInt(terms, 10);
+      if (!isNaN(days)) {
+        date.setDate(date.getDate() + days);
         setDueDate(date.toISOString().split('T')[0]);
-      } else {
-        setDueDate('');
       }
-    } else if (!issueDate) {
-      setDueDate('');
     }
   }, [issueDate, terms]);
 
-  // Auto-fill invoice number when settings are loaded
-  useEffect(() => {
-    if (settingsData?.invoiceSettings && !invoiceNumber) {
-      const { invoicePrefix, startingNumber } = settingsData.invoiceSettings;
-      const prefix = invoicePrefix || 'INV-';
-      const nextNumber = startingNumber
-        ? startingNumber.toString().padStart(3, '0')
-        : '001';
-      setInvoiceNumber(`${prefix}${nextNumber}`);
-    }
-  }, [settingsData, invoiceNumber]);
-
   // --- Handlers ---
-  const handleItemChange = (
-    index: number,
-    field: keyof LineItem,
-    value: string | number
-  ) => {
-    const newItems = items.map((item, i) => {
-      if (i === index) {
-        const numericValue =
-          field === 'quantity' || field === 'unitPrice'
-            ? parseFloat(value.toString()) || 0
-            : value;
-        return { ...item, [field]: numericValue };
-      }
-      return item;
-    });
+  const handleItemChange = (index: number, field: keyof LineItem, val: any) => {
+    const newItems = [...items];
+    newItems[index] = { ...newItems[index], [field]: val };
     setItems(newItems);
   };
 
-  const addItem = () =>
-    setItems([
-      ...items,
-      { description: '', quantity: 1, unitPrice: 0 },
-    ]);
-
-  const removeItem = (index: number) => {
-    if (items.length <= 1) {
-      setItems([{ description: '', quantity: 1, unitPrice: 0 }]);
-      return;
-    }
-    setItems(items.filter((_, i) => i !== index));
-  };
-
-  const handleDueDateChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const newManualDate = e.target.value;
-    setDueDate(newManualDate);
-    let calculatedDate = '';
-    if (terms !== 'custom' && issueDate) {
-      const parts = issueDate.split('-');
-      const date = new Date(
-        Date.UTC(
-          Number(parts[0]),
-          Number(parts[1]) - 1,
-          Number(parts[2])
-        )
-      );
-      const daysToAdd = parseInt(terms, 10);
-      if (!isNaN(daysToAdd)) {
-        date.setUTCDate(date.getUTCDate() + daysToAdd);
-        calculatedDate = date.toISOString().split('T')[0];
-      }
-    }
-    if (
-      terms !== 'custom' &&
-      newManualDate &&
-      calculatedDate &&
-      newManualDate !== calculatedDate
-    ) {
-      setTerms('custom');
-    }
-  };
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    if (!selectedProjectId) {
-      alert('Please select a project.');
-      return;
-    }
-
-    const itemsForMutation = items
-      .map((item) => ({
-        description: item.description,
-        quantity: Number(item.quantity) || 0,
-        unitPrice: Number(item.unitPrice) || 0,
-      }))
-      .filter((item) => item.description);
-
-    if (itemsForMutation.length === 0) {
-      alert('Please add at least one item with a description.');
-      return;
-    }
-
-    if (!dueDate) {
-      alert('Please ensure a Due Date is set.');
-      return;
-    }
-
-    const dueParts = dueDate.split('-');
-    const finalDueDate = new Date(
-      Date.UTC(
-        Number(dueParts[0]),
-        Number(dueParts[1]) - 1,
-        Number(dueParts[2])
-      )
-    );
-    const issueParts = issueDate.split('-');
-    const finalIssueDate = new Date(
-      Date.UTC(
-        Number(issueParts[0]),
-        Number(issueParts[1]) - 1,
-        Number(issueParts[2])
-      )
-    );
-
-    // Optional: flat string for logging / UI (not sent to GraphQL)
-    const businessAddressSnapshot = [
-      fromBusiness.addressLine1,
-      fromBusiness.addressLine2,
-      [fromBusiness.city, fromBusiness.state].filter(Boolean).join(' '),
-      fromBusiness.postcode,
-    ]
-      .filter(Boolean)
-      .join(', ');
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedProjectId) return alert("Please select a project");
 
     try {
-      console.log('Submitting invoice payload:', {
-        projectId: selectedProjectId,
-        invoiceNumber,
-        issueDate: finalIssueDate,
-        dueDate: finalDueDate,
-        notes,
-        items: itemsForMutation,
-        gstRate,
-        businessName: fromBusiness.businessName,
-        abn: fromBusiness.abn,
-        addressLine1: fromBusiness.addressLine1,
-        addressLine2: fromBusiness.addressLine2,
-        city: fromBusiness.city,
-        state: fromBusiness.state,
-        postcode: fromBusiness.postcode,
-        country: fromBusiness.country,
-        phone: fromBusiness.phone,
-        email: fromBusiness.email,
-        website: fromBusiness.website,
-        logoUrl: fromBusiness.logoUrl,
-        bankDetails: fromBusiness.bankDetails,
-      });
-
-      // ✅ IMPORTANT: Use structured fields, NOT "address"
-      const { data } = await createInvoice({
+      await createInvoice({
         variables: {
           input: {
             projectId: selectedProjectId,
-            invoiceNumber,
-            issueDate: finalIssueDate,
-            dueDate: finalDueDate,
+            issueDate: new Date(issueDate),
+            dueDate: new Date(dueDate),
             notes,
-            items: itemsForMutation,
-            gstRate, // from settings (0 if GST disabled)
-
-            // Snapshot of business details - must match CreateInvoiceInput
-            businessName: fromBusiness.businessName,
-            abn: fromBusiness.abn,
-            addressLine1: fromBusiness.addressLine1,
-            addressLine2: fromBusiness.addressLine2,
-            city: fromBusiness.city,
-            state: fromBusiness.state,
-            postcode: fromBusiness.postcode,
-            country: fromBusiness.country,
-            phone: fromBusiness.phone,
-            email: fromBusiness.email,
-            website: fromBusiness.website,
-            logoUrl: fromBusiness.logoUrl,
-            bankDetails: fromBusiness.bankDetails,
-          },
-        },
+            items: items.map(i => ({
+              description: i.description,
+              quantity: Number(i.quantity),
+              unitPrice: Number(i.unitPrice)
+            })),
+            // We NO LONGER send business details. Backend does it.
+          }
+        }
       });
-
-      // ✅ Increment invoice number in settings after success
-      if (data?.createInvoice && settingsData?.invoiceSettings) {
-        const { startingNumber = 1 } = settingsData.invoiceSettings;
-        await updateInvoiceSettings({
-          variables: {
-            input: {
-              // Only send the field you want to bump – same pattern as SettingsPage
-              startingNumber: startingNumber + 1,
-            },
-          },
-        });
-      }
-
-      if (data?.createInvoice?.id) {
-        router.push(
-          `/dashboard/invoices/${data.createInvoice.id}/preview`
-        );
-      }
-    } catch (error: any) {
-      console.error('Error creating invoice:', error);
-      alert('Failed to create invoice. Check console for details.');
+    } catch (err: any) {
+      alert(`Failed to create invoice: ${err.message}`);
     }
   };
 
-  // --- Loading & Error States ---
-  if (settingsLoading) return <p>Loading business settings...</p>;
-  if (settingsError)
-    return (
-      <p>Error loading settings: {settingsError.message}</p>
-    );
-  if (clientsLoading || projectsLoading)
-    return <p>Loading client and project data...</p>;
-  if (clientsError)
-    return <p>Error loading clients: {clientsError.message}</p>;
-  if (projectsError)
-    return <p>Error loading projects: {projectsError.message}</p>;
+  if (settingsLoading) return <p>Loading...</p>;
 
-  // --- Render ---
+  // ✅ Read-only Business Preview
+  const business = settingsData?.invoiceSettings; 
+
   return (
     <div className={styles.container}>
       <form className={styles.invoiceForm} onSubmit={handleSubmit}>
         <header className={styles.header}>
-          <h1 className={styles.title}>Create Invoice</h1>
+          <h1 className={styles.title}>New Invoice</h1>
+          <span className={styles.draftBadge}>DRAFT #{nextInvoiceNumber}</span>
         </header>
 
-        {/* === FROM / BILL TO / PROJECT === */}
         <section className={styles.metaGrid}>
-          {/* FROM (Business Info) */}
-          <div>
-            <h3 className={styles.subSectionTitle}>
-              From (Your Business Info)
-            </h3>
-
-            <div className={styles.inputGroup}>
-              <label
-                htmlFor="businessName"
-                className={styles.label}
-              >
-                Business Name
-              </label>
-              <input
-                id="businessName"
-                type="text"
-                className={styles.input}
-                value={fromBusiness.businessName}
-                onChange={(e) =>
-                  setFromBusiness({
-                    ...fromBusiness,
-                    businessName: e.target.value,
-                  })
-                }
-              />
-            </div>
-
-            <div className={styles.inputGroup}>
-              <label htmlFor="abn" className={styles.label}>
-                ABN
-              </label>
-              <input
-                id="abn"
-                type="text"
-                className={styles.input}
-                value={fromBusiness.abn}
-                onChange={(e) =>
-                  setFromBusiness({
-                    ...fromBusiness,
-                    abn: e.target.value,
-                  })
-                }
-              />
-            </div>
-
-            <div className={styles.inputGroup}>
-              <label
-                htmlFor="addressLine1"
-                className={styles.label}
-              >
-                Address
-              </label>
-              <input
-                id="addressLine1"
-                type="text"
-                className={styles.input}
-                value={fromBusiness.addressLine1}
-                onChange={(e) =>
-                  setFromBusiness({
-                    ...fromBusiness,
-                    addressLine1: e.target.value,
-                  })
-                }
-              />
-            </div>
-
-            <div className={styles.inputGroup}>
-              <label
-                htmlFor="addressLine2"
-                className={styles.label}
-              >
-                Address Line 2 (Optional)
-              </label>
-              <input
-                id="addressLine2"
-                type="text"
-                className={styles.input}
-                value={fromBusiness.addressLine2}
-                onChange={(e) =>
-                  setFromBusiness({
-                    ...fromBusiness,
-                    addressLine2: e.target.value,
-                  })
-                }
-              />
-            </div>
-
-            <div className={styles.inputGroup}>
-              <label htmlFor="city" className={styles.label}>
-                City
-              </label>
-              <input
-                id="city"
-                type="text"
-                className={styles.input}
-                value={fromBusiness.city}
-                onChange={(e) =>
-                  setFromBusiness({
-                    ...fromBusiness,
-                    city: e.target.value,
-                  })
-                }
-              />
-            </div>
-
-            <div className={styles.inputGroup}>
-              <label htmlFor="state" className={styles.label}>
-                State
-              </label>
-              <input
-                id="state"
-                type="text"
-                className={styles.input}
-                value={fromBusiness.state}
-                onChange={(e) =>
-                  setFromBusiness({
-                    ...fromBusiness,
-                    state: e.target.value,
-                  })
-                }
-              />
-            </div>
-
-            <div className={styles.inputGroup}>
-              <label
-                htmlFor="postcode"
-                className={styles.label}
-              >
-                Postcode
-              </label>
-              <input
-                id="postcode"
-                type="text"
-                className={styles.input}
-                value={fromBusiness.postcode}
-                onChange={(e) =>
-                  setFromBusiness({
-                    ...fromBusiness,
-                    postcode: e.target.value,
-                  })
-                }
-              />
-            </div>
-
-            {/* Country kept in state for schema compatibility, but not shown if you don't want it.
-            <div className={styles.inputGroup}>
-              <label
-                htmlFor="country"
-                className={styles.label}
-              >
-                Country
-              </label>
-              <input
-                id="country"
-                type="text"
-                className={styles.input}
-                value={fromBusiness.country}
-                onChange={(e) =>
-                  setFromBusiness({
-                    ...fromBusiness,
-                    country: e.target.value,
-                  })
-                }
-              />
-            </div>
-            */}
-
-            <div className={styles.inputGroup}>
-              <label htmlFor="phone" className={styles.label}>
-                Phone
-              </label>
-              <input
-                id="phone"
-                type="tel"
-                className={styles.input}
-                value={fromBusiness.phone}
-                onChange={(e) =>
-                  setFromBusiness({
-                    ...fromBusiness,
-                    phone: e.target.value,
-                  })
-                }
-              />
-            </div>
-
-            <div className={styles.inputGroup}>
-              <label htmlFor="email" className={styles.label}>
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                className={styles.input}
-                value={fromBusiness.email}
-                onChange={(e) =>
-                  setFromBusiness({
-                    ...fromBusiness,
-                    email: e.target.value,
-                  })
-                }
-              />
-            </div>
-
-            <div className={styles.inputGroup}>
-              <label htmlFor="website" className={styles.label}>
-                Website
-              </label>
-              <input
-                id="website"
-                type="text"
-                className={styles.input}
-                value={fromBusiness.website}
-                onChange={(e) =>
-                  setFromBusiness({
-                    ...fromBusiness,
-                    website: e.target.value,
-                  })
-                }
-              />
-            </div>
+          
+          {/* ✅ 1. READ-ONLY FROM SECTION */}
+          <div className={styles.readOnlyCard}>
+            <h3 className={styles.subSectionTitle}>From</h3>
+            {business ? (
+              <div className={styles.businessPreview}>
+                {business.logoUrl && <img src={business.logoUrl} alt="Logo" className={styles.logoPreview} />}
+                <strong>{business.businessName}</strong>
+                <p>{business.abn}</p>
+                <p>{business.address?.line1}</p>
+                <p>{business.address?.city} {business.address?.state} {business.address?.postcode}</p>
+                <br />
+                <a href="/dashboard/settings" className={styles.editLink}>Edit Business Details</a>
+              </div>
+            ) : (
+              <p>Loading business details...</p>
+            )}
           </div>
 
-          {/* BILL TO (Client Info) */}
+          {/* ✅ 2. BILL TO (Client & Project) */}
           <div>
-            <h3 className={styles.subSectionTitle}>
-              Bill To (Select Client)
-            </h3>
+            <h3 className={styles.subSectionTitle}>Bill To</h3>
+            
             <div className={styles.inputGroup}>
-              <label htmlFor="client" className={styles.label}>
-                Client
-              </label>
-              <select
-                id="client"
+              <label className={styles.label}>Client</label>
+              <select 
                 className={styles.select}
                 value={selectedClientId}
-                onChange={(e) => {
-                  setSelectedClientId(e.target.value);
-                  setSelectedProjectId('');
-                }}
+                onChange={(e) => { setSelectedClientId(e.target.value); setSelectedProjectId(''); }}
                 required
               >
-                <option value="" disabled>
-                  Select a Client
-                </option>
-                {clientsData?.clients.map((c) => (
+                <option value="" disabled>Select Client</option>
+                {clientsData?.clients.map((c: any) => (
                   <option key={c.id} value={c.id}>
-                    {c.name}
+                    {c.firstName} {c.lastName} {c.businessName ? `(${c.businessName})` : ''}
                   </option>
                 ))}
               </select>
             </div>
 
-            <div
-              className={`${styles.inputGroup} ${styles.projectInputGroup}`}
-            >
-              <label
-                htmlFor="project"
-                className={styles.label}
-              >
-                For Project
-              </label>
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>Project</label>
               <select
-                id="project"
                 className={styles.select}
                 value={selectedProjectId}
                 onChange={(e) => setSelectedProjectId(e.target.value)}
                 required
-                disabled={
-                  !selectedClientId ||
-                  !clientProjects ||
-                  clientProjects.length === 0
-                }
+                disabled={!selectedClientId}
               >
-                <option value="" disabled>
-                  {!selectedClientId
-                    ? 'Select a client first'
-                    : clientProjects?.length === 0
-                    ? 'No projects for this client'
-                    : 'Select a project'}
-                </option>
-                {clientProjects?.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.title}
-                  </option>
+                <option value="" disabled>Select Project</option>
+                {clientProjects.map((p: any) => (
+                  <option key={p.id} value={p.id}>{p.title}</option>
                 ))}
               </select>
             </div>
-
-            {selectedClientId && (
-              <>
-                <h3 className={styles.subSectionTitle}>
-                  Client Details
-                </h3>
-                <div className={styles.inputGroup}>
-                  <label
-                    htmlFor="clientAddress"
-                    className={styles.label}
-                  >
-                    Address
-                  </label>
-                  <input
-                    id="clientAddress"
-                    type="text"
-                    className={styles.input}
-                    value={clientAddress}
-                    onChange={(e) =>
-                      setClientAddress(e.target.value)
-                    }
-                  />
-                </div>
-
-                <div className={styles.inputGroup}>
-                  <label
-                    htmlFor="clientPhone"
-                    className={styles.label}
-                  >
-                    Phone
-                  </label>
-                  <input
-                    id="clientPhone"
-                    type="tel"
-                    className={styles.input}
-                    value={clientPhone}
-                    onChange={(e) =>
-                      setClientPhone(e.target.value)
-                    }
-                  />
-                </div>
-
-                <div className={styles.inputGroup}>
-                  <label
-                    htmlFor="clientEmail"
-                    className={styles.label}
-                  >
-                    Email
-                  </label>
-                  <input
-                    id="clientEmail"
-                    type="email"
-                    className={styles.input}
-                    value={clientEmail}
-                    onChange={(e) =>
-                      setClientEmail(e.target.value)
-                    }
-                  />
-                </div>
-              </>
-            )}
           </div>
         </section>
 
-        {/* === DETAILS GRID === */}
-        <section className={styles.detailsGrid}>
-          <div className={styles.inputGroup}>
-            <label
-              htmlFor="invoiceNumber"
-              className={styles.label}
-            >
-              Invoice #
-            </label>
-            <input
-              id="invoiceNumber"
-              type="text"
-              className={styles.input}
-              value={invoiceNumber}
-              onChange={(e) => setInvoiceNumber(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className={styles.inputGroup}>
-            <label htmlFor="issueDate" className={styles.label}>
-              Issue Date
-            </label>
-            <input
-              id="issueDate"
-              type="date"
-              className={styles.input}
-              value={issueDate}
-              onChange={(e) => setIssueDate(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className={styles.inputGroup}>
-            <label htmlFor="terms" className={styles.label}>
-              Terms
-            </label>
-            <select
-              id="terms"
-              className={styles.select}
-              value={terms}
-              onChange={(e) => setTerms(e.target.value)}
-            >
-              <option value="0">Due on receipt</option>
-              <option value="1">1 Day</option>
-              <option value="3">3 Days</option>
-              <option value="7">7 Days</option>
-              <option value="14">14 Days</option>
-              <option value="30">30 Days</option>
-              <option value="custom">Custom</option>
-            </select>
-          </div>
-
-          <div className={styles.inputGroup}>
-            <label htmlFor="dueDate" className={styles.label}>
-              Due Date
-            </label>
-            <input
-              id="dueDate"
-              type="date"
-              className={styles.input}
-              value={dueDate}
-              onChange={handleDueDateChange}
-              required
-            />
-          </div>
-        </section>
-
-        {/* === ITEMS SECTION === */}
-        <section>
-          <h2 className={styles.sectionTitle}>Items</h2>
-          <table className={styles.itemsTable}>
-            <thead>
-              <tr>
-                <th>Description</th>
-                <th>Qty</th>
-                <th>Unit Price</th>
-                <th>Total</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item, index) => (
-                <tr key={index}>
-                  <td>
-                    <input
-                      type="text"
-                      value={item.description}
-                      onChange={(e) =>
-                        handleItemChange(
-                          index,
-                          'description',
-                          e.target.value
-                        )
-                      }
-                      className={styles.tableInput}
-                      required
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      value={item.quantity}
-                      onChange={(e) =>
-                        handleItemChange(
-                          index,
-                          'quantity',
-                          e.target.value
-                        )
-                      }
-                      className={styles.tableInput}
-                      min="0"
-                      step="any"
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      value={item.unitPrice}
-                      onChange={(e) =>
-                        handleItemChange(
-                          index,
-                          'unitPrice',
-                          e.target.value
-                        )
-                      }
-                      className={styles.tableInput}
-                      min="0"
-                      step="0.01"
-                    />
-                  </td>
-                  <td className={styles.colTotal}>
-                    $
-                    {(
-                      (Number(item.quantity) || 0) *
-                      (Number(item.unitPrice) || 0)
-                    ).toFixed(2)}
-                  </td>
-                  <td className={styles.colActions}>
-                    <button
-                      type="button"
-                      onClick={() => removeItem(index)}
-                      className={styles.removeButton}
-                    >
-                      ×
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          <div className={styles.addItemButtonContainer}>
-            <Button
-              type="button"
-              onClick={addItem}
-              variant="secondary"
-            >
-              + Add Item
-            </Button>
-          </div>
-        </section>
-
-        {/* === NOTES SECTION === */}
-        <section>
-          <h2 className={styles.sectionTitle}>Notes / Terms</h2>
-          <div className={styles.inputGroup}>
-            <label htmlFor="notes" className={styles.label}>
-              Notes
-            </label>
-            <textarea
-              id="notes"
-              className={styles.textarea}
-              placeholder="Enter notes or payment terms (e.g. bank details)..."
-              rows={3}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            ></textarea>
-          </div>
-        </section>
-
-        {/* === FOOTER === */}
+        {/* ... DATES & ITEMS (Keep your existing table logic here) ... */}
+        
+        {/* FOOTER */}
         <footer>
           <div className={styles.totals}>
-            <p>
-              <span>Subtotal:</span>{' '}
-              <span>${subtotal.toFixed(2)}</span>
-            </p>
-            <p>
-              <span>
-                GST ({(gstRate * 100).toFixed(0)}%):
-              </span>{' '}
-              <span>${gstAmount.toFixed(2)}</span>
-            </p>
-            <p className={styles.totalAmount}>
-              <span>Total:</span>{' '}
-              <span>${totalAmount.toFixed(2)}</span>
-            </p>
+            <p><span>Subtotal:</span> ${subtotal.toFixed(2)}</p>
+            <p><span>{business?.taxLabel || 'Tax'} ({taxRate * 100}%):</span> ${taxAmount.toFixed(2)}</p>
+            <p className={styles.totalAmount}><span>Total:</span> ${totalAmount.toFixed(2)}</p>
           </div>
-          {createError && (
-            <p className={styles.errorMessage}>
-              Error: {createError.message}
-            </p>
-          )}
+          
           <div className={styles.buttonGroup}>
-            <Button
-              href="/dashboard/invoices"
-              variant="secondary"
-              type="button"
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isCreating}>
-              {isCreating ? 'Saving...' : 'Save & Preview'}
-            </Button>
+             <Button type="submit" disabled={isCreating}>Create Invoice</Button>
           </div>
         </footer>
+
       </form>
     </div>
   );

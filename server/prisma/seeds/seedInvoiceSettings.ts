@@ -1,14 +1,12 @@
-// prisma/seeds/seedInvoiceSettings.ts
-import { PrismaClient, Prisma } from "@prisma/client";  //  <-- IMPORTANT
+// server/prisma/seeds/seedInvoiceSettings.ts
+import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export default async function seedInvoiceSettings() {
   console.log("🌱 Seeding InvoiceSettings...");
 
-  // 1) Find the Business
   const business = await prisma.business.findFirst({
     where: { email: "contact@flowtradie.com" },
-    include: { address: true },
   });
 
   if (!business) {
@@ -16,40 +14,20 @@ export default async function seedInvoiceSettings() {
     return;
   }
 
-  // 2) Create structured JSON or NULL safely
-  const addressSnapshot =
-    business.address
-      ? {
-          line1: business.address.line1,
-          line2: business.address.line2,
-          city: business.address.city,
-          state: business.address.state,
-          postcode: business.address.postcode,
-          country: business.address.country,
-          countryCode: business.address.countryCode,
-        }
-      : Prisma.JsonNull; // <-- FIXED
-
-  // 3) Upsert settings
+  // 3) Upsert settings (Cleaned up)
   const settings = await prisma.invoiceSettings.upsert({
     where: { businessId: business.id },
     update: {},
     create: {
       businessId: business.id,
-      businessName: business.name,
-      abn: business.registrationNumber,
-      phone: business.phone,
-      email: business.email,
-      website: business.website,
-      logoUrl: business.logoUrl,
+      
+      // ❌ REMOVED: Name, ABN, AddressSnapshot, etc.
+      
       bankDetails: "BSB 000-000 | ACC 00000000",
-
-      addressSnapshot, // ✔ FIXED
-
       invoicePrefix: "INV-",
       startingNumber: 1000,
       defaultDueDays: 14,
-      taxRate: 0.10, // DECIMAL in Prisma
+      taxRate: 0.10,
 
       smtpHost: null,
       smtpPort: null,

@@ -9,8 +9,8 @@ import { GET_INVOICES } from "@/app/lib/graphql/queries/invoices";
 import { DELETE_INVOICE_MUTATION } from "@/app/lib/graphql/mutations/invoice";
 
 import Button from "@/components/Button/Button";
+// ✅ FIX: Import the shared table styles as 'styles'
 import styles from "@/app/dashboard/styles/DashboardTable.module.css";
-
 
 export default function InvoicesPage() {
   const { user, loading: authLoading } = useAuth();
@@ -41,25 +41,25 @@ export default function InvoicesPage() {
 
     switch (normalized) {
       case "PAID":
-        cls = tableStyles.statusPaid;
+        cls = styles.statusPaid;
         break;
       case "SENT":
-        cls = tableStyles.statusSent;
+        cls = styles.statusSent;
         break;
       case "OVERDUE":
-        cls = tableStyles.statusOverdue;
+        cls = styles.statusOverdue;
         break;
       case "PARTIALLY_PAID":
-        cls = tableStyles.statusPartially;
+        cls = styles.statusPartially;
         break;
       case "DRAFT":
       default:
-        cls = tableStyles.statusDraft;
+        cls = styles.statusDraft;
         break;
     }
 
     return (
-      <span className={`${tableStyles.status} ${cls}`}>
+      <span className={`${styles.status} ${cls}`}>
         {normalized.toLowerCase()}
       </span>
     );
@@ -82,7 +82,8 @@ export default function InvoicesPage() {
 
   async function confirmDelete() {
     if (!deleteTarget) return;
-    await deleteInvoice({ variables: { id: deleteTarget.id } });
+    // ✅ FIX: Variable name must match the Mutation ($deleteInvoiceId)
+    await deleteInvoice({ variables: { deleteInvoiceId: deleteTarget.id } });
     setDeleteTarget(null);
     refetch();
   }
@@ -96,8 +97,8 @@ export default function InvoicesPage() {
       </div>
 
       {/* Table */}
-      <div className={tableStyles.tableContainer}>
-        <table className={tableStyles.table}>
+      <div className={styles.tableContainer}>
+        <table className={styles.table}>
           <thead>
             <tr>
               <th>Invoice #</th>
@@ -105,7 +106,7 @@ export default function InvoicesPage() {
               <th>Status</th>
               <th>Total</th>
               <th>Due Date</th>
-              <th className={tableStyles.actionsHeader}>Actions</th>
+              <th className={styles.actionsHeader}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -121,11 +122,11 @@ export default function InvoicesPage() {
                 <td>${formatAmount(inv.totalAmount)}</td>
                 <td>{formatDate(inv.dueDate)}</td>
 
-                <td className={tableStyles.actionsCell}>
-                  <div className={tableStyles.dropdown}>
-                    <button className={tableStyles.dropdownButton}>⋮</button>
+                <td className={styles.actionsCell}>
+                  <div className={styles.dropdown}>
+                    <button className={styles.dropdownButton}>⋮</button>
 
-                    <div className={tableStyles.dropdownMenu}>
+                    <div className={styles.dropdownMenu}>
                       <button
                         onClick={() =>
                           router.push(`/dashboard/invoices/${inv.id}`)
@@ -142,8 +143,17 @@ export default function InvoicesPage() {
                         Edit
                       </button>
 
+                      {/* ✅ NEW: PDF Download Button */}
                       <button
-                        className={tableStyles.deleteBtn}
+                        onClick={() =>
+                          window.open(`/api/invoices/${inv.id}/pdf`, '_blank')
+                        }
+                      >
+                        Download PDF
+                      </button>
+
+                      <button
+                        className={styles.deleteBtn}
                         onClick={() => setDeleteTarget(inv)}
                       >
                         Delete
@@ -157,7 +167,7 @@ export default function InvoicesPage() {
         </table>
 
         {invoices.length === 0 && (
-          <p className={tableStyles.emptyMessage}>No invoices found yet.</p>
+          <p className={styles.emptyMessage}>No invoices found yet.</p>
         )}
       </div>
 

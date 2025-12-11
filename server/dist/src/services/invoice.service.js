@@ -57,7 +57,7 @@ export const invoiceService = {
             // 1️⃣ Find project → derive business & client
             const project = await tx.project.findUnique({
                 where: { id: projectId },
-                include: { client: true, business: true },
+                include: { client: true, business: { include: { address: true } } },
             });
             if (!project)
                 throw new Error("Project not found");
@@ -67,11 +67,16 @@ export const invoiceService = {
             const settings = await tx.invoiceSettings.findUnique({
                 where: { businessId },
             });
-            if (!settings) {
-                throw new Error("Invoice settings not found. Please configure them before creating invoices.");
-            }
+            // Safety net: Create default settings if missing
+            const safeSettings = settings || await tx.invoiceSettings.create({
+                data: {
+                    businessId,
+                    taxRate: 0.1, // Default fallback
+                    taxLabel: "GST"
+                },
+            });
             const updatedSettings = await tx.invoiceSettings.update({
-                where: { id: settings.id },
+                where: { id: safeSettings.id },
                 data: { startingNumber: { increment: 1 } },
             });
             const sequence = updatedSettings.startingNumber ?? 1;
@@ -93,16 +98,24 @@ export const invoiceService = {
                 total: (i.quantity ?? 1) * i.unitPrice,
             }));
             const { subtotal, taxAmount, totalAmount } = calcTotals(itemsData, rate);
-            // 5️⃣ Business snapshot JSON
+            // 5️⃣ Business snapshot JSON (Corrected Logic)
             const businessSnapshot = {
-                businessName: updatedSettings.businessName ?? project.business.name,
-                abn: updatedSettings.abn ?? project.business.registrationNumber,
-                phone: updatedSettings.phone ?? project.business.phone,
-                email: updatedSettings.email ?? project.business.email,
-                website: updatedSettings.website ?? project.business.website,
-                logoUrl: updatedSettings.logoUrl ?? project.business.logoUrl,
+                businessName: project.business.name,
+                abn: project.business.registrationNumber,
+                phone: project.business.phone,
+                email: project.business.email,
+                website: project.business.website,
+                logoUrl: project.business.logoUrl,
                 bankDetails: updatedSettings.bankDetails,
-                address: updatedSettings.addressSnapshot ?? null, // already JSON in DB
+                address: project.business.address ? {
+                    line1: project.business.address.line1,
+                    line2: project.business.address.line2,
+                    city: project.business.address.city,
+                    state: project.business.address.state,
+                    postcode: project.business.address.postcode,
+                    country: project.business.address.country,
+                    countryCode: project.business.address.countryCode,
+                } : null,
             };
             // 6️⃣ Client snapshot JSON
             const clientSnapshot = {
@@ -113,7 +126,7 @@ export const invoiceService = {
                 phone: project.client.phone,
                 email: project.client.email,
                 type: project.client.type,
-                // address: null for now – can be extended with client address selection
+                address: null, // Can be extended later
             };
             // 7️⃣ Create invoice
             return tx.invoice.create({
@@ -129,7 +142,7 @@ export const invoiceService = {
                     dueDate: finalDueDate,
                     status: restInput.status ?? InvoiceStatus.DRAFT,
                     taxRate: rate,
-                    taxLabelSnapshot: "GST",
+                    taxLabelSnapshot: updatedSettings.taxLabel ?? "GST",
                     currencyCode: "AUD",
                     subtotal,
                     taxAmount,
@@ -149,36 +162,28 @@ export const invoiceService = {
         });
     },
     /* -------------------------------------------------------
-       Update Invoice + Recalculate totals
+       Update Invoice
     ------------------------------------------------------- */
     update: async (id, input, ctx) => {
         return ctx.prisma.$transaction(async (tx) => {
             const { items, businessSnapshot, clientSnapshot, ...invoiceDataInput } = input;
             const invoiceData = {};
-            if (invoiceDataInput.invoiceNumber !== undefined && invoiceDataInput.invoiceNumber !== null) {
+            if (invoiceDataInput.invoiceNumber !== undefined)
                 invoiceData.invoiceNumber = invoiceDataInput.invoiceNumber;
-            }
-            if (invoiceDataInput.issueDate !== undefined) {
+            if (invoiceDataInput.issueDate !== undefined)
                 invoiceData.issueDate = invoiceDataInput.issueDate;
-            }
-            if (invoiceDataInput.dueDate !== undefined) {
+            if (invoiceDataInput.dueDate !== undefined)
                 invoiceData.dueDate = invoiceDataInput.dueDate;
-            }
-            if (invoiceDataInput.status !== undefined && invoiceDataInput.status !== null) {
+            if (invoiceDataInput.status !== undefined)
                 invoiceData.status = invoiceDataInput.status;
-            }
-            if (invoiceDataInput.notes !== undefined) {
+            if (invoiceDataInput.notes !== undefined)
                 invoiceData.notes = invoiceDataInput.notes;
-            }
-            if (invoiceDataInput.taxRate !== undefined && invoiceDataInput.taxRate !== null) {
+            if (invoiceDataInput.taxRate !== undefined)
                 invoiceData.taxRate = invoiceDataInput.taxRate;
-            }
-            if (businessSnapshot !== undefined) {
+            if (businessSnapshot !== undefined)
                 invoiceData.businessSnapshot = businessSnapshot;
-            }
-            if (clientSnapshot !== undefined) {
+            if (clientSnapshot !== undefined)
                 invoiceData.clientSnapshot = clientSnapshot;
-            }
             // Update main invoice fields
             await tx.invoice.update({
                 where: { id },
@@ -199,13 +204,10 @@ export const invoiceService = {
                     });
                 }
             }
-            // Recalculate totals from DB items
+            // Recalculate totals
             const updatedItems = await tx.invoiceItem.findMany({
                 where: { invoiceId: id },
-                select: {
-                    quantity: true,
-                    unitPrice: true,
-                },
+                select: { quantity: true, unitPrice: true },
             });
             const invoiceRecord = await tx.invoice.findUnique({
                 where: { id },
@@ -222,10 +224,7 @@ export const invoiceService = {
                 data: { subtotal, taxAmount, totalAmount },
                 include: {
                     items: true,
-                    payments: {
-                        where: { deletedAt: null },
-                        orderBy: { date: "asc" },
-                    },
+                    payments: { where: { deletedAt: null }, orderBy: { date: "asc" } },
                     project: { include: { client: true } },
                 },
             });

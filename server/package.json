@@ -13,7 +13,7 @@
     "codegen": "graphql-codegen --config codegen.yml"
   },
   "prisma": {
-    "seed": "node --loader ts-node/esm prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@apollo/server": "^4.12.2",
@@ -44,6 +44,7 @@
     "@types/node": "^24.3.1",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.2"
   },
   "overrides": {

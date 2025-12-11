@@ -1,4 +1,4 @@
-// prisma/seeds/seedBusiness.ts
+// server/prisma/seeds/seedBusiness.ts
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
@@ -28,7 +28,7 @@ export default async function seedBusiness() {
     },
   });
 
-  // 3) Create Business
+  // 3) Create Business (Identity lives here now!)
   const business = await prisma.business.create({
     data: {
       name: "FlowTradie Pty Ltd",
@@ -37,36 +37,25 @@ export default async function seedBusiness() {
       email: "contact@flowtradie.com",
       phone: "0400 000 000",
       website: "https://flowtradie.com",
+      // logoUrl: "...", // Optional if you have one
 
       regionId: region.id,
       addressId: address.id,
     },
   });
 
-  // 4) Create Invoice Settings — NOW DYNAMIC BASED ON REGION!
+  // 4) Create Invoice Settings (Only Config & Bank Details)
   await prisma.invoiceSettings.create({
     data: {
       businessId: business.id,
-      businessName: business.name,
-      abn: business.registrationNumber,
-      phone: business.phone,
-      email: business.email,
-      website: business.website,
-
-      addressSnapshot: {
-        line1: address.line1,
-        city: address.city,
-        state: address.state,
-        postcode: address.postcode,
-        country: address.country,
-        countryCode: address.countryCode,
-      },
+      
+      // ❌ REMOVED: businessName, abn, phone, email, website, addressSnapshot
+      // ✅ KEEP: Payment & Tax Config
 
       invoicePrefix: "INV-",
       startingNumber: 1000,
       defaultDueDays: 14,
 
-      // 🔥 Auto pulled from Region model
       taxLabel: region.taxLabel,
       taxRate: region.defaultTaxRate,
 

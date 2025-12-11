@@ -1,26 +1,29 @@
-# server/graphql/schema/invoiceSettings.graphql
+# server/src/graphql/schemas/invoiceSettings.graphql
 
 type InvoiceSettings {
   id: ID!
-  businessId: ID!         # 🔥 NEW - required
+  businessId: ID!
+  
+  # 🔗 Merged Fields (Read from Business)
   businessName: String
   abn: String
-
   phone: String
   email: String
   website: String
   logoUrl: String
-  bankDetails: String
+  
+  # ✅ Professional Nested Address
+  address: Address
 
+  # ⚙️ Configuration (Read from Settings)
+  bankDetails: String
   invoicePrefix: String
   startingNumber: Int
   defaultDueDays: Int
-
-  # 🔥 Updated tax system
   taxRate: Float
-  taxLabel: String        # e.g., "GST" / "VAT" / "Sales Tax"
+  taxLabel: String
 
-  # SMTP (email integration)
+  # 📧 Email
   smtpHost: String
   smtpPort: Int
   smtpUser: String
@@ -32,21 +35,22 @@ type InvoiceSettings {
   updatedAt: DateTime!
 }
 
-# Input type used for UPDATE only
+# Input for updating everything at once
 input InvoiceSettingsInput {
   businessName: String
   abn: String
-
   phone: String
   email: String
   website: String
   logoUrl: String
-  bankDetails: String
+  
+  # ✅ Nested Input
+  address: AddressInput
 
+  bankDetails: String
   invoicePrefix: String
   startingNumber: Int
   defaultDueDays: Int
-
   taxRate: Float
   taxLabel: String
 
