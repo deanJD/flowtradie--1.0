@@ -1,10 +1,10 @@
 // prisma/seed.ts
-import seedRegion from "./seeds/seedRegion.js";
-import seedBusiness from "./seeds/seedBusiness.js";
-import seedAdmin from "./seeds/seedAdmin.js";
-import seedClient from "./seeds/seedClient.js";
-import seedProject from "./seeds/seedProject.js";
-import { seedTasks } from "./seeds/seedTask.js";
+import seedRegion from "./seedRegion.js";
+import seedBusiness from "./seedBusiness.js";
+import seedAdmin from "./seedAdmin.js";
+import seedClient from "./seedClient.js";
+import seedProject from "./seedProject.js";
+import { seedTasks } from "./seedTask.js";
 async function main() {
   console.log("🌱 Starting full seed...");
 

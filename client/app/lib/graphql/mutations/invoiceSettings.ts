@@ -4,27 +4,36 @@ export const UPDATE_INVOICE_SETTINGS = gql`
   mutation UpdateInvoiceSettings($input: InvoiceSettingsInput!) {
     updateInvoiceSettings(input: $input) {
       id
-      businessName
-      abn
 
-      addressLine1
-      addressLine2
-      city
-      state
-      postcode
-      country
+      # identity
+      businessName
+      legalName        
+      businessNumber   
+      businessType     
 
       phone
       email
       website
       logoUrl
-      bankDetails
 
+      # address
+      address {
+        line1
+        line2
+        city
+        state
+        postcode
+        country
+        countryCode
+      }
+
+      # config
+      bankDetails
       invoicePrefix
       startingNumber
       defaultDueDays
-      gstRate
 
+      # sending
       smtpHost
       smtpPort
       smtpUser

@@ -1,40 +1,42 @@
-// client/app/lib/graphql/queries/invoice.ts
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
-/**
- * Canonical single-invoice query
- * Used for: Edit page, Preview page, PDF
- */
-export const GET_INVOICE_QUERY = gql`
-  query GetInvoice($invoiceId: ID!) {
-    invoice(id: $invoiceId) {
+export const GET_INVOICE = gql`
+  query GetInvoice($id: ID!) {
+    invoice(id: $id) {
       id
+      
       invoiceNumber
+      invoicePrefix
+      invoiceSequence
+
       status
       issueDate
       dueDate
       notes
+      updatedAt
 
-      # --- Totals ---
       subtotal
-      gstRate
-      gstAmount
+      taxRate
+      taxAmount
       totalAmount
+      currencyCode
+      taxLabelSnapshot
 
-      # --- Project & Client ---
+      # BUSINESS → PROJECT → CLIENT 
       project {
         id
         title
+        
         client {
           id
-          name
-          address
-          phone
+          firstName
+          lastName
+          businessName
           email
+          phone
         }
       }
 
-      # --- Items ---
       items {
         id
         description
@@ -43,23 +45,17 @@ export const GET_INVOICE_QUERY = gql`
         total
       }
 
-      # --- Payments ---
       payments {
         id
         amount
         date
         method
+        notes
       }
 
-      # --- Snapshot (CRITICAL for Edit & Preview) ---
-      businessName
-      abn
-      address
-      phone
-      email
-      website
-      logoUrl
-      bankDetails
+      # JSON snapshots
+      businessSnapshot
+      clientSnapshot
     }
   }
 `;

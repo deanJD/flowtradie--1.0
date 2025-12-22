@@ -1,23 +1,27 @@
 import { gql } from "@apollo/client";
 
-export const GET_INVOICES = gql`
-  query Invoices {
+export const GET_INVOICES_DASHBOARD = gql`
+  query GetInvoices {
     invoices {
       id
       invoiceNumber
       status
-      totalAmount
+      issueDate
       dueDate
+
+      subtotal
+      taxAmount
+      totalAmount
+      currencyCode
 
       project {
         id
         title
-        client {
-          id
-          firstName
-          lastName
-          businessName
-        }
+      }
+
+      payments {
+        id
+        amount
       }
     }
   }

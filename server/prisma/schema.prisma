@@ -114,44 +114,6 @@ model Region {
   @@index([code])
 }
 
-// ======================
-//  BUSINESS (TENANT)
-// ======================
-model Business {
-  id                 String  @id @default(cuid())
-  name               String
-  legalName          String?
-  registrationNumber String?
-  email              String
-  phone              String?
-  website            String?
-  logoUrl            String?
-  
-
-  regionId String
-  region   Region @relation(fields: [regionId], references: [id])
-
-  addressId String?
-  address   Address? @relation(fields: [addressId], references: [id], name: "BusinessAddresses")
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  users           User[]
-  clients         Client[]
-  projects        Project[]
-  quotes          Quote[]
-  invoices        Invoice[]
-  billableItems   BillableItem[]
-  invoiceSettings InvoiceSettings?
-  tasks           Task[]
-  projectExpenses ProjectExpense[]
-  timeLogs        TimeLog[]
-  payments        Payment[]
-
-  @@index([regionId])
-}
 
 // ======================
 //  INVOICE SETTINGS
@@ -162,13 +124,11 @@ model InvoiceSettings {
   businessId String   @unique
   business   Business @relation(fields: [businessId], references: [id])
 
-  
   bankDetails    String?
   invoicePrefix  String? @default("INV-")
-  startingNumber Int?    @default(1000)
-  defaultDueDays Int?    @default(14)
-  taxRate        Decimal @default(0.10) @db.Decimal(5, 2)
-  taxLabel       String?
+  startingNumber Int     @default(1)
+  defaultDueDays Int     @default(14)
+
   smtpHost     String?
   smtpPort     Int?
   smtpUser     String?
@@ -180,6 +140,146 @@ model InvoiceSettings {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+
+
+model Invoice {
+  id String @id @default(cuid())
+
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
+
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id])
+
+  invoiceNumber   String @unique
+  invoicePrefix   String
+  invoiceSequence Int
+
+  status    InvoiceStatus @default(DRAFT)
+  issueDate DateTime      @default(now())
+  dueDate   DateTime
+  notes     String?
+
+  // 👇 snapshot tax applied at time of issue
+  taxRate          Decimal @db.Decimal(5, 2)
+  taxLabelSnapshot String
+  currencyCode     String
+
+  subtotal         Decimal @db.Decimal(10, 2)
+  taxAmount        Decimal @db.Decimal(10, 2)
+  totalAmount      Decimal @db.Decimal(10, 2)
+
+  businessSnapshot Json
+  clientSnapshot   Json
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  items    InvoiceItem[]
+  payments Payment[]
+
+  @@index([businessId])
+  @@index([projectId])
+  @@index([clientId])
+  @@index([status])
+}
+
+// ======================
+//  INVOICE ITEM
+// ======================
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  description String
+  quantity    Int     @default(1)
+  unitPrice   Decimal @db.Decimal(10, 2)
+  total       Decimal @db.Decimal(10, 2)
+
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
+
+
+// ======================
+//  QUOTE
+// ======================
+model Quote {
+  id String @id @default(cuid())
+
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
+
+  quoteNumber String      @unique
+  status      QuoteStatus @default(DRAFT)
+  issueDate   DateTime    @default(now())
+  expiryDate  DateTime?
+
+  subtotal    Decimal @db.Decimal(10, 2)
+  taxRate     Decimal @default(0.00) @db.Decimal(5, 2)
+  taxAmount   Decimal @db.Decimal(10, 2)
+  totalAmount Decimal @db.Decimal(10, 2)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  items QuoteItem[]
+
+  @@index([businessId])
+  @@index([projectId])
+  @@index([status])
+}
+
+// Quote Item (NO CHANGE)
+model QuoteItem {
+  id          String  @id @default(cuid())
+  description String
+  quantity    Int     @default(1)
+  unitPrice   Decimal @db.Decimal(10, 2)
+  total       Decimal @db.Decimal(10, 2)
+
+  quoteId String
+  quote   Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+}
+
+// ======================
+//  PAYMENTS
+// ======================
+model Payment {
+  id String @id @default(cuid())
+
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id])
+
+  // NEW — supports reporting by client!
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id])
+
+  amount Decimal  @db.Decimal(10, 2)
+  date   DateTime @default(now())
+  method String
+  notes  String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([businessId])
+  @@index([invoiceId])
+  @@index([clientId])
+  @@index([date])
+}
+
 
 
 // ======================
@@ -236,6 +336,58 @@ model Client {
   @@index([businessId])
 }
 
+
+
+
+// ======================
+//  BUSINESS (TENANT)
+// ======================
+model Business {
+  id             String   @id @default(cuid())
+  
+  // 1. Identity
+  name           String   // Trading Name
+  legalName      String?  // Legal Entity
+  logoUrl        String?
+
+  // 2. Registration (The Update 🛠️)
+  businessNumber String?  // Replaces registrationNumber (ABN/VAT/EIN)
+  businessType   String?  // New: "Sole Trader", "Company", etc.
+
+  // 3. Contact
+  email          String
+  phone          String?
+  website        String?
+
+  // 4. Location & Region
+  regionId       String
+  region         Region   @relation(fields: [regionId], references: [id])
+
+  addressId      String?  @unique // Ensure 1:1 if possible, or just optional
+  address        Address? @relation(fields: [addressId], references: [id], name: "BusinessAddresses")
+
+  // 5. Audit
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  // 6. Relations
+  users          User[]
+  clients        Client[]
+  projects       Project[]
+  quotes         Quote[]
+  invoices       Invoice[]
+  billableItems  BillableItem[]
+  invoiceSettings InvoiceSettings?
+  tasks          Task[]
+  projectExpenses ProjectExpense[]
+  timeLogs       TimeLog[]
+  payments       Payment[]
+
+  @@index([regionId])
+}
+
+
 // ======================
 //  PROJECT
 // ======================
@@ -275,50 +427,7 @@ model Project {
   @@index([status])
 }
 
-// ======================
-//  QUOTE
-// ======================
-model Quote {
-  id String @id @default(cuid())
 
-  businessId String
-  business   Business @relation(fields: [businessId], references: [id])
-
-  projectId String
-  project   Project @relation(fields: [projectId], references: [id])
-
-  quoteNumber String      @unique
-  status      QuoteStatus @default(DRAFT)
-  issueDate   DateTime    @default(now())
-  expiryDate  DateTime?
-
-  subtotal    Decimal @db.Decimal(10, 2)
-  taxRate     Decimal @default(0.00) @db.Decimal(5, 2)
-  taxAmount   Decimal @db.Decimal(10, 2)
-  totalAmount Decimal @db.Decimal(10, 2)
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  items QuoteItem[]
-
-  @@index([businessId])
-  @@index([projectId])
-  @@index([status])
-}
-
-// Quote Item (NO CHANGE)
-model QuoteItem {
-  id          String  @id @default(cuid())
-  description String
-  quantity    Int     @default(1)
-  unitPrice   Decimal @db.Decimal(10, 2)
-  total       Decimal @db.Decimal(10, 2)
-
-  quoteId String
-  quote   Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
-}
 
 // ======================
 //  BILLABLE ITEM (PRICE BOOK)
@@ -338,97 +447,7 @@ model BillableItem {
 }
 
 
-// ======================
-//  INVOICE 
-// ======================
-model Invoice {
-  id String @id @default(cuid())
 
-  businessId String
-  business   Business @relation(fields: [businessId], references: [id])
-
-  projectId String
-  project   Project @relation(fields: [projectId], references: [id])
-
-  clientId String
-  client   Client @relation(fields: [clientId], references: [id])
-
-  invoiceNumber   String @unique
-  invoicePrefix   String
-  invoiceSequence Int
-
-  status    InvoiceStatus @default(DRAFT)
-  issueDate DateTime      @default(now())
-  dueDate   DateTime
-  notes     String?
-
-  taxRate          Decimal @default(0.00) @db.Decimal(5, 2)
-  taxLabelSnapshot String
-  subtotal         Decimal @db.Decimal(10, 2)
-  taxAmount        Decimal @db.Decimal(10, 2)
-  totalAmount      Decimal @db.Decimal(10, 2)
-  currencyCode     String
-
-  businessSnapshot Json
-  clientSnapshot   Json
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  items    InvoiceItem[]
-  payments Payment[]
-
-  @@index([businessId])
-  @@index([projectId])
-  @@index([clientId])
-  @@index([status])
-}
-
-// ======================
-//  INVOICE ITEM
-// ======================
-model InvoiceItem {
-  id          String  @id @default(cuid())
-  description String
-  quantity    Int     @default(1)
-  unitPrice   Decimal @db.Decimal(10, 2)
-  total       Decimal @db.Decimal(10, 2)
-
-  invoiceId String
-  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-}
-
-// ======================
-//  PAYMENTS
-// ======================
-model Payment {
-  id String @id @default(cuid())
-
-  businessId String
-  business   Business @relation(fields: [businessId], references: [id])
-
-  invoiceId String
-  invoice   Invoice @relation(fields: [invoiceId], references: [id])
-
-  // NEW — supports reporting by client!
-  clientId String
-  client   Client @relation(fields: [clientId], references: [id])
-
-  amount Decimal  @db.Decimal(10, 2)
-  date   DateTime @default(now())
-  method String
-  notes  String?
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  @@index([businessId])
-  @@index([invoiceId])
-  @@index([clientId])
-  @@index([date])
-}
 
 // ======================
 //  TASKS, EXPENSES, TIME LOGS

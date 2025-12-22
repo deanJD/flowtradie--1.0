@@ -13,6 +13,7 @@ const mainNavLinks = [
   { href: '/dashboard/clients', label: 'Clients' },
   { href: '/dashboard/invoices', label: 'Invoices' },
   { href: '/dashboard/team', label: 'Team' },
+  { label: 'Settings', href: '/dashboard/settings' }, // ⚙️ The new link
   // Add other main links as needed
 ];
 

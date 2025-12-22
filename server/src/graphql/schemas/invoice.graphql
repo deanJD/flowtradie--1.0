@@ -73,7 +73,6 @@ input UpdateInvoiceInput {
   invoiceNumber: String
   issueDate: DateTime
   dueDate: DateTime
-  status: InvoiceStatus
   notes: String
   taxRate: Float
 

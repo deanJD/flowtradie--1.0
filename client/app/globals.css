@@ -1,50 +1,31 @@
-/* client/app/globals.css (Golden Copy with New Brand Theme) */
-
-/* 1. A simple, modern CSS Reset */
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-/* 2. CSS Custom Properties (Variables) - OUR NEW BRAND THEME */
+/* client/app/globals.css */
 :root {
-  /* vvvv YOUR NEW BRAND COLORS vvvv */
-  --primary-accent: #2a27f5; /* Your new, strong blue */
-  --primary-accent-hover: #2220c4; /* A slightly darker, correct hover color */
-  --accent-purple: #9127F5; /* The purple accent color */
-  /* ^^^^ YOUR NEW BRAND COLORS ^^^^ */
-
-  /* --- Our Base Theme --- */
-  --background-color: #f3f4f6;
-  --card-background: #ffffff;
-  --text-color: #1f2937;
-  --subtext-color: #6b7280;
-  --border-color: #e5e7eb;
-  --link-color: var(--primary-accent);
+  /* --- QuickBooks Inspired Palette --- */
+  /* The famous "Intuit Green" for primary actions */
+  --primary-accent: #2ca01c; 
+  --primary-accent-hover: #108000;
   
-  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Secondary/Info links (Blue) */
+  --link-color: #0077c5;
+  
+  /* Navigation & Structure */
+  --sidebar-bg: #1c1c1d; /* Dark Sidebar like QB Enterprise/Online */
+  --sidebar-text: #ffffff;
+  --sidebar-text-muted: #aeb0b3;
+  
+  /* Backgrounds */
+  --background-color: #f4f5f8; /* Light gray background */
+  --card-background: #ffffff;
+  
+  /* Typography */
+  --text-color: #393a3d; /* Softer than pure black */
+  --subtext-color: #6b6c72;
+  --border-color: #dcdce0;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* 3. Base Body Styles */
 body {
   background-color: var(--background-color);
   color: var(--text-color);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* 4. Global style for links */
-a {
-  color: var(--link-color);
-  text-decoration: none;
-}
-
-a {
-  text-decoration: none !important;
-  color: inherit;
-}
-a:hover {
-  text-decoration: none !important;
 }

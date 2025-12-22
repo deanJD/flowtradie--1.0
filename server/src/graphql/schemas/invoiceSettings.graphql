@@ -4,18 +4,20 @@ type InvoiceSettings {
   id: ID!
   businessId: ID!
   
-  # 🔗 Merged Fields (Read from Business)
-  businessName: String
-  abn: String
-  phone: String
+  # ✅ Merged Business Fields (Matches Prisma)
+  businessName: String       # Maps to business.name
+  legalName: String          # Maps to business.legalName
+  registrationNumber: String 
+  
   email: String
+  phone: String
   website: String
   logoUrl: String
   
-  # ✅ Professional Nested Address
+  # ✅ Address
   address: Address
 
-  # ⚙️ Configuration (Read from Settings)
+  # ⚙️ Settings
   bankDetails: String
   invoicePrefix: String
   startingNumber: Int
@@ -23,7 +25,7 @@ type InvoiceSettings {
   taxRate: Float
   taxLabel: String
 
-  # 📧 Email
+  # 📧 Email Config
   smtpHost: String
   smtpPort: Int
   smtpUser: String
@@ -35,16 +37,17 @@ type InvoiceSettings {
   updatedAt: DateTime!
 }
 
-# Input for updating everything at once
 input InvoiceSettingsInput {
+  # ✅ Matches the Type above
   businessName: String
-  abn: String
-  phone: String
+  legalName: String
+  registrationNumber: String
+  
   email: String
+  phone: String
   website: String
   logoUrl: String
   
-  # ✅ Nested Input
   address: AddressInput
 
   bankDetails: String

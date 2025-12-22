@@ -1,48 +1,108 @@
-// server/src/services/payment.service.ts
-import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
+import { InvoiceStatus } from "@prisma/client";
+/**
+ * Helper: recalc invoice status based on payments
+ * - Does NOT recalc subtotal/tax/total (invoiceService owns that)
+ * - Only updates status: DRAFT / SENT / PARTIALLY_PAID / PAID
+ */
+async function recalcInvoiceStatus(invoiceId, ctx) {
+    const invoice = await ctx.prisma.invoice.findUnique({
+        where: { id: invoiceId },
+        include: {
+            payments: { where: { deletedAt: null } },
+            items: true,
+            project: { include: { client: true } },
+        },
+    });
+    if (!invoice)
+        throw new Error("Invoice not found");
+    const totalAmount = Number(invoice.totalAmount);
+    const totalPaid = invoice.payments.reduce((sum, p) => sum + Number(p.amount), 0);
+    // Start from existing status so we don't blow away SENT, etc.
+    let status = invoice.status;
+    if (totalPaid >= totalAmount && totalAmount > 0) {
+        status = InvoiceStatus.PAID;
+    }
+    else if (totalPaid > 0 && totalPaid < totalAmount) {
+        status = InvoiceStatus.PARTIALLY_PAID;
+    }
+    else {
+        // no payments – keep existing (DRAFT or SENT)
+        // status stays as invoice.status
+    }
+    const updated = await ctx.prisma.invoice.update({
+        where: { id: invoiceId },
+        data: { status },
+        include: {
+            items: true,
+            payments: { where: { deletedAt: null }, orderBy: { date: "asc" } },
+            project: { include: { client: true } },
+        },
+    });
+    return updated;
+}
 export const paymentService = {
-    // 🔹 Get all payments for an invoice
-    async getByInvoice(invoiceId, ctx) {
-        if (!ctx.user)
-            throw new Error("Not authenticated"); // 🔒 TS fixed
-        return prisma.payment.findMany({
-            where: {
-                invoiceId,
-                // If businessId is not a direct field, use a relation filter or remove this line
-                // business: { id: ctx.user.businessId }, // Uncomment if you have a business relation
-            },
-            orderBy: { date: "desc" },
-        });
-    },
-    // 🔹 Create a new payment
+    /**
+     * CREATE payment -> return updated Invoice
+     */
     async create(input, ctx) {
-        if (!ctx.user)
-            throw new Error("Not authenticated");
-        return prisma.payment.create({
+        const { invoiceId, amount, date, method, notes } = input;
+        // We need businessId + clientId from the invoice itself
+        const invoice = await ctx.prisma.invoice.findUnique({
+            where: { id: invoiceId },
+            select: { id: true, businessId: true, clientId: true },
+        });
+        if (!invoice)
+            throw new Error("Invoice not found");
+        await ctx.prisma.payment.create({
             data: {
-                ...input,
-                date: input.date || new Date(),
-                businessId: ctx.user.businessId, // 🔥 WORKS NOW
+                invoiceId: invoice.id,
+                businessId: invoice.businessId,
+                clientId: invoice.clientId,
+                amount,
+                date: date ? new Date(date) : new Date(),
+                method,
+                notes: notes ?? null,
             },
         });
+        return recalcInvoiceStatus(invoice.id, ctx);
     },
-    // 🔹 Update payment
+    /**
+     * UPDATE payment -> return updated Invoice
+     */
     async update(id, input, ctx) {
-        if (!ctx.user)
-            throw new Error("Not authenticated");
-        return prisma.payment.update({
+        const payment = await ctx.prisma.payment.findUnique({
             where: { id },
-            data: input,
         });
+        if (!payment)
+            throw new Error("Payment not found");
+        await ctx.prisma.payment.update({
+            where: { id },
+            data: {
+                amount: input.amount ?? undefined,
+                date: input.date
+                    ? new Date(input.date)
+                    : undefined,
+                method: input.method ?? undefined,
+                notes: input.notes ?? undefined,
+            },
+        });
+        return recalcInvoiceStatus(payment.invoiceId, ctx);
     },
-    // 🔹 Delete payment
+    /**
+     * DELETE payment (soft delete) -> return updated Invoice
+     */
     async delete(id, ctx) {
-        if (!ctx.user)
-            throw new Error("Not authenticated");
-        return prisma.payment.delete({
+        const payment = await ctx.prisma.payment.findUnique({
             where: { id },
         });
+        if (!payment)
+            throw new Error("Payment not found");
+        // Soft delete if your Payment model has deletedAt, otherwise hard delete
+        await ctx.prisma.payment.update({
+            where: { id },
+            data: { deletedAt: new Date() },
+        });
+        return recalcInvoiceStatus(payment.invoiceId, ctx);
     },
 };
 //# sourceMappingURL=payment.service.js.map

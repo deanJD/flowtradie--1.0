@@ -1,84 +1,75 @@
 // client/app/lib/graphql/mutations/invoice.ts
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
-//
-// =========================
-//    CREATE INVOICE
-// =========================
-//
+/* ======================================
+   CREATE INVOICE
+====================================== */
 export const CREATE_INVOICE_MUTATION = gql`
   mutation CreateInvoice($input: CreateInvoiceInput!) {
     createInvoice(input: $input) {
       id
       invoiceNumber
+      invoicePrefix
+      invoiceSequence
+
+      status
       issueDate
       dueDate
-      status
+      updatedAt
+
       subtotal
-      gstRate
-      gstAmount
+      taxRate
+      taxAmount
       totalAmount
+      currencyCode
+      taxLabelSnapshot
 
       project {
         id
         title
         client {
           id
-          name
+          firstName
+          lastName
+          businessName
         }
       }
 
-      # Snapshot fields coming from settings
-      businessName
-      abn
-      addressLine1
-      addressLine2
-      city
-      state
-      postcode
-      country
-      phone
-      email
-      website
-      logoUrl
-      bankDetails
+      businessSnapshot
+      clientSnapshot
     }
   }
 `;
 
-//
-// =========================
-//    UPDATE INVOICE
-// =========================
-//
+/* ======================================
+   UPDATE INVOICE
+====================================== */
 export const UPDATE_INVOICE_MUTATION = gql`
-  mutation UpdateInvoice($updateInvoiceId: ID!, $input: UpdateInvoiceInput!) {
-    updateInvoice(id: $updateInvoiceId, input: $input) {
+  mutation UpdateInvoice($id: ID!, $input: UpdateInvoiceInput!) {
+    updateInvoice(id: $id, input: $input) {
       id
       invoiceNumber
       status
       issueDate
       dueDate
       notes
+      updatedAt
+
       subtotal
-      gstRate
-      gstAmount
+      taxRate
+      taxAmount
       totalAmount
+      currencyCode
+      taxLabelSnapshot
 
       project {
         id
         title
         client {
           id
-          name
-          addressLine1
-          addressLine2
-          city
-          state
-          postcode
-          country
-          phone
-          email
+          firstName
+          lastName
+          businessName
         }
       }
 
@@ -97,33 +88,20 @@ export const UPDATE_INVOICE_MUTATION = gql`
         method
       }
 
-      # Snapshot fields
-      businessName
-      abn
-      addressLine1
-      addressLine2
-      city
-      state
-      postcode
-      country
-      phone
-      email
-      website
-      logoUrl
-      bankDetails
+      businessSnapshot
+      clientSnapshot
     }
   }
 `;
 
-//
-// =========================
-//    DELETE INVOICE
-// =========================
-//
+/* ======================================
+   DELETE INVOICE (SOFT DELETE)
+====================================== */
 export const DELETE_INVOICE_MUTATION = gql`
-  mutation DeleteInvoice($deleteInvoiceId: ID!) {
-    deleteInvoice(id: $deleteInvoiceId) {
+  mutation DeleteInvoice($id: ID!) {
+    deleteInvoice(id: $id) {
       id
+      deletedAt
     }
   }
 `;

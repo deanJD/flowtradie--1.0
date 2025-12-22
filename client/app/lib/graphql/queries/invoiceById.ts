@@ -5,24 +5,26 @@ export const GET_INVOICE_BY_ID = gql`
     invoice(id: $id) {
       id
       invoiceNumber
+      invoicePrefix
+      invoiceSequence
+      
       status
       issueDate
       dueDate
-      subtotal
-      gstRate
-      gstAmount
-      totalAmount
       notes
+      updatedAt
+      deletedAt
 
-      # Snapshot (from CompanySettings at time of creation)
-      businessName
-      abn
-      address
-      phone
-      email
-      website
-      logoUrl
-      bankDetails
+      subtotal
+      taxRate
+      taxAmount
+      totalAmount
+      currencyCode
+      taxLabelSnapshot
+
+      # Snapshots frozen at invoice creation
+      businessSnapshot
+      clientSnapshot
 
       items {
         id
@@ -32,12 +34,25 @@ export const GET_INVOICE_BY_ID = gql`
         total
       }
 
+      payments {
+        id
+        amount
+        date
+        method
+        notes
+      }
+
       project {
         id
         title
+        
         client {
           id
-          name
+          firstName
+          lastName
+          businessName
+          email
+          phone
         }
       }
     }

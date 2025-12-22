@@ -1,7 +1,7 @@
 // server/src/graphql/resolvers/client.ts
 import {
   Resolvers,
-  QueryClientsArgs,
+  // QueryClientsArgs, ❌ Removed this as it doesn't exist in your schema
   QueryClientArgs,
   MutationCreateClientArgs,
   MutationUpdateClientArgs,
@@ -20,13 +20,19 @@ export const clientResolvers = {
   Query: {
     clients: async (
       _p: unknown,
-      args: QueryClientsArgs,
+      _args: unknown, // ✅ Changed to _args since we don't use frontend args anymore
       ctx: GraphQLContext
     ) => {
+      // 🔒 SECURITY: Force businessId from the authenticated user
+      const businessId = ctx.user?.businessId;
+      if (!businessId) {
+        throw new Error("Authenticated user must have a businessId");
+      }
+
       // We know this returns a list of Client-shaped objects,
       // but TS can't match Prisma vs GraphQL types perfectly, so we cast.
       return clientService.getAll(
-        args.businessId,
+        businessId,
         ctx
       ) as unknown as Promise<GQLClient[]>;
     },

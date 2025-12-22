@@ -1,22 +1,26 @@
 {
   "name": "client",
   "scripts": {
-    "dev": "next dev --turbopack"
-  },
+  "dev": "next dev --turbopack",
+  "build": "next build",
+  "start": "next start"
+},
+
   "dependencies": {
     "@apollo/client": "^3.14.0",
     "graphql": "^16.11.0",
-    "next": "^15.5.4",
+    "next": "^16.1.0",
     "nodemailer": "^7.0.10",
     "puppeteer": "^24.32.1",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "react-icons": "^5.5.0"
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "react-icons": "^5.5.0",
+    "turbo": "^2.7.1"
   },
   "devDependencies": {
-    "@types/node": "^24.6.2",
+    "@types/node": "^25.0.3",
     "@types/nodemailer": "^7.0.3",
-    "@types/react": "^19.2.0",
+    "@types/react": "^19.2.7",
     "typescript": "^5.9.3"
   }
 }

@@ -9,6 +9,7 @@ import cors from "cors";
 
 import { resolvers } from "./graphql/index.js";
 import { buildContext } from "./context.js";
+import { Resolvers } from "./__generated__/graphql.js";
 
 async function startServer() {
   const app = express();
@@ -19,7 +20,7 @@ async function startServer() {
 
   const server = new ApolloServer({
     typeDefs,
-    resolvers: resolvers as any,
+    resolvers: resolvers as Resolvers,
     csrfPrevention: false,
   });
 

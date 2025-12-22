@@ -14,7 +14,7 @@ export async function getBusinessSnapshot(businessId) {
     // ✅ FIX: Single Source of Truth Logic
     const snapshot = {
         businessName: business.name,
-        abn: business.registrationNumber,
+        businessNumber: business.businessNumber,
         phone: business.phone,
         email: business.email,
         website: business.website,

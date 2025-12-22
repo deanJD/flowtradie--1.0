@@ -14,21 +14,26 @@ export default async function seedInvoiceSettings() {
     return;
   }
 
-  // 3) Upsert settings (Cleaned up)
   const settings = await prisma.invoiceSettings.upsert({
     where: { businessId: business.id },
-    update: {},
-    create: {
-      businessId: business.id,
-      
-      // ❌ REMOVED: Name, ABN, AddressSnapshot, etc.
-      
+    update: {
       bankDetails: "BSB 000-000 | ACC 00000000",
       invoicePrefix: "INV-",
       startingNumber: 1000,
       defaultDueDays: 14,
-      taxRate: 0.10,
-
+      smtpHost: null,
+      smtpPort: null,
+      smtpUser: null,
+      smtpPassword: null,
+      fromEmail: null,
+      fromName: null,
+    },
+    create: {
+      businessId: business.id,
+      bankDetails: "BSB 000-000 | ACC 00000000",
+      invoicePrefix: "INV-",
+      startingNumber: 1000,
+      defaultDueDays: 14,
       smtpHost: null,
       smtpPort: null,
       smtpUser: null,

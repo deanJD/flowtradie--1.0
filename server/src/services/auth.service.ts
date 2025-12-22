@@ -11,38 +11,32 @@ export const authService = {
   async register(input: RegisterInput) {
     const { name, email, password, regionCode } = input;
 
-    // 1) Find Region (Critical for Tax Rules)
+    // 1) Find Region
     const region = await prisma.region.findUnique({
       where: { code: regionCode },
     });
     if (!region) throw new Error(`Invalid region: ${regionCode}`);
 
-    // 2) Run in Transaction (Safety First)
-    // We want to ensure User, Business, AND Settings are created together.
+    // 2) Atomic creation
     const result = await prisma.$transaction(async (tx) => {
       
       // A. Create Business
       const business = await tx.business.create({
         data: {
-          name, // Default business name to user's name initially
+          name, 
           email,
           legalName: name,
           region: { connect: { id: region.id } },
         },
       });
 
-      // B. 👇 SMART SETTINGS CREATION
-      // This is the "Xero-like" magic. We pre-fill tax rules based on the region.
+      // B. Create InvoiceSettings (NO tax fields)
       await tx.invoiceSettings.create({
         data: {
           businessId: business.id,
           invoicePrefix: "INV-",
-          startingNumber: 1000,
+          startingNumber: 1,
           defaultDueDays: 14,
-          
-          // Inherit defaults from the Region
-          taxRate: region.defaultTaxRate, 
-          taxLabel: region.taxLabel,
         },
       });
 

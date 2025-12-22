@@ -1,43 +1,33 @@
-/* client/app/components/Sidebar/Sidebar.module.css */
+/* client/components/Sidebar/Sidebar.module.css */
 .sidebar {
-  background-color: var(--card-background);
-  border-right: 1px solid var(--border-color);
-  width: 195px;
-  padding: 1.5rem 1rem;
+  background-color: var(--sidebar-bg); /* Dark background */
+  width: 240px; /* Slightly wider for professional feel */
+  padding: 1.5rem 0.5rem;
   height: 100vh;
-}
-
-.navList {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.navItem {
-  margin-bottom: 0.5rem;
+  color: var(--sidebar-text);
+  display: flex;
+  flex-direction: column;
 }
 
 .link {
-  display: block;
-  padding: 0.75rem 1rem;
-  border-radius: 6px;
-  text-decoration: none;
-  color: #374151; /* gray-700 */
+  color: var(--sidebar-text-muted);
   font-weight: 500;
-  transition: background-color 0.2s;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Space for icons if you add them */
 }
 
 .link:hover {
-  background-color: #f3f4f6; /* gray-100 */
+  background-color: #333333; /* Subtle hover on dark */
+  color: #fff;
 }
 
 .activeLink {
-  /* Apply this style to the link of the currently active page */
-  composes: link; /* This inherits all the styles from .link */
-  background-color: var(--primary-accent);
-  color: white;
-}
-
-.activeLink:hover {
-  background-color: var(--primary-accent-hover);
+  composes: link;
+  background-color: #108000; /* Darker green active state */
+  color: #fff;
+  border-left: 4px solid var(--primary-accent); /* Green accent bar on left */
 }

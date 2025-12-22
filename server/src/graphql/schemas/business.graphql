@@ -18,7 +18,8 @@ type Business {
   id: ID!
   name: String!
   legalName: String
-  registrationNumber: String
+  businessNumber: String
+  businessType: String
   email: String!
   phone: String
   website: String
@@ -41,7 +42,8 @@ type Business {
 input CreateBusinessInput {
   name: String!
   legalName: String
-  registrationNumber: String
+ businessNumber: String 
+  businessType: String
   email: String!
   phone: String
   website: String
@@ -61,7 +63,8 @@ input CreateBusinessInput {
 input UpdateBusinessInput {
   name: String
   legalName: String
-  registrationNumber: String
+  businessNumber: String 
+  businessType: String
   email: String
   phone: String
   website: String

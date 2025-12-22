@@ -4,10 +4,16 @@ export const clientResolvers = {
     // QUERIES
     // ============================================
     Query: {
-        clients: async (_p, args, ctx) => {
+        clients: async (_p, _args, // ✅ Changed to _args since we don't use frontend args anymore
+        ctx) => {
+            // 🔒 SECURITY: Force businessId from the authenticated user
+            const businessId = ctx.user?.businessId;
+            if (!businessId) {
+                throw new Error("Authenticated user must have a businessId");
+            }
             // We know this returns a list of Client-shaped objects,
             // but TS can't match Prisma vs GraphQL types perfectly, so we cast.
-            return clientService.getAll(args.businessId, ctx);
+            return clientService.getAll(businessId, ctx);
         },
         client: async (_p, args, ctx) => {
             return clientService.getById(args.id, ctx);
