@@ -24,9 +24,8 @@ export default function ProjectsPage() {
 
   // Fetch projects
   const { data, loading, error, refetch } = useQuery(GET_PROJECTS, {
-  fetchPolicy: "network-only",
-});
-
+    fetchPolicy: "network-only",
+  });
 
   const [deleteProject] = useMutation(DELETE_PROJECT_MUTATION);
 
@@ -38,12 +37,11 @@ export default function ProjectsPage() {
   // Confirm delete handler
   async function confirmDelete() {
     if (!deleteTarget) return;
-    
-    // 👇 FIX: Change 'id' to 'deleteProjectId'
-    await deleteProject({ 
-      variables: { deleteProjectId: deleteTarget.id } 
+
+    await deleteProject({
+      variables: { id: deleteTarget.id }, // 👈 must match $id in the mutation
     });
-    
+
     setDeleteTarget(null);
     refetch();
   }
@@ -63,6 +61,7 @@ export default function ProjectsPage() {
             <tr>
               <th>Title</th>
               <th>Client</th>
+              <th>Site Address</th>
               <th>Status</th>
               <th className={tableStyles.actionsCell}>Actions</th>
             </tr>
@@ -72,7 +71,18 @@ export default function ProjectsPage() {
             {projects.map((p: any) => (
               <tr key={p.id}>
                 <td>{p.title}</td>
-                <td>{p.client?.firstName} {p.client?.lastName}</td>
+
+                <td>
+                  {p.client?.firstName} {p.client?.lastName}
+                </td>
+
+                <td>
+                  {p.siteAddress
+                    ? `${p.siteAddress.line1}, ${p.siteAddress.city}${
+                        p.siteAddress.state ? " " + p.siteAddress.state : ""
+                      } ${p.siteAddress.postcode}`
+                    : "—"}
+                </td>
 
                 {/* STATUS PILL */}
                 <td>
@@ -97,11 +107,19 @@ export default function ProjectsPage() {
                     <button className={tableStyles.dropdownButton}>Edit</button>
 
                     <div className={tableStyles.dropdownMenu}>
-                      <button onClick={() => router.push(`/dashboard/projects/${p.id}`)}>
+                      <button
+                        onClick={() =>
+                          router.push(`/dashboard/projects/${p.id}`)
+                        }
+                      >
                         View
                       </button>
 
-                      <button onClick={() => router.push(`/dashboard/projects/${p.id}/edit`)}>
+                      <button
+                        onClick={() =>
+                          router.push(`/dashboard/projects/${p.id}/edit`)
+                        }
+                      >
                         Edit
                       </button>
 
@@ -119,7 +137,10 @@ export default function ProjectsPage() {
 
             {projects.length === 0 && (
               <tr>
-                <td colSpan={4} style={{ padding: "1.5rem", textAlign: "center" }}>
+                <td
+                  colSpan={5}
+                  style={{ padding: "1.5rem", textAlign: "center" }}
+                >
                   No projects found.
                 </td>
               </tr>

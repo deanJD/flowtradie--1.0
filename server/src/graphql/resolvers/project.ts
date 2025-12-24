@@ -52,24 +52,41 @@ export const projectResolvers = {
      FIELD RESOLVERS
   ============================================================ */
   Project: {
+    // 🏠 Site address
+    siteAddress: async (parent: GqlProject, _args: unknown, ctx: GraphQLContext) => {
+      // if the service already included siteAddress, just return it
+      const anyParent = parent as any;
+      if (anyParent.siteAddress) {
+        return anyParent.siteAddress;
+      }
+
+      // otherwise, fetch it via Prisma
+      const project = await ctx.prisma.project.findUnique({
+        where: { id: parent.id },
+        include: { siteAddress: true },
+      });
+
+      return project?.siteAddress ?? null;
+    },
+
     // ⚡️ PERFORMANCE FIX: Check if parent already has the data before fetching
     client: (parent: GqlProject, _args: unknown, ctx: GraphQLContext) =>
-      parent.client ?? projectService.getClient(parent.id, ctx),
+      (parent as any).client ?? projectService.getClient(parent.id, ctx),
 
     quotes: (parent: GqlProject, _args: unknown, ctx: GraphQLContext) =>
-      parent.quotes ?? projectService.getQuotes(parent.id, ctx),
+      (parent as any).quotes ?? projectService.getQuotes(parent.id, ctx),
 
     invoices: (parent: GqlProject, _args: unknown, ctx: GraphQLContext) =>
-      parent.invoices ?? projectService.getInvoices(parent.id, ctx),
+      (parent as any).invoices ?? projectService.getInvoices(parent.id, ctx),
 
     tasks: (parent: GqlProject, _args: unknown, ctx: GraphQLContext) =>
-      parent.tasks ?? projectService.getTasks(parent.id, ctx),
+      (parent as any).tasks ?? projectService.getTasks(parent.id, ctx),
 
     expenses: (parent: GqlProject, _args: unknown, ctx: GraphQLContext) =>
-      parent.expenses ?? projectService.getExpenses(parent.id, ctx),
+      (parent as any).expenses ?? projectService.getExpenses(parent.id, ctx),
 
     timeLogs: (parent: GqlProject, _args: unknown, ctx: GraphQLContext) =>
-      parent.timeLogs ?? projectService.getTimeLogs(parent.id, ctx),
+      (parent as any).timeLogs ?? projectService.getTimeLogs(parent.id, ctx),
 
     financialSummary: async (parent: GqlProject, _args: unknown, ctx: GraphQLContext) => {
       const summary = await projectService.getFinancialSummary(parent.id, ctx);
@@ -89,12 +106,22 @@ export const projectResolvers = {
     },
 
     progress: (parent: GqlProject) => {
-      if (!parent.tasks || parent.tasks.length === 0) return 0;
-      const completed = parent.tasks.filter((t: any) => t.status === "COMPLETED" || t.isCompleted).length;
-      return (completed / parent.tasks.length) * 100;
+      const anyParent = parent as any;
+      if (!anyParent.tasks || anyParent.tasks.length === 0) return 0;
+      const completed = anyParent.tasks.filter(
+        (t: any) => t.status === "COMPLETED" || t.isCompleted
+      ).length;
+      return (completed / anyParent.tasks.length) * 100;
     },
 
-    totalHoursWorked: (parent: GqlProject) =>
-      parent.timeLogs?.reduce((sum: number, log: any) => sum + Number(log.hoursWorked), 0) ?? 0,
+    totalHoursWorked: (parent: GqlProject) => {
+      const anyParent = parent as any;
+      return (
+        anyParent.timeLogs?.reduce(
+          (sum: number, log: any) => sum + Number(log.hoursWorked),
+          0
+        ) ?? 0
+      );
+    },
   },
 };

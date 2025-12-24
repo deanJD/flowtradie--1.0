@@ -1,41 +1,62 @@
-import { PrismaClient, TaskStatus } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
-export async function seedTasks() {
-  const project = await prisma.project.findFirst();
-  const user = await prisma.user.findFirst(); // optional
+export default async function seedTask(prisma: PrismaClient) {
+  console.log("🌱 Seeding tasks...");
 
-  if (!project) {
-    console.warn("⚠️ No project found — skipping task seed");
+  const business = await prisma.business.findFirst();
+  if (!business) throw new Error("Business not found – seedBusiness must run first");
+
+  const projects = await prisma.project.findMany({
+    where: { businessId: business.id },
+  });
+
+  if (projects.length === 0) {
+    console.log("   ➤ No projects found – seedProject must run first");
     return;
   }
 
-  // Seed 3 tasks
-  const tasksData = [
-    {
-      title: "Site inspection",
-      description: "Check access and safety",
-      projectId: project.id,
-      businessId: project.businessId,
-      status: TaskStatus.PENDING,
-      assignedToId: user?.id ?? null,
-    },
-    {
-      title: "Order Materials",
-      description: "Timber + concrete",
-      projectId: project.id,
-      businessId: project.businessId,
-      status: TaskStatus.IN_PROGRESS,
-    },
-    {
-      title: "Excavation Start",
-      description: "Book machinery",
-      projectId: project.id,
-      businessId: project.businessId,
-      status: TaskStatus.COMPLETED,
-    },
-  ];
+  const existingCount = await prisma.task.count({
+    where: { businessId: business.id },
+  });
+
+  if (existingCount > 0) {
+    console.log(`   ➤ ${existingCount} tasks already exist – skipping`);
+    return;
+  }
+
+  const tasksData: any[] = [];
+
+  for (const project of projects) {
+    tasksData.push(
+      {
+        title: "Site measure & quote",
+        description: "Visit site and confirm scope.",
+        businessId: business.id,
+        projectId: project.id,
+        status: "COMPLETED",
+        isCompleted: true,
+      },
+      {
+        title: "Order materials",
+        description: "Order all required materials.",
+        businessId: business.id,
+        projectId: project.id,
+        status: "IN_PROGRESS",
+        isCompleted: false,
+      },
+      {
+        title: "Install & commissioning",
+        description: "Complete install and test.",
+        businessId: business.id,
+        projectId: project.id,
+        status: "PENDING",
+        isCompleted: false,
+      }
+    );
+  }
 
   await prisma.task.createMany({ data: tasksData });
-  console.log("   ➤ 3 Tasks seeded successfully!");
+
+  console.log(`   ➤ Seeded ${tasksData.length} tasks`);
 }

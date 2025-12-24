@@ -9,23 +9,27 @@ import seedTask from "./seeds/seedTask.js";
 import seedInvoice from "./seeds/seedInvoice.js";
 import seedPayment from "./seeds/seedPayment.js";
 import { PrismaClient } from "@prisma/client";
+
 async function main() {
-    console.log("🌱 Starting full seed...");
-    const prisma = new PrismaClient();
-    await seedRegion(prisma);
-    await seedBusiness(prisma);
-    await seedInvoiceSettings(prisma);
-    await seedAdmin(prisma);
-    await seedClient(prisma);
-    await seedProject(prisma);
-    await seedTask(prisma);
-    await seedInvoice(prisma);
-    await seedPayment(prisma);
-    console.log("🌱 Seed complete.");
+  console.log("🌱 Starting full seed...");
+
+  const prisma = new PrismaClient();
+
+  await seedRegion(prisma);
+  await seedBusiness(prisma);
+  await seedInvoiceSettings(prisma);
+  await seedAdmin(prisma);
+  await seedClient(prisma);
+  await seedProject(prisma);
+  await seedTask(prisma);
+  await seedInvoice(prisma);
+  await seedPayment(prisma);
+
+  console.log("🌱 Seed complete.");
 }
+
 main()
-    .catch((e) => {
+  .catch((e) => {
     console.error("❌ Seed error:", e);
     process.exit(1);
-});
-//# sourceMappingURL=seed.js.map
+  });

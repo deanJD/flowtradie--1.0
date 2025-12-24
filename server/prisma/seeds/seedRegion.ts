@@ -1,9 +1,8 @@
-// prisma/seeds/seedRegion.ts
-import { PrismaClient } from "@prisma/client"
-const prisma = new PrismaClient()
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 
-export default async function seedRegion() {
-  console.log("🌱 Seeding Regions...")
+export default async function seedRegion(prisma: PrismaClient) {
+  console.log("🌱 Seeding regions...");
 
   const regions = [
     {
@@ -12,26 +11,8 @@ export default async function seedRegion() {
       currencyCode: "AUD",
       currencySymbol: "$",
       taxLabel: "GST",
-      defaultTaxRate: 10.0,
+      defaultTaxRate: 0.1,
       locale: "en-AU",
-    },
-    {
-      code: "UK", // or GB
-      name: "United Kingdom",
-      currencyCode: "GBP",
-      currencySymbol: "£",
-      taxLabel: "VAT",
-      defaultTaxRate: 20.0, // Standard UK VAT
-      locale: "en-GB",
-    },
-    {
-      code: "US",
-      name: "United States",
-      currencyCode: "USD",
-      currencySymbol: "$",
-      taxLabel: "Tax", // US Tax varies by state, so we default to generic "Tax"
-      defaultTaxRate: 0.0, // Default to 0% and let them set it in Settings
-      locale: "en-US",
     },
     {
       code: "NZ",
@@ -39,17 +20,36 @@ export default async function seedRegion() {
       currencyCode: "NZD",
       currencySymbol: "$",
       taxLabel: "GST",
-      defaultTaxRate: 15.0,
+      defaultTaxRate: 0.15,
       locale: "en-NZ",
-    }
-  ]
+    },
+    {
+      code: "UK",
+      name: "United Kingdom",
+      currencyCode: "GBP",
+      currencySymbol: "£",
+      taxLabel: "VAT",
+      defaultTaxRate: 0.2,
+      locale: "en-GB",
+    },
+    {
+      code: "US",
+      name: "United States",
+      currencyCode: "USD",
+      currencySymbol: "$",
+      taxLabel: "Sales Tax",
+      defaultTaxRate: 0,
+      locale: "en-US",
+    },
+  ];
 
   for (const region of regions) {
     await prisma.region.upsert({
       where: { code: region.code },
-      update: region, // Updates existing if they changed
+      update: {},
       create: region,
-    })
-    console.log(`   ➤ Region ${region.code} seeded.`)
+    });
   }
+
+  console.log(`   ➤ Regions upserted`);
 }

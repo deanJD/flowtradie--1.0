@@ -24,6 +24,20 @@ export const projectResolvers = {
        FIELD RESOLVERS
     ============================================================ */
     Project: {
+        // 🏠 Site address
+        siteAddress: async (parent, _args, ctx) => {
+            // if the service already included siteAddress, just return it
+            const anyParent = parent;
+            if (anyParent.siteAddress) {
+                return anyParent.siteAddress;
+            }
+            // otherwise, fetch it via Prisma
+            const project = await ctx.prisma.project.findUnique({
+                where: { id: parent.id },
+                include: { siteAddress: true },
+            });
+            return project?.siteAddress ?? null;
+        },
         // ⚡️ PERFORMANCE FIX: Check if parent already has the data before fetching
         client: (parent, _args, ctx) => parent.client ?? projectService.getClient(parent.id, ctx),
         quotes: (parent, _args, ctx) => parent.quotes ?? projectService.getQuotes(parent.id, ctx),
@@ -47,12 +61,16 @@ export const projectResolvers = {
             return new Date(parent.endDate) < new Date();
         },
         progress: (parent) => {
-            if (!parent.tasks || parent.tasks.length === 0)
+            const anyParent = parent;
+            if (!anyParent.tasks || anyParent.tasks.length === 0)
                 return 0;
-            const completed = parent.tasks.filter((t) => t.status === "COMPLETED" || t.isCompleted).length;
-            return (completed / parent.tasks.length) * 100;
+            const completed = anyParent.tasks.filter((t) => t.status === "COMPLETED" || t.isCompleted).length;
+            return (completed / anyParent.tasks.length) * 100;
         },
-        totalHoursWorked: (parent) => parent.timeLogs?.reduce((sum, log) => sum + Number(log.hoursWorked), 0) ?? 0,
+        totalHoursWorked: (parent) => {
+            const anyParent = parent;
+            return (anyParent.timeLogs?.reduce((sum, log) => sum + Number(log.hoursWorked), 0) ?? 0);
+        },
     },
 };
 //# sourceMappingURL=project.js.map

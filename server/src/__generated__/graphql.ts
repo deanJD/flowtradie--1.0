@@ -203,8 +203,8 @@ export type CreateProjectInput = {
   clientId: Scalars['ID']['input'];
   description: InputMaybe<Scalars['String']['input']>;
   endDate: InputMaybe<Scalars['DateTime']['input']>;
-  location: InputMaybe<Scalars['String']['input']>;
   managerId: InputMaybe<Scalars['ID']['input']>;
+  siteAddress: InputMaybe<ProjectSiteAddressInput>;
   startDate: InputMaybe<Scalars['DateTime']['input']>;
   status: InputMaybe<ProjectStatus>;
   title: Scalars['String']['input'];
@@ -298,9 +298,9 @@ export type InvoiceSettings = {
   __typename?: 'InvoiceSettings';
   address: Maybe<Address>;
   bankDetails: Maybe<Scalars['String']['output']>;
+  businessId: Scalars['ID']['output'];
   businessName: Maybe<Scalars['String']['output']>;
-  businessNumber: Maybe<Scalars['String']['output']>;
-  businessType: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['DateTime']['output'];
   defaultDueDays: Maybe<Scalars['Int']['output']>;
   email: Maybe<Scalars['String']['output']>;
   fromEmail: Maybe<Scalars['String']['output']>;
@@ -310,6 +310,7 @@ export type InvoiceSettings = {
   legalName: Maybe<Scalars['String']['output']>;
   logoUrl: Maybe<Scalars['String']['output']>;
   phone: Maybe<Scalars['String']['output']>;
+  registrationNumber: Maybe<Scalars['String']['output']>;
   smtpHost: Maybe<Scalars['String']['output']>;
   smtpPassword: Maybe<Scalars['String']['output']>;
   smtpPort: Maybe<Scalars['Int']['output']>;
@@ -317,6 +318,7 @@ export type InvoiceSettings = {
   startingNumber: Maybe<Scalars['Int']['output']>;
   taxLabel: Maybe<Scalars['String']['output']>;
   taxRate: Maybe<Scalars['Float']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
   website: Maybe<Scalars['String']['output']>;
 };
 
@@ -324,8 +326,6 @@ export type InvoiceSettingsInput = {
   address: InputMaybe<AddressInput>;
   bankDetails: InputMaybe<Scalars['String']['input']>;
   businessName: InputMaybe<Scalars['String']['input']>;
-  businessNumber: InputMaybe<Scalars['String']['input']>;
-  businessType: InputMaybe<Scalars['String']['input']>;
   defaultDueDays: InputMaybe<Scalars['Int']['input']>;
   email: InputMaybe<Scalars['String']['input']>;
   fromEmail: InputMaybe<Scalars['String']['input']>;
@@ -334,6 +334,7 @@ export type InvoiceSettingsInput = {
   legalName: InputMaybe<Scalars['String']['input']>;
   logoUrl: InputMaybe<Scalars['String']['input']>;
   phone: InputMaybe<Scalars['String']['input']>;
+  registrationNumber: InputMaybe<Scalars['String']['input']>;
   smtpHost: InputMaybe<Scalars['String']['input']>;
   smtpPassword: InputMaybe<Scalars['String']['input']>;
   smtpPort: InputMaybe<Scalars['Int']['input']>;
@@ -387,7 +388,7 @@ export type Mutation = {
   updateBusiness: Business;
   updateClient: Client;
   updateInvoice: Invoice;
-  updateInvoiceSettings: Maybe<InvoiceSettings>;
+  updateInvoiceSettings: InvoiceSettings;
   updatePayment: Payment;
   updateProject: Project;
   updateQuote: Quote;
@@ -607,10 +608,10 @@ export type Project = {
   id: Scalars['ID']['output'];
   invoices: Array<Invoice>;
   isOverdue: Scalars['Boolean']['output'];
-  location: Maybe<Scalars['String']['output']>;
   manager: Maybe<User>;
   progress: Scalars['Float']['output'];
   quotes: Array<Quote>;
+  siteAddress: Maybe<Address>;
   startDate: Maybe<Scalars['DateTime']['output']>;
   status: ProjectStatus;
   tasks: Array<Task>;
@@ -648,6 +649,16 @@ export type ProjectProfitability = {
   totalLaborCosts: Scalars['Float']['output'];
   totalMaterialCosts: Scalars['Float']['output'];
   totalRevenue: Scalars['Float']['output'];
+};
+
+export type ProjectSiteAddressInput = {
+  city: Scalars['String']['input'];
+  country: InputMaybe<Scalars['String']['input']>;
+  countryCode: InputMaybe<Scalars['String']['input']>;
+  line1: Scalars['String']['input'];
+  line2: InputMaybe<Scalars['String']['input']>;
+  postcode: Scalars['String']['input'];
+  state: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ProjectStatus =
@@ -889,7 +900,6 @@ export type UpdateInvoiceInput = {
   issueDate: InputMaybe<Scalars['DateTime']['input']>;
   items: InputMaybe<Array<CreateInvoiceItemInput>>;
   notes: InputMaybe<Scalars['String']['input']>;
-  status: InputMaybe<InvoiceStatus>;
   taxRate: InputMaybe<Scalars['Float']['input']>;
 };
 
@@ -904,8 +914,8 @@ export type UpdateProjectInput = {
   budgetedAmount: InputMaybe<Scalars['Float']['input']>;
   description: InputMaybe<Scalars['String']['input']>;
   endDate: InputMaybe<Scalars['DateTime']['input']>;
-  location: InputMaybe<Scalars['String']['input']>;
   managerId: InputMaybe<Scalars['ID']['input']>;
+  siteAddress: InputMaybe<ProjectSiteAddressInput>;
   startDate: InputMaybe<Scalars['DateTime']['input']>;
   status: InputMaybe<ProjectStatus>;
   title: InputMaybe<Scalars['String']['input']>;
@@ -1079,6 +1089,7 @@ export type ResolversTypes = ResolversObject<{
   ProjectExpense: ResolverTypeWrapper<ProjectExpense>;
   ProjectFinancialSummary: ResolverTypeWrapper<ProjectFinancialSummary>;
   ProjectProfitability: ResolverTypeWrapper<ProjectProfitability>;
+  ProjectSiteAddressInput: ProjectSiteAddressInput;
   ProjectStatus: ProjectStatus;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
   Quote: ResolverTypeWrapper<Quote>;
@@ -1144,6 +1155,7 @@ export type ResolversParentTypes = ResolversObject<{
   ProjectExpense: ProjectExpense;
   ProjectFinancialSummary: ProjectFinancialSummary;
   ProjectProfitability: ProjectProfitability;
+  ProjectSiteAddressInput: ProjectSiteAddressInput;
   Query: Record<PropertyKey, never>;
   Quote: Quote;
   QuoteItem: QuoteItem;
@@ -1280,9 +1292,9 @@ export type InvoiceItemResolvers<ContextType = GraphQLContext, ParentType extend
 export type InvoiceSettingsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['InvoiceSettings'] = ResolversParentTypes['InvoiceSettings']> = ResolversObject<{
   address: Resolver<Maybe<ResolversTypes['Address']>, ParentType, ContextType>;
   bankDetails: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  businessId: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   businessName: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  businessNumber: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  businessType: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  createdAt: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   defaultDueDays: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   email: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   fromEmail: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -1292,6 +1304,7 @@ export type InvoiceSettingsResolvers<ContextType = GraphQLContext, ParentType ex
   legalName: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   logoUrl: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   phone: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  registrationNumber: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   smtpHost: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   smtpPassword: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   smtpPort: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
@@ -1299,6 +1312,7 @@ export type InvoiceSettingsResolvers<ContextType = GraphQLContext, ParentType ex
   startingNumber: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   taxLabel: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   taxRate: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  updatedAt: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   website: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
 }>;
 
@@ -1336,7 +1350,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   updateBusiness: Resolver<ResolversTypes['Business'], ParentType, ContextType, RequireFields<MutationUpdateBusinessArgs, 'id' | 'input'>>;
   updateClient: Resolver<ResolversTypes['Client'], ParentType, ContextType, RequireFields<MutationUpdateClientArgs, 'id' | 'input'>>;
   updateInvoice: Resolver<ResolversTypes['Invoice'], ParentType, ContextType, RequireFields<MutationUpdateInvoiceArgs, 'id' | 'input'>>;
-  updateInvoiceSettings: Resolver<Maybe<ResolversTypes['InvoiceSettings']>, ParentType, ContextType, RequireFields<MutationUpdateInvoiceSettingsArgs, 'input'>>;
+  updateInvoiceSettings: Resolver<ResolversTypes['InvoiceSettings'], ParentType, ContextType, RequireFields<MutationUpdateInvoiceSettingsArgs, 'input'>>;
   updatePayment: Resolver<ResolversTypes['Payment'], ParentType, ContextType, RequireFields<MutationUpdatePaymentArgs, 'id' | 'input'>>;
   updateProject: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<MutationUpdateProjectArgs, 'id' | 'input'>>;
   updateQuote: Resolver<ResolversTypes['Quote'], ParentType, ContextType, RequireFields<MutationUpdateQuoteArgs, 'id' | 'input'>>;
@@ -1369,10 +1383,10 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   id: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   invoices: Resolver<Array<ResolversTypes['Invoice']>, ParentType, ContextType>;
   isOverdue: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  location: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   manager: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
   progress: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   quotes: Resolver<Array<ResolversTypes['Quote']>, ParentType, ContextType>;
+  siteAddress: Resolver<Maybe<ResolversTypes['Address']>, ParentType, ContextType>;
   startDate: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   status: Resolver<ResolversTypes['ProjectStatus'], ParentType, ContextType>;
   tasks: Resolver<Array<ResolversTypes['Task']>, ParentType, ContextType>;

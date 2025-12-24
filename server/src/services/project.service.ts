@@ -1,9 +1,9 @@
-// server/src/services/project.service.ts
 import { GraphQLContext } from "../context.js";
 import {
   CreateProjectInput,
   UpdateProjectInput,
 } from "@/__generated__/graphql.js";
+import { AddressType } from "@prisma/client";
 
 export const projectService = {
   /** ------------------------------------------------------------------
@@ -20,10 +20,10 @@ export const projectService = {
         deletedAt: null,
       },
       orderBy: { createdAt: "asc" },
-
-      // Helpful when listing projects
       include: {
         client: true,
+        // add this later if you want addresses in list APIs
+        // siteAddress: true,
       },
     });
   },
@@ -47,6 +47,7 @@ export const projectService = {
         invoices: true,
         timeLogs: true,
         expenses: true,
+        siteAddress: true, // 👈 include the related address
       },
     });
   },
@@ -54,54 +55,133 @@ export const projectService = {
   /** ------------------------------------------------------------------
    *  🆕 CREATE PROJECT
    *  ------------------------------------------------------------------ */
-  create: (input: CreateProjectInput, ctx: GraphQLContext) => {
+  create: async (input: CreateProjectInput, ctx: GraphQLContext) => {
     if (!ctx.user?.businessId) throw new Error("Unauthorized");
+
+    const { siteAddress, ...rest } = input;
+
+    // If siteAddress was provided, create it first
+    let siteAddressConnect:
+      | {
+          connect: { id: string };
+        }
+      | undefined;
+
+    if (siteAddress) {
+      const createdAddress = await ctx.prisma.address.create({
+        data: {
+          addressType: AddressType.SITE,
+          line1: siteAddress.line1,
+          line2: siteAddress.line2 ?? null,
+          city: siteAddress.city,
+          state: siteAddress.state ?? null,
+          postcode: siteAddress.postcode,
+          country: siteAddress.country ?? null,
+          countryCode: siteAddress.countryCode ?? null,
+        },
+      });
+
+      siteAddressConnect = { connect: { id: createdAddress.id } };
+    }
 
     return ctx.prisma.project.create({
       data: {
         business: { connect: { id: ctx.businessId! } },
-        client: { connect: { id: input.clientId } },
+        client: { connect: { id: rest.clientId } },
 
-        manager: input.managerId
-          ? { connect: { id: input.managerId } }
+        manager: rest.managerId
+          ? { connect: { id: rest.managerId } }
           : undefined,
 
-        title: input.title,
-        description: input.description ?? undefined,
-        location: input.location ?? undefined,
-        status: input.status ?? undefined,
-        startDate: input.startDate ?? undefined,
-        endDate: input.endDate ?? undefined,
+        title: rest.title,
+        description: rest.description ?? undefined,
+        status: rest.status ?? undefined,
+        startDate: rest.startDate ?? undefined,
+        endDate: rest.endDate ?? undefined,
+
+        // 👇 use relation, NOT siteAddressId scalar
+        siteAddress: siteAddressConnect,
       },
-      include: { client: true },
+      include: { client: true, siteAddress: true },
     });
   },
 
   /** ------------------------------------------------------------------
    *  🔁 UPDATE PROJECT
    *  ------------------------------------------------------------------ */
-  update: (id: string, input: UpdateProjectInput, ctx: GraphQLContext) => {
+  update: async (id: string, input: UpdateProjectInput, ctx: GraphQLContext) => {
     if (!ctx.user?.businessId) throw new Error("Unauthorized");
+
+    const { siteAddress, ...rest } = input;
+
+    // We may or may not need to change the relation
+    let siteAddressRelation:
+      | {
+          connect: { id: string };
+        }
+      | undefined;
+
+    if (siteAddress) {
+      // Does the project already have a site address?
+      const existing = await ctx.prisma.project.findUnique({
+        where: { id },
+        select: { siteAddressId: true },
+      });
+
+      if (existing?.siteAddressId) {
+        // Update existing address only – no need to change relation
+        await ctx.prisma.address.update({
+          where: { id: existing.siteAddressId },
+          data: {
+            line1: siteAddress.line1,
+            line2: siteAddress.line2 ?? null,
+            city: siteAddress.city,
+            state: siteAddress.state ?? null,
+            postcode: siteAddress.postcode,
+            country: siteAddress.country ?? null,
+            countryCode: siteAddress.countryCode ?? null,
+          },
+        });
+        // relation already points at this address
+      } else {
+        // No address yet -> create one and connect it
+        const createdAddress = await ctx.prisma.address.create({
+          data: {
+            addressType: AddressType.SITE,
+            line1: siteAddress.line1,
+            line2: siteAddress.line2 ?? null,
+            city: siteAddress.city,
+            state: siteAddress.state ?? null,
+            postcode: siteAddress.postcode,
+            country: siteAddress.country ?? null,
+            countryCode: siteAddress.countryCode ?? null,
+          },
+        });
+
+        siteAddressRelation = { connect: { id: createdAddress.id } };
+      }
+    }
 
     return ctx.prisma.project.update({
       where: { id },
       data: {
-        title: input.title ?? undefined,
-        description: input.description ?? undefined,
-        location: input.location ?? undefined,
-        status: input.status ?? undefined,
-        startDate: input.startDate ?? undefined,
-        endDate: input.endDate ?? undefined,
-        budgetedAmount: input.budgetedAmount ?? undefined,
+        title: rest.title ?? undefined,
+        description: rest.description ?? undefined,
+        status: rest.status ?? undefined,
+        startDate: rest.startDate ?? undefined,
+        endDate: rest.endDate ?? undefined,
+        budgetedAmount: rest.budgetedAmount ?? undefined,
+
+        ...(siteAddressRelation ? { siteAddress: siteAddressRelation } : {}),
 
         manager:
-          input.managerId === null
+          rest.managerId === null
             ? { disconnect: true }
-            : input.managerId
-            ? { connect: { id: input.managerId } }
+            : rest.managerId
+            ? { connect: { id: rest.managerId } }
             : undefined,
       },
-      include: { client: true },
+      include: { client: true, siteAddress: true },
     });
   },
 

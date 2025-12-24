@@ -1,38 +1,95 @@
 // client/app/lib/graphql/queries/project.ts
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
 export const GET_PROJECT = gql`
-  query GetProject($projectId: ID!) {
-    project(id: $projectId) {
+  query GetProject($id: ID!) {
+    project(id: $id) {
       id
       title
       description
       status
       startDate
       endDate
+      budgetedAmount
+      createdAt
+      updatedAt
+
       client {
         id
-        name
+        firstName
+        lastName
+        businessName
+        email
+        phone
       }
+
+      siteAddress {
+        id
+        line1
+        line2
+        city
+        state
+        postcode
+        country
+        countryCode
+      }
+
       tasks {
         id
         title
-        isCompleted
+        status
+        dueDate
       }
-      # vvvv NEW FIELDS ADDED BELOW vvvv
+
       quotes {
         id
-        quoteNumber
         status
         totalAmount
       }
+
       invoices {
         id
-        invoiceNumber
         status
         totalAmount
       }
-      # ^^^^ NEW FIELDS ADDED ABOVE ^^^^
+
+      expenses {
+        id
+        amount
+        category
+        date
+      }
+
+      timeLogs {
+        id
+        date
+        hoursWorked
+        notes
+      }
+
+      financialSummary {
+        invoicesTotal
+        paymentsTotal
+        expensesTotal
+        hoursWorked
+        estimatedProfit
+      }
+
+      isOverdue
+      progress
+      totalHoursWorked
+    }
+  }
+`;
+
+export const GET_PROJECT_REPORT = gql`
+  query ProjectReport($id: ID!) {
+    projectReport(id: $id) {
+      invoicesTotal
+      paymentsTotal
+      expensesTotal
+      hoursWorked
+      estimatedProfit
     }
   }
 `;

@@ -1,11 +1,6 @@
-// prisma/seeds/seedInvoice.ts
-
-// node16 / nodenext needs .js extension
 import { PrismaClient } from "@prisma/client";
-
 const prisma = new PrismaClient();
 
-// simple timestamp helpers
 function addDays(date: Date, days: number) {
   return new Date(date.getTime() + days * 86400000);
 }
@@ -14,76 +9,108 @@ function subDays(date: Date, days: number) {
   return new Date(date.getTime() - days * 86400000);
 }
 
-export default async function seedInvoice() {
+export default async function seedInvoice(prisma: PrismaClient) {
+  console.log("🌱 Seeding invoices...");
+
   const business = await prisma.business.findFirst();
-  if (!business) throw new Error("Business missing");
+  if (!business) throw new Error("Business not found – seedBusiness must run first");
+
+  const settings = await prisma.invoiceSettings.findUnique({
+    where: { businessId: business.id },
+  });
+  if (!settings) throw new Error("Invoice settings not found – seedInvoiceSettings must run first");
+
+  const region = await prisma.region.findUnique({
+    where: { id: business.regionId },
+  });
+  if (!region) throw new Error("Region not found for business");
 
   const projects = await prisma.project.findMany({
+    where: { businessId: business.id },
     include: { client: true },
   });
 
-  console.log(`🌱 Seeding invoices for ${projects.length} projects...`);
+  if (projects.length === 0) {
+    console.log("   ➤ No projects found – seedProject must run first");
+    return;
+  }
 
-  let sequence = 1;
+  const existingCount = await prisma.invoice.count({
+    where: { businessId: business.id },
+  });
+
+  if (existingCount > 0) {
+    console.log(`   ➤ ${existingCount} invoices already exist – skipping`);
+    return;
+  }
+
+  const prefix = settings.invoicePrefix ?? "INV-";
+  let sequence = settings.startingNumber ?? 1;
+  const taxRate = Number(region.defaultTaxRate);
   const invoicesData: any[] = [];
+  const possibleStatuses = ["DRAFT", "SENT", "PAID", "OVERDUE", "PARTIALLY_PAID"] as const;
 
   for (const project of projects) {
-    const numInvoices = Math.random() > 0.5 ? 2 : 1;
+    const numInvoices = 1 + Math.floor(Math.random() * 2);
 
     for (let i = 0; i < numInvoices; i++) {
-      const subtotal = Number((Math.random() * 1200 + 300).toFixed(2)); // $300–1500
-      const taxRate = 0.10;
+      const subtotal = Number((Math.random() * 1200 + 300).toFixed(2));
       const taxAmount = Number((subtotal * taxRate).toFixed(2));
       const totalAmount = subtotal + taxAmount;
 
       const issueDate = subDays(new Date(), Math.floor(Math.random() * 30));
-      const dueDate = addDays(issueDate, 14);
+      const dueDate = addDays(issueDate, settings.defaultDueDays ?? 14);
+
+      const status =
+        possibleStatuses[Math.floor(Math.random() * possibleStatuses.length)];
 
       invoicesData.push({
         businessId: business.id,
         projectId: project.id,
         clientId: project.clientId,
 
-        invoicePrefix: "FT",
+        invoicePrefix: prefix,
         invoiceSequence: sequence,
-        invoiceNumber: `FT-${sequence.toString().padStart(4, "0")}`,
-        sequence: sequence,
+        invoiceNumber: `${prefix}${sequence.toString().padStart(4, "0")}`,
 
-        status:
-          Math.random() > 0.6
-            ? "PAID"
-            : Math.random() > 0.3
-            ? "SENT"
-            : "DRAFT",
-
+        status,
         issueDate,
         dueDate,
+        notes: "Seeded invoice",
+
+        taxRate,
+        taxLabelSnapshot: region.taxLabel,
+        currencyCode: region.currencyCode,
 
         subtotal,
-        taxRate,
-        taxLabelSnapshot: "GST",
         taxAmount,
         totalAmount,
-        currencyCode: "AUD",
 
-        businessSnapshot: business,
+        businessSnapshot: {
+          id: business.id,
+          name: business.name,
+          email: business.email,
+          phone: business.phone,
+          regionCode: region.code,
+          currencyCode: region.currencyCode,
+          taxLabel: region.taxLabel,
+        },
         clientSnapshot: {
           id: project.client.id,
-          name: project.client.businessName ?? project.client.firstName,
+          name:
+            project.client.businessName ??
+            `${project.client.firstName} ${project.client.lastName}`,
+          email: project.client.email,
+          phone: project.client.phone,
+          type: project.client.type,
         },
-
-        notes: "Seeded invoice",
       });
 
       sequence++;
     }
   }
 
-  if (invoicesData.length > 0) {
-    await prisma.invoice.createMany({
-      data: invoicesData,
-    });
-  }
+  await prisma.invoice.createMany({ data: invoicesData });
 
   console.log(`   ➤ Seeded ${invoicesData.length} invoices`);
 }

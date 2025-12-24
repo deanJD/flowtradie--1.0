@@ -1,18 +1,25 @@
 // client/app/dashboard/projects/[projectId]/page.tsx
-'use client';
+"use client";
 
-import React, { use } from 'react';
-import { useQuery, useMutation } from '@apollo/client';
-import { GET_PROJECT } from '@/app/lib/graphql/queries/project';
-import { UPDATE_TASK_MUTATION } from '@/app/lib/graphql/mutations/task';
-import Link from 'next/link';
-import styles from './ProjectDetailsPage.module.css';
+import React from "react";
+import { useQuery, useMutation } from "@apollo/client";
+import Link from "next/link";
 
-export default function ProjectDetailsPage({ params }: { params: Promise<{ projectId: string }> }) {
-  const { projectId } = use(params);
+import { GET_PROJECT } from "@/app/lib/graphql/queries/project";
+import { UPDATE_TASK_MUTATION } from "@/app/lib/graphql/mutations/task";
 
+import styles from "./ProjectDetailsPage.module.css";
+
+interface ProjectDetailsPageProps {
+  params: { projectId: string };
+}
+
+export default function ProjectDetailsPage({ params }: ProjectDetailsPageProps) {
+  const { projectId } = params;
+
+  // 👇 Make sure GET_PROJECT is defined as: query GetProject($id: ID!) { project(id: $id) { ... } }
   const { data, loading, error, refetch } = useQuery(GET_PROJECT, {
-    variables: { projectId },
+    variables: { id: projectId },
   });
 
   const [updateTask] = useMutation(UPDATE_TASK_MUTATION, {
@@ -36,32 +43,81 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ proje
 
   const { project } = data;
 
+  const clientName =
+    project.client?.businessName ||
+    [project.client?.firstName, project.client?.lastName].filter(Boolean).join(" ");
+
+  const siteAddress = project.siteAddress;
+
   return (
     <div className={styles.container}>
       <Link href="/dashboard/projects" className={styles.backLink}>
         ← Back to All Projects
       </Link>
-      
+
       <div className={styles.header}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
           <h1 className={styles.title}>{project.title}</h1>
-          {/* vvvvvvvvvv NEW BUTTON ADDED BELOW vvvvvvvvvv */}
-          <Link 
-            href={`/dashboard/projects/${project.id}/edit`} 
-            className={styles.editButton} // We will add this style next
+
+          <Link
+            href={`/dashboard/projects/${project.id}/edit`}
+            className={styles.editButton}
           >
             Edit
           </Link>
-          {/* ^^^^^^^^^^ NEW BUTTON ADDED ABOVE ^^^^^^^^^^ */}
         </div>
+
         <div className={styles.metaGrid}>
-          <p className={styles.metaItem}><strong>Status:</strong> {project.status}</p>
-          <p className={styles.metaItem}><strong>Client:</strong> {project.client.name}</p>
+          <p className={styles.metaItem}>
+            <strong>Status:</strong> {project.status}
+          </p>
+
+          <p className={styles.metaItem}>
+            <strong>Client:</strong> {clientName || "Unknown client"}
+          </p>
+
+          <p className={styles.metaItem}>
+            <strong>Site Address:</strong>{" "}
+            {siteAddress
+              ? `${siteAddress.line1}${
+                  siteAddress.line2 ? ", " + siteAddress.line2 : ""
+                }, ${siteAddress.city}${
+                  siteAddress.state ? " " + siteAddress.state : ""
+                } ${siteAddress.postcode}`
+              : "No site address set"}
+          </p>
         </div>
-        <p className={styles.description}>{project.description || 'No description provided.'}</p>
+
+        <p className={styles.description}>
+          {project.description || "No description provided."}
+        </p>
       </div>
-      
-      {/* ... Quotes, Invoices, and Tasks sections ... */}
+
+      {/* TODO: hook these back up to real data if not already */}
+      {/* Example structure for later: */}
+      {/* 
+      <section className={styles.section}>
+        <h2>Tasks</h2>
+        {project.tasks?.length ? (
+          <ul className={styles.taskList}>
+            {project.tasks.map((task: any) => (
+              <li key={task.id} className={styles.taskItem}>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={task.isCompleted}
+                    onChange={() => handleToggleTask(task)}
+                  />
+                  {task.title}
+                </label>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No tasks for this project.</p>
+        )}
+      </section>
+      */}
     </div>
   );
 }

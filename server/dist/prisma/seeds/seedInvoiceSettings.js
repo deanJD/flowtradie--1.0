@@ -1,46 +1,25 @@
-// server/prisma/seeds/seedInvoiceSettings.ts
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
-export default async function seedInvoiceSettings() {
-    console.log("🌱 Seeding InvoiceSettings...");
-    const business = await prisma.business.findFirst({
-        where: { email: "contact@flowtradie.com" },
+export default async function seedInvoiceSettings(prisma) {
+    console.log("🌱 Seeding invoice settings...");
+    const business = await prisma.business.findFirst();
+    if (!business)
+        throw new Error("Business not found – seedBusiness must run first");
+    const existing = await prisma.invoiceSettings.findUnique({
+        where: { businessId: business.id },
     });
-    if (!business) {
-        console.error("❌ Business not found. Run seedBusiness first.");
+    if (existing) {
+        console.log("   ➤ Invoice settings already exist – skipping");
         return;
     }
-    const settings = await prisma.invoiceSettings.upsert({
-        where: { businessId: business.id },
-        update: {
-            bankDetails: "BSB 000-000 | ACC 00000000",
-            invoicePrefix: "INV-",
-            startingNumber: 1000,
-            defaultDueDays: 14,
-            smtpHost: null,
-            smtpPort: null,
-            smtpUser: null,
-            smtpPassword: null,
-            fromEmail: null,
-            fromName: null,
-        },
-        create: {
+    await prisma.invoiceSettings.create({
+        data: {
             businessId: business.id,
-            bankDetails: "BSB 000-000 | ACC 00000000",
-            invoicePrefix: "INV-",
-            startingNumber: 1000,
+            invoicePrefix: "FT-",
+            startingNumber: 1,
             defaultDueDays: 14,
-            smtpHost: null,
-            smtpPort: null,
-            smtpUser: null,
-            smtpPassword: null,
-            fromEmail: null,
-            fromName: null,
         },
     });
-    console.log("   ➤ InvoiceSettings seeded:", settings.id);
+    console.log("   ➤ Invoice settings seeded");
 }
-seedInvoiceSettings()
-    .catch((err) => console.error(err))
-    .finally(async () => prisma.$disconnect());
 //# sourceMappingURL=seedInvoiceSettings.js.map

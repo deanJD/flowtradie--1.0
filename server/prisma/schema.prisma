@@ -91,6 +91,7 @@ model Address {
 
   businesses Business[] @relation("BusinessAddresses")
   clients    Client[]   @relation("ClientAddresses")
+  projects   Project[]  @relation("ProjectSiteAddress") // 👈 NEW
 }
 // ======================
 //  REGION (FOR TAX & LANGUAGE)
@@ -402,7 +403,6 @@ model Project {
 
   title          String
   description    String?
-  location       String?
   status         ProjectStatus @default(PENDING)
   startDate      DateTime?
   endDate        DateTime?
@@ -410,7 +410,11 @@ model Project {
 
   managerId String?
   manager   User?   @relation("ProjectManager", fields: [managerId], references: [id], onDelete: SetNull)
-
+  
+  // 👇 NEW
+  siteAddressId String?
+  siteAddress   Address? @relation("ProjectSiteAddress", fields: [siteAddressId], references: [id])
+  
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?

@@ -1,57 +1,47 @@
-// prisma/seeds/seedClient.ts
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
-export default async function seedClient() {
-    const businessId = "cmilphqmn000395zo5d1pnk2k"; // 🔥 YOUR business ID
-    await prisma.client.createMany({
-        data: [
-            {
-                businessId,
-                firstName: "John",
-                lastName: "Builder",
-                businessName: "JB Carpentry",
-                email: "john@jbcarpentry.com",
-                phone: "0400 123 456",
-                type: "COMMERCIAL",
-            },
-            {
-                businessId,
-                firstName: "Sarah",
-                lastName: "Sparks",
-                businessName: "Sparks Electrical",
-                email: "sarah@sparks.com",
-                phone: "0401 987 654",
-                type: "COMMERCIAL",
-            },
-            {
-                businessId,
-                firstName: "Michael",
-                lastName: "Plumb",
-                businessName: "MP Plumbing Co.",
-                email: "michael@mpplumbing.com",
-                phone: "0407 654 321",
-                type: "RESIDENTIAL",
-            },
-            {
-                businessId,
-                firstName: "Lisa",
-                lastName: "Painter",
-                businessName: "Perfect Paint",
-                email: "lisa@perfectpaint.com",
-                phone: "0402 888 999",
-                type: "RESIDENTIAL",
-            },
-            {
-                businessId,
-                firstName: "Dave",
-                lastName: "Concrete",
-                businessName: "DC Concreting",
-                email: "dave@dcconcrete.com",
-                phone: "0412 456 789",
-                type: "COMMERCIAL",
-            },
-        ],
+export default async function seedClient(prisma) {
+    console.log("🌱 Seeding clients...");
+    const business = await prisma.business.findFirst();
+    if (!business)
+        throw new Error("Business not found – seedBusiness must run first");
+    const existingCount = await prisma.client.count({
+        where: { businessId: business.id },
     });
-    console.log("🔥 Seeded 5 clients successfully!");
+    if (existingCount > 0) {
+        console.log(`   ➤ ${existingCount} clients already exist – skipping`);
+        return;
+    }
+    const clientsData = [
+        {
+            firstName: "John",
+            lastName: "Smith",
+            businessName: "Smith Plumbing Pty Ltd",
+            phone: "0400 111 111",
+            email: "admin@smithplumbing.test",
+            type: "COMMERCIAL",
+            businessId: business.id,
+        },
+        {
+            firstName: "Sarah",
+            lastName: "Lee",
+            businessName: "Rapid Electrical",
+            phone: "0400 222 222",
+            email: "office@rapidelec.test",
+            type: "COMMERCIAL",
+            businessId: business.id,
+        },
+        {
+            firstName: "Michael",
+            lastName: "Brown",
+            businessName: null,
+            phone: "0400 333 333",
+            email: "michael.brown@example.test",
+            type: "RESIDENTIAL",
+            businessId: business.id,
+        },
+    ];
+    await prisma.client.createMany({ data: clientsData });
+    console.log(`   ➤ Seeded ${clientsData.length} clients`);
 }
 //# sourceMappingURL=seedClient.js.map

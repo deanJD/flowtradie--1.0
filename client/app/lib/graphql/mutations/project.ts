@@ -1,5 +1,5 @@
 // client/app/lib/graphql/mutations/project.ts
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
 export const CREATE_PROJECT_MUTATION = gql`
   mutation CreateProject($input: CreateProjectInput!) {
@@ -7,29 +7,49 @@ export const CREATE_PROJECT_MUTATION = gql`
       id
       title
       status
+
       client {
         id
         firstName
         lastName
+        businessName
+      }
+
+      siteAddress {
+        id
+        line1
+        city
+        state
+        postcode
       }
     }
   }
 `;
 
 export const UPDATE_PROJECT_MUTATION = gql`
-  mutation UpdateProject($updateProjectId: ID!, $input: UpdateProjectInput!) {
-    updateProject(id: $updateProjectId, input: $input) {
+  mutation UpdateProject($id: ID!, $input: UpdateProjectInput!) {
+    updateProject(id: $id, input: $input) {
       id
       title
-      description
       status
+
+      siteAddress {
+        id
+        line1
+        line2
+        city
+        state
+        postcode
+        country
+        countryCode
+      }
     }
   }
 `;
 
 export const DELETE_PROJECT_MUTATION = gql`
-  mutation DeleteProject($deleteProjectId: ID!) {
-    deleteProject(id: $deleteProjectId) {
+  mutation DeleteProject($id: ID!) {
+    deleteProject(id: $id) {
       id
     }
   }
