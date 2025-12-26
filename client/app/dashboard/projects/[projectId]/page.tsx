@@ -1,25 +1,27 @@
-// client/app/dashboard/projects/[projectId]/page.tsx
 "use client";
 
 import React from "react";
 import { useQuery, useMutation } from "@apollo/client";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 
 import { GET_PROJECT } from "@/app/lib/graphql/queries/project";
 import { UPDATE_TASK_MUTATION } from "@/app/lib/graphql/mutations/task";
 
 import styles from "./ProjectDetailsPage.module.css";
 
-interface ProjectDetailsPageProps {
-  params: { projectId: string };
-}
+export default function ProjectDetailsPage() {
+  const params = useParams<{ projectId: string }>();
+  const projectId = params?.projectId;
 
-export default function ProjectDetailsPage({ params }: ProjectDetailsPageProps) {
-  const { projectId } = params;
-
-  // 👇 Make sure GET_PROJECT is defined as: query GetProject($id: ID!) { project(id: $id) { ... } }
-  const { data, loading, error, refetch } = useQuery(GET_PROJECT, {
+  const {
+    data,
+    loading,
+    error,
+    refetch,
+  } = useQuery(GET_PROJECT, {
     variables: { id: projectId },
+    skip: !projectId, // ✅ don't send query until we have an id
   });
 
   const [updateTask] = useMutation(UPDATE_TASK_MUTATION, {
@@ -37,6 +39,7 @@ export default function ProjectDetailsPage({ params }: ProjectDetailsPageProps) 
     });
   };
 
+  if (!projectId) return <p>Invalid project id.</p>;
   if (loading) return <p>Loading project details...</p>;
   if (error) return <p>Error: {error.message}</p>;
   if (!data || !data.project) return <p>Project not found.</p>;
@@ -45,7 +48,9 @@ export default function ProjectDetailsPage({ params }: ProjectDetailsPageProps) 
 
   const clientName =
     project.client?.businessName ||
-    [project.client?.firstName, project.client?.lastName].filter(Boolean).join(" ");
+    [project.client?.firstName, project.client?.lastName]
+      .filter(Boolean)
+      .join(" ");
 
   const siteAddress = project.siteAddress;
 
@@ -71,11 +76,9 @@ export default function ProjectDetailsPage({ params }: ProjectDetailsPageProps) 
           <p className={styles.metaItem}>
             <strong>Status:</strong> {project.status}
           </p>
-
           <p className={styles.metaItem}>
             <strong>Client:</strong> {clientName || "Unknown client"}
           </p>
-
           <p className={styles.metaItem}>
             <strong>Site Address:</strong>{" "}
             {siteAddress
@@ -93,9 +96,7 @@ export default function ProjectDetailsPage({ params }: ProjectDetailsPageProps) 
         </p>
       </div>
 
-      {/* TODO: hook these back up to real data if not already */}
-      {/* Example structure for later: */}
-      {/* 
+      {/* Tasks section if you want it later:
       <section className={styles.section}>
         <h2>Tasks</h2>
         {project.tasks?.length ? (

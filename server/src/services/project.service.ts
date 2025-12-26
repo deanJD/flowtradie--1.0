@@ -188,8 +188,19 @@ export const projectService = {
   /** ------------------------------------------------------------------
    *  🗑 SOFT DELETE PROJECT
    *  ------------------------------------------------------------------ */
-  delete: (id: string, ctx: GraphQLContext) => {
+    delete: async (id: string, ctx: GraphQLContext) => {
     if (!ctx.user?.businessId) throw new Error("Unauthorized");
+
+    const invoiceCount = await ctx.prisma.invoice.count({
+      where: {
+        projectId: id,
+        deletedAt: null,
+      },
+    });
+
+    if (invoiceCount > 0) {
+      throw new Error("Cannot delete project with existing invoices.");
+    }
 
     return ctx.prisma.project.update({
       where: { id },

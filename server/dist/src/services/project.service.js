@@ -155,9 +155,18 @@ export const projectService = {
     /** ------------------------------------------------------------------
      *  🗑 SOFT DELETE PROJECT
      *  ------------------------------------------------------------------ */
-    delete: (id, ctx) => {
+    delete: async (id, ctx) => {
         if (!ctx.user?.businessId)
             throw new Error("Unauthorized");
+        const invoiceCount = await ctx.prisma.invoice.count({
+            where: {
+                projectId: id,
+                deletedAt: null,
+            },
+        });
+        if (invoiceCount > 0) {
+            throw new Error("Cannot delete project with existing invoices.");
+        }
         return ctx.prisma.project.update({
             where: { id },
             data: { deletedAt: new Date() },

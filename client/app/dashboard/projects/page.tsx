@@ -16,30 +16,43 @@ export default function ProjectsPage() {
   const router = useRouter();
 
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [search, setSearch] = useState("");
 
-  // Protect route
   useEffect(() => {
     if (!authLoading && !user) router.push("/login");
   }, [authLoading, user, router]);
 
-  // Fetch projects
   const { data, loading, error, refetch } = useQuery(GET_PROJECTS, {
     fetchPolicy: "network-only",
   });
 
   const [deleteProject] = useMutation(DELETE_PROJECT_MUTATION);
 
+  const projects = data?.projects ?? [];
+
+  // 🔎 Simple in-memory filter, no useMemo
+  const filteredProjects = projects.filter((p: any) => {
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+
+    const clientName =
+      p.client?.businessName ||
+      [p.client?.firstName, p.client?.lastName].filter(Boolean).join(" ");
+
+    return (
+      p.title.toLowerCase().includes(q) ||
+      (clientName && clientName.toLowerCase().includes(q))
+    );
+  });
+
   if (authLoading || loading) return <p>Loading projects...</p>;
   if (error) return <p>Error loading projects: {error.message}</p>;
 
-  const projects = data?.projects ?? [];
-
-  // Confirm delete handler
   async function confirmDelete() {
     if (!deleteTarget) return;
 
     await deleteProject({
-      variables: { id: deleteTarget.id }, // 👈 must match $id in the mutation
+      variables: { id: deleteTarget.id },
     });
 
     setDeleteTarget(null);
@@ -51,7 +64,16 @@ export default function ProjectsPage() {
       {/* HEADER */}
       <div className={tableStyles.header}>
         <h1 className={tableStyles.title}>Projects</h1>
-        <Button href="/dashboard/projects/new">+ New Project</Button>
+        <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+          <input
+            type="text"
+            placeholder="Search by project or client..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className={tableStyles.searchInput}
+          />
+          <Button href="/dashboard/projects/new">+ New Project</Button>
+        </div>
       </div>
 
       {/* PROJECTS TABLE */}
@@ -68,7 +90,7 @@ export default function ProjectsPage() {
           </thead>
 
           <tbody>
-            {projects.map((p: any) => (
+            {filteredProjects.map((p: any) => (
               <tr key={p.id}>
                 <td>{p.title}</td>
 
@@ -135,7 +157,7 @@ export default function ProjectsPage() {
               </tr>
             ))}
 
-            {projects.length === 0 && (
+            {filteredProjects.length === 0 && (
               <tr>
                 <td
                   colSpan={5}

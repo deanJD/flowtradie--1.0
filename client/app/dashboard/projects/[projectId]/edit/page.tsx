@@ -1,137 +1,225 @@
-// client/app/dashboard/projects/[projectId]/edit/page.tsx
-'use client';
+"use client";
 
-import React, { useState, useEffect, use } from 'react';
-import { useQuery, useMutation } from '@apollo/client';
-import { useRouter } from 'next/navigation';
-import { GET_PROJECT } from '@/app/lib/graphql/queries/project';
-import { GET_PROJECTS } from '@/app/lib/graphql/queries/projects'; // <-- We need this for the cache update
-import { UPDATE_PROJECT_MUTATION, DELETE_PROJECT_MUTATION } from '@/app/lib/graphql/mutations/project';
-import styles from './EditProjectPage.module.css';
-import Button from '@/components/Button/Button';
-import ConfirmationModal from '@/components/Modal/ConfirmationModal';
+import React, { useEffect, useState } from "react";
+import { useRouter, useParams } from "next/navigation";
+import { useQuery, useMutation } from "@apollo/client";
 
-export default function EditProjectPage({ params }: { params: Promise<{ projectId: string }> }) {
-  const { projectId } = use(params);
+import { useAuth } from "@/app/context/AuthContext";
+import { GET_PROJECT } from "@/app/lib/graphql/queries/project";
+import { UPDATE_PROJECT_MUTATION } from "@/app/lib/graphql/mutations/project";
+import { GET_PROJECTS } from "@/app/lib/graphql/queries/projects";
+
+import styles from "./EditProjectPage.module.css";
+
+export default function EditProjectPage() {
   const router = useRouter();
+  const params = useParams<{ projectId: string }>();
+  const projectId = params?.projectId;
 
-  const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
+  const { user, loading: authLoading } = useAuth();
 
-  const { data: projectData, loading: projectLoading } = useQuery(GET_PROJECT, {
-    variables: { projectId },
+  const { data, loading, error } = useQuery(GET_PROJECT, {
+    variables: { id: projectId },
+    skip: !projectId,
   });
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [updateProject, { loading: updating }] = useMutation(
+    UPDATE_PROJECT_MUTATION,
+    {
+      refetchQueries: [{ query: GET_PROJECTS }],
+    }
+  );
+
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    status: "PENDING",
+    budgetedAmount: "",
+    line1: "",
+    line2: "",
+    city: "",
+    state: "",
+    postcode: "",
+    country: "Australia",
+    countryCode: "AU",
+  });
 
   useEffect(() => {
-    if (projectData && projectData.project) {
-      setTitle(projectData.project.title);
-      setDescription(projectData.project.description || '');
+    if (!authLoading && !user) router.push("/login");
+  }, [authLoading, user, router]);
+
+  useEffect(() => {
+    if (data?.project) {
+      const p = data.project;
+      const a = p.siteAddress;
+
+      setForm({
+        title: p.title ?? "",
+        description: p.description ?? "",
+        status: p.status ?? "PENDING",
+        budgetedAmount: p.budgetedAmount ?? "",
+        line1: a?.line1 ?? "",
+        line2: a?.line2 ?? "",
+        city: a?.city ?? "",
+        state: a?.state ?? "",
+        postcode: a?.postcode ?? "",
+        country: a?.country ?? "Australia",
+        countryCode: a?.countryCode ?? "AU",
+      });
     }
-  }, [projectData]);
+  }, [data]);
 
-  const [updateProject, { loading: updatingProject, error: updateError }] = useMutation(UPDATE_PROJECT_MUTATION, {
-    onCompleted: () => {
-      router.push(`/dashboard/projects/${projectId}`);
-    },
-    refetchQueries: [{ query: GET_PROJECT, variables: { projectId } }],
-  });
+  if (!projectId) return <p>Invalid project id.</p>;
+  if (authLoading || loading) return <p>Loading...</p>;
+  if (error) return <p>Error loading project: {error.message}</p>;
+  if (!data?.project) return <p>Project not found.</p>;
 
-  // vvvvvvvvvv THIS IS THE FIX vvvvvvvvvv
-  const [deleteProject, { loading: deletingProject, error: deleteError }] = useMutation(DELETE_PROJECT_MUTATION, {
-    update(cache, { data: { deleteProject } }) {
-      // Read the current projects list from the cache
-      const existingData = cache.readQuery<{ projects: any[] }>({ query: GET_PROJECTS });
-
-      if (existingData && deleteProject) {
-        // Filter out the project that was just deleted
-        const updatedProjects = existingData.projects.filter(
-          (project) => project.id !== deleteProject.id
-        );
-        // Write the new, shorter list back to the cache
-        cache.writeQuery({
-          query: GET_PROJECTS,
-          data: { projects: updatedProjects },
-        });
-      }
-    },
-    onCompleted: () => {
-      // On success, go back to the main projects list
-      router.push('/dashboard/projects');
-    },
-  });
-  // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-  const handleDelete = () => {
-    deleteProject({
-      variables: {
-        deleteProjectId: projectId,
-      },
-    });
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    updateProject({
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    await updateProject({
       variables: {
-        updateProjectId: projectId,
+        id: projectId,
         input: {
-          title,
-          description,
+          title: form.title,
+          description: form.description || null,
+          status: form.status,
+          budgetedAmount: form.budgetedAmount
+            ? Number(form.budgetedAmount)
+            : null,
+          siteAddress: form.line1
+            ? {
+                line1: form.line1,
+                line2: form.line2 || null,
+                city: form.city,
+                state: form.state || null,
+                postcode: form.postcode,
+                country: form.country || null,
+                countryCode: form.countryCode || null,
+              }
+            : null,
         },
       },
     });
+
+    router.push(`/dashboard/projects/${projectId}`);
   };
 
-  if (projectLoading) return <p>Loading project for editing...</p>;
-  
   return (
-    <>
-      <div className={styles.container}>
-        <form className={styles.form} onSubmit={handleSubmit}>
-          <h1 className={styles.title}>Edit Project</h1>
-          
-          <div className={styles.inputGroup}>
-            <label htmlFor="title" className={styles.label}>Project Title</label>
-            <input id="title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} className={styles.input} required />
-          </div>
+    <div className={styles.pageContainer}>
+      <h1 className={styles.title}>Edit Project</h1>
 
-          <div className={styles.inputGroup}>
-            <label htmlFor="description" className={styles.label}>Description (Optional)</label>
-            <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} className={styles.input} rows={4} />
-          </div>
-
-          {updateError && <p className={styles.errorMessage}>Error: {updateError.message}</p>}
-
-          <div className={styles.buttonGroup}>
-            <Button type="submit" disabled={updatingProject}>
-              {updatingProject ? 'Saving...' : 'Save Changes'}
-            </Button>
-            <Button href={`/dashboard/projects/${projectId}`} variant="secondary">
-              Cancel
-            </Button>
-          </div>
-        </form>
-
-        <div className={styles.dangerZone}>
-          <h2 className={styles.dangerTitle}>Danger Zone</h2>
-          <Button onClick={() => setDeleteModalOpen(true)} variant="secondary" disabled={deletingProject}>
-            Delete this Project
-          </Button>
-          {deleteError && <p className={styles.errorMessage}>Error: {deleteError.message}</p>}
+      <form className={styles.form} onSubmit={handleSubmit}>
+        <div className={styles.fieldGroup}>
+          <label className={styles.label}>Title</label>
+          <input
+            className={styles.input}
+            name="title"
+            value={form.title}
+            onChange={handleChange}
+            required
+          />
         </div>
-      </div>
 
-      <ConfirmationModal
-        isOpen={isDeleteModalOpen}
-        title="Delete Project"
-        message={`Are you sure you want to delete "${projectData?.project?.title}"? This is a soft-delete.`}
-        onClose={() => setDeleteModalOpen(false)}
-        onConfirm={handleDelete}
-        confirmText="Delete Project"
-        isLoading={deletingProject}
-      />
-    </>
+        <div className={styles.fieldGroup}>
+          <label className={styles.label}>Status</label>
+          <select
+            className={styles.input}
+            name="status"
+            value={form.status}
+            onChange={handleChange}
+          >
+            <option value="PENDING">Pending</option>
+            <option value="ACTIVE">Active</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+        </div>
+
+        <div className={styles.fieldGroup}>
+          <label className={styles.label}>Budgeted Amount</label>
+          <input
+            className={styles.input}
+            name="budgetedAmount"
+            type="number"
+            value={form.budgetedAmount}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div className={styles.fieldGroup}>
+          <label className={styles.label}>Description</label>
+          <textarea
+            className={styles.textarea}
+            name="description"
+            value={form.description}
+            onChange={handleChange}
+          />
+        </div>
+
+        <h2 className={styles.subheading}>Site Address</h2>
+
+        <div className={styles.fieldGroup}>
+          <label className={styles.label}>Address Line 1</label>
+          <input
+            className={styles.input}
+            name="line1"
+            value={form.line1}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div className={styles.fieldGroup}>
+          <label className={styles.label}>Address Line 2</label>
+          <input
+            className={styles.input}
+            name="line2"
+            value={form.line2}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div className={styles.inlineGroup}>
+          <div className={styles.fieldGroup}>
+            <label className={styles.label}>City</label>
+            <input
+              className={styles.input}
+              name="city"
+              value={form.city}
+              onChange={handleChange}
+            />
+          </div>
+          <div className={styles.fieldGroup}>
+            <label className={styles.label}>State</label>
+            <input
+              className={styles.input}
+              name="state"
+              value={form.state}
+              onChange={handleChange}
+            />
+          </div>
+          <div className={styles.fieldGroup}>
+            <label className={styles.label}>Postcode</label>
+            <input
+              className={styles.input}
+              name="postcode"
+              value={form.postcode}
+              onChange={handleChange}
+            />
+          </div>
+        </div>
+
+        <button className={styles.submitButton} type="submit" disabled={updating}>
+          {updating ? "Saving..." : "Save Changes"}
+        </button>
+      </form>
+    </div>
   );
 }

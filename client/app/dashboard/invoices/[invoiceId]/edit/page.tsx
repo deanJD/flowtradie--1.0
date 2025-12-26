@@ -8,7 +8,7 @@ import styles from '../../shared/InvoiceForm.module.css';
 import Button from '@/components/Button/Button';
 
 // ✅ Use your confirmed GraphQL ops
-import { GET_INVOICE_QUERY } from '@/app/lib/graphql/queries/invoice';
+import { GET_INVOICE } from '@/app/lib/graphql/queries/invoice';
 import { UPDATE_INVOICE_MUTATION } from '@/app/lib/graphql/mutations/invoice';
 
 // --- Types (lightweight) ---
@@ -18,7 +18,7 @@ export default function EditInvoicePage() {
   const router = useRouter();
   const { invoiceId } = useParams<{ invoiceId: string }>();
 
-  const { data, loading, error } = useQuery(GET_INVOICE_QUERY, {
+  const { data, loading, error } = useQuery(GET_INVOICE, {
     variables: { invoiceId },
     fetchPolicy: 'cache-and-network',
   });

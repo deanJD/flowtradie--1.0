@@ -4,16 +4,13 @@ export const GET_INVOICE = gql`
   query GetInvoice($id: ID!) {
     invoice(id: $id) {
       id
-      
       invoiceNumber
       invoicePrefix
       invoiceSequence
-
       status
       issueDate
       dueDate
       notes
-      updatedAt
 
       subtotal
       taxRate
@@ -22,40 +19,37 @@ export const GET_INVOICE = gql`
       currencyCode
       taxLabelSnapshot
 
-      # BUSINESS → PROJECT → CLIENT 
       project {
         id
         title
-        
+
+        siteAddress {
+          id
+          line1
+          line2
+          city
+          state
+          postcode
+          country
+          countryCode
+        }
+
         client {
           id
           firstName
           lastName
           businessName
-          email
-          phone
         }
       }
 
-      items {
+      client {
         id
-        description
-        quantity
-        unitPrice
-        total
+        firstName
+        lastName
+        businessName
+        email
+        phone
       }
-
-      payments {
-        id
-        amount
-        date
-        method
-        notes
-      }
-
-      # JSON snapshots
-      businessSnapshot
-      clientSnapshot
     }
   }
 `;
